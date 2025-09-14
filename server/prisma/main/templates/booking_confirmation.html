@@ -1,0 +1,214 @@
+{% extends "base_email.html" %} {% block title %}Booking Confirmation{% endblock %}
+{% block content %}
+<div class="greeting">Hello <strong class="name">{{ customer_name }}</strong>,</div>
+
+<div class="intro-text">
+  Thank you for choosing Prisma! Your booking has been confirmed. We're excited
+  to provide you with exceptional service.
+  <br /><br />
+  Your assigned detailer <strong class="name">{{ detailer_name }}</strong> will be with you
+  at the specified time to provide you with the best service possible.
+</div>
+
+<div class="details-banner">
+  <div class="details-title">Booking Confirmation</div>
+</div>
+
+<div class="details-grid">
+  <div class="detail-item">
+    <span class="detail-label">Booking Reference:</span>
+    <span class="detail-value">{{ booking_reference }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Date:</span>
+    <span class="detail-value">{{ booking_date }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Time:</span>
+    <span class="detail-value">{{ start_time }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Service Type:</span>
+    <span class="detail-value">{{ service_type_name }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Valet Type:</span>
+    <span class="detail-value">{{ valet_type_name }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Vehicle:</span>
+    <span class="detail-value">{{ vehicle_make }} {{ vehicle_model }}</span>
+  </div>
+
+  <div class="detail-item total-cost">
+    <span class="detail-label">Total Cost:</span>
+    <span class="detail-value total-amount">{{ total_cost }}</span>
+  </div>
+</div>
+
+<div class="reminders-section">
+  <div class="section-title">Important Reminders</div>
+  <ul class="reminders-list">
+    <li>
+      Appointments cannot be rescheduled or cancelled within 24 hours of the
+      scheduled time
+    </li>
+    <li>
+      Cancelled appointments will not count towars your promotions.
+    </li>
+    <li>For cancellations, Please contact us.</li>
+  </ul>
+</div>
+
+<div class="contact-section">
+  <div class="section-title">Need Help?</div>
+  <div class="contact-methods">
+    <div class="contact-method">
+      <span class="contact-icon">📧</span>
+      <a href="mailto:support@prismavalet.com" class="contact-link"
+        >support@prismavalet.com</a
+      >
+    </div>
+    <div class="contact-method">
+      <span class="contact-icon">🌐</span>
+      <a href="https://prismavalet.com" class="contact-link">prismavalet.com</a>
+    </div>
+  </div>
+</div>
+
+<div class="closing">
+  <div class="closing-text">
+    We look forward to serving you and providing an exceptional experience.
+    Thank you for trusting Prisma with your vehicle care needs.
+  </div>
+  <div class="signature">
+    Best regards,<br />
+    <span class="signature-name">The Prisma Team</span>
+  </div>
+</div>
+
+<style>
+  .intro-text {
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .details-grid {
+    margin-bottom: 24px;
+  }
+
+  .detail-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .detail-item:last-child {
+    border-bottom: none;
+  }
+
+  .detail-item.total-cost {
+    background-color: #f8fafc;
+    padding: 16px 12px;
+    border-radius: 6px;
+    margin-top: 8px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .total-amount {
+    font-weight: 700;
+    color: #1e3a8a;
+    font-size: 18px;
+  }
+
+  .reminders-section,
+  .contact-section {
+    background-color: #f8fafc;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #3b82f6;
+  }
+
+  .section-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 12px;
+    font-size: 16px;
+  }
+
+  .reminders-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .reminders-list li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 8px;
+    color: #475569;
+    line-height: 1.5;
+  }
+
+  .reminders-list li:before {
+    content: "•";
+    color: #3b82f6;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+  }
+
+  .contact-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .contact-method {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .contact-icon {
+    font-size: 16px;
+  }
+
+  .contact-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .contact-link:hover {
+    text-decoration: underline;
+  }
+
+  .closing {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .closing-text {
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  @media only screen and (max-width: 600px) {
+    .reminders-section,
+    .contact-section {
+      padding: 16px;
+    }
+
+    .contact-methods {
+      gap: 12px;
+    }
+  }
+</style>
+{% endblock %}

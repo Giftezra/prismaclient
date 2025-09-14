@@ -1,0 +1,90 @@
+import { createApi } from "@reduxjs/toolkit/query/react";
+import axiosBaseQuery from "@/app/store/baseQuery";
+import {
+  MyAddressProps,
+  MyServiceHistoryProps,
+} from "@/app/interfaces/ProfileInterfaces";
+
+const profileApi = createApi({
+  reducerPath: "profileApi",
+  baseQuery: axiosBaseQuery(),
+  endpoints: (builder) => ({
+    /**
+     * Get the user addresses using a query that will query all the addresses for the user.
+     * on the server side, we will simply return all the addresses for the user.
+     */
+    fetchAllUserAddresses: builder.query<MyAddressProps[], void>({
+      query: () => ({
+        url: "/api/v1/profile/get_addresses/",
+        method: "GET",
+      }),
+      transformResponse: (response: { addresses: MyAddressProps[] }) =>
+        response.addresses,
+    }),
+    /**
+     * Fetch the service history of the user.
+     * on the server side, we will simply return all the service history for the user.
+     */
+    fetchAllUserServiceHistory: builder.query<MyServiceHistoryProps[], void>({
+      query: () => ({
+        url: "/api/v1/profile/get_service_history/",
+        method: "GET",
+      }),
+      transformResponse: (response: {
+        service_history: MyServiceHistoryProps[];
+      }) => response.service_history,
+    }),
+
+    /**
+     * Add a new address to the user's profile.
+     * on the server side, we will simply add the new address to the user's profile.
+     */
+    addNewAddress: builder.mutation<MyAddressProps, MyAddressProps>({
+      query: (address) => ({
+        url: "/api/v1/profile/add_new_address/",
+        method: "POST",
+        data: address,
+      }),
+    }),
+    /**
+     * Update an existing address in the user's profile.
+     * on the server side, we will simply update the existing address in the user's profile.
+     */
+    updateExistingAddress: builder.mutation<
+      MyAddressProps,
+      {
+        id: string;
+        address: MyAddressProps;
+      }
+    >({
+      query: (address) => ({
+        url: `/api/v1/profile/update_address/`,
+        method: "PATCH",
+        data: address,
+      }),
+    }),
+    /**
+     * Delete an existing address in the user's profile.
+     * on the server side, we will simply delete the existing address in the user's profile.
+     */
+    deleteExistingAddress: builder.mutation<
+      { id: string; message: string },
+      string
+    >({
+      query: (id) => ({
+        url: `/api/v1/profile/delete_address/`,
+        method: "DELETE",
+        data: { id },
+      }),
+    }),
+  }),
+});
+
+export const {
+  useFetchAllUserAddressesQuery,
+  useFetchAllUserServiceHistoryQuery,
+  useAddNewAddressMutation,
+  useUpdateExistingAddressMutation,
+  useDeleteExistingAddressMutation,
+} = profileApi;
+export default profileApi;
