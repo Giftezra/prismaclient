@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from main.models import BookedAppointment,ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicles
+from main.models import BookedAppointment,ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicles, Promotions
 import stripe
 from django.conf import settings
 from datetime import datetime
@@ -24,6 +24,7 @@ class BookingView(APIView):
         'reschedule_booking' : 'reschedule_booking',
         'get_add_ons' : 'get_add_ons',
         'get_payment_sheet_details' : 'get_payment_sheet_details',
+        'get_promotions' : 'get_promotions',
     }
     
     """ Here we will override the crud methods and define the methods that would route the url to the appropriate function """
@@ -52,6 +53,32 @@ class BookingView(APIView):
         to get the methods and route then through the get, post, patch given the method passed in the 
         client api
     """
+
+
+    def get_promotions(self, request):
+        """ Get the promotions for the user.
+            ARGS : void
+            RESPONSE : PromotionsProps or null
+        """
+        try:
+            promotions = Promotions.objects.filter(user=request.user, is_active=True).first()
+            if promotions:
+                promotions_data = {
+                    "id" : str(promotions.id),
+                    "title" : promotions.title,
+                    "discount_percentage" : promotions.discount_percentage,
+                    "valid_until" : promotions.valid_until.strftime('%Y-%m-%d'),
+                    "is_active" : promotions.is_active,
+                    "terms_conditions" : promotions.terms_conditions,
+                }
+                return Response(promotions_data, status=status.HTTP_200_OK)
+            else:
+                return Response(None, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error fetching promotions: {str(e)}")
+            return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            
 
     def get_service_type(self, request):
         """ Get the service type predefined by the admin in the system.
@@ -346,8 +373,6 @@ class BookingView(APIView):
             )
 
 
-
-
     
     def send_push_notification(self, user, title, body, data=None):
         """Send push notification using NotificationService"""
@@ -376,3 +401,4 @@ class BookingView(APIView):
             print(f"Failed to send push notification to user {user.id}: {e}")
             logger.error(f"Push notification error for user {user.id}: {str(e)}")
             return False
+

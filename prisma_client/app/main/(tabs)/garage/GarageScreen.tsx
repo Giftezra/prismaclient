@@ -10,7 +10,7 @@ import {
 import React, { useCallback, useState } from "react";
 import StyledText from "@/app/components/helpers/StyledText";
 import MyVehicleStatsComponent from "@/app/components/garage/MyVehicleStatsComponent";
-import PromotionsCardComponent from "@/app/components/garage/PromotionsCardComponent";
+import PromotionsCardComponent from "@/app/components/booking/PromotionsCard";
 import useGarage from "@/app/app-hooks/useGarage";
 import GarageVehicleComponent from "@/app/components/garage/GarageVehicleComponent";
 import StyledButton from "@/app/components/helpers/StyledButton";

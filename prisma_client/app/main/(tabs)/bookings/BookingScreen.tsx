@@ -36,6 +36,9 @@ import StyledTextInput from "@/app/components/helpers/StyledTextInput";
 import { useAddresses } from "@/app/app-hooks/useAddresses";
 import useVehicles from "@/app/app-hooks/useVehicles";
 import ModalServices from "@/app/utils/ModalServices";
+import PromotionsCardComponent from "@/app/components/booking/PromotionsCard";
+import { PromotionsProps } from "@/app/interfaces/GarageInterface";
+
 
 // Define step interface
 interface BookingStep {
@@ -63,6 +66,7 @@ const BookingScreen = () => {
     currentStep,
     isLoading,
     isSUV,
+    promotions,
 
     // Addon management state
     selectedAddons,
@@ -349,7 +353,7 @@ const BookingScreen = () => {
                   addonPrice={getAddonPrice()}
                   addonDuration={getAddonDuration()}
                   formatPrice={formatPrice}
-                  user={user}
+                  user={user || undefined}
                   originalPrice={getOriginalPrice()}
                   finalPrice={getFinalPrice()}
                   loyaltyDiscount={getLoyaltyDiscount()}
@@ -405,6 +409,11 @@ const BookingScreen = () => {
   }
   return (
     <View style={[styles.container, { backgroundColor }]}>
+      {promotions  && (
+        <View>
+          <PromotionsCardComponent {...promotions} />
+        </View>
+      )}
       {renderStepIndicator()}
       <ScrollView
         style={styles.scrollContainer}

@@ -101,19 +101,32 @@ def send_service_reminders():
     from main.models import BookedAppointment
     notification_service = NotificationService()
 
-    # Get appointments starting in 30 minutes
-    reminder_time = timezone.now() + timedelta(minutes=30)
+    # Get appointments starting in the next 30 minutes
+    now = timezone.now()
+    reminder_start = now + timedelta(minutes=25)  # 25 minutes from now
+    reminder_end = now + timedelta(minutes=35)    # 35 minutes from now
+    
     try:
+        # Get appointments that start between 25-35 minutes from now
+        # This ensures we catch all appointments in the 30-minute window
         appointments = BookedAppointment.objects.filter(
-            appointment_date=reminder_time.date(),
-            start_time=reminder_time.hour,
-            start_time__minute=reminder_time.minute,
+            appointment_date=now.date(),
+            start_time__gte=reminder_start.time(),
+            start_time__lte=reminder_end.time(),
             status='confirmed'
         )
+        
+        print(f"Found {appointments.count()} appointments for reminder")
+        
         for appointment in appointments:
             notification_results = notification_service.send_service_reminder(appointment.user, appointment)
             if notification_results['errors']:
                 print(f"Error sending service reminder: {notification_results['errors']}")
+            else:
+                print(f"Service reminder sent successfully for appointment {appointment.booking_reference}")
+        
+        return f"Processed {appointments.count()} appointments for reminders"
+        
     except Exception as e:
         print(f"Error sending service reminder: {str(e)}")
         return f"Failed to send service reminder: {str(e)}"

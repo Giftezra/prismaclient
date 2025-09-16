@@ -19,6 +19,7 @@ import {
   useBookAppointmentMutation,
   useCancelBookingMutation,
   useRescheduleBookingMutation,
+  useFetchPromotionsQuery,
 } from "@/app/store/api/bookingApi";
 import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "@/app/contexts/AlertContext";
@@ -57,6 +58,16 @@ const useBooking = () => {
   /* Api hooks */
 
   const { data: addOns, isLoading: isLoadingAddOns } = useFetchAddOnsQuery();
+  const {
+    data: promotions,
+    isLoading: isLoadingPromotions,
+    error: promotionsError,
+  } = useFetchPromotionsQuery();
+
+  // Debug promotions
+  console.log("Promotions data:", promotions);
+  console.log("Promotions loading:", isLoadingPromotions);
+  console.log("Promotions error:", promotionsError);
   const { data: serviceTypes, isLoading: isLoadingServiceTypes } =
     useFetchServiceTypeQuery();
   const { data: valetTypes, isLoading: isLoadingValetTypes } =
@@ -115,10 +126,6 @@ const useBooking = () => {
         0
       );
       const totalServiceDuration = baseServiceDuration + addonExtraDuration;
-
-      console.log("Calculated total service duration:", totalServiceDuration);
-      console.log("Base service duration:", baseServiceDuration);
-      console.log("Addon extra duration:", addonExtraDuration);
 
       return totalServiceDuration;
     },
@@ -900,10 +907,6 @@ const useBooking = () => {
     }
   }, []);
 
-  // ============================================================================
-  // VALIDATION METHODS
-  // ============================================================================
-
   /**
    * Validates if a specific step is complete and valid
    *
@@ -1073,6 +1076,11 @@ const useBooking = () => {
   const getLoyaltyDiscount = useCallback((): number => {
     if (!user?.loyalty_benefits?.discount) return 0;
 
+    console.log(
+      "user.loyalty_benefits.discount",
+      user.loyalty_benefits.discount
+    );
+    console.log('loyalty tier', user.loyalty_tier);
     const basePrice = selectedServiceType?.price || 0;
     const addonCosts = selectedAddons.reduce(
       (total, addon) => total + addon.price,
@@ -1082,7 +1090,6 @@ const useBooking = () => {
     const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
     const totalBeforeDiscount = totalBeforeSurcharge + suvSurcharge;
 
-    // Apply loyalty discount as percentage
     return totalBeforeDiscount * (user.loyalty_benefits.discount / 100);
   }, [
     user?.loyalty_benefits?.discount,
@@ -1635,6 +1642,7 @@ const useBooking = () => {
     handleNextStep,
     handlePreviousStep,
     handleGoToStep,
+    promotions,
 
     // Addon management handlers
     handleAddonSelection,

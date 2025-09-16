@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'channels',
     'channels_redis',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -167,6 +168,15 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_DEFAULT_QUEUE = 'client_queue'
 CELERY_TASK_DEFAULT_QUEUE = 'client_queue'
+
+# Celery Beat Configuration
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BEAT_SCHEDULE = {
+    'send-service-reminders': {
+        'task': 'main.tasks.send_service_reminders',
+        'schedule': 300.0,  # Run every 5 minutes (300 seconds)
+    },
+}
 
 AUTH_USER_MODEL = 'main.User'
 STATIC_URL = '/static/'

@@ -25,9 +25,19 @@ def handle_booking_completion(sender, instance, created, **kwargs):
             loyalty.current_tier = 'silver'
         else:
             loyalty.current_tier = 'bronze'
-        
         loyalty.save()
         
+        # Send the user a push notification whenever the user is upgraded to a new tier
+        if old_tier != loyalty.current_tier:
+        # check if the user has allowed push notifications and if they have a token saved 
+            if user.allow_push_notifications and user.notification_token:
+                send_push_notification.delay(
+                    user.id, 
+                    f"Tier Upgraded to {loyalty.current_tier.title()}! ⭐", 
+                    f"Congratulations! You've been upgraded to {loyalty.current_tier.title()} tier!",
+                    "tier_upgrade"
+                )
+                
         # 2. Check for Activity Promotion (3 washes in 30 days)
         thirty_days_ago = now - timedelta(days=30)
         
