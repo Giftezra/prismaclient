@@ -36,6 +36,18 @@ const useOnboarding = () => {
    */
   const registerUser = async () => {
     if (!signUpData) return;
+    if (!signUpData.name || !signUpData.email || !signUpData.phone || !signUpData.password) {
+      setAlertConfig({
+        title: "Missing Fields",
+        message: "Please fill in all required fields",
+        type: "error",
+        isVisible: true,
+        onConfirm: () => {
+          setIsVisible(false);
+        },
+      });
+      return;
+    }
     try {
       dispatch(setIsLoading(true));
       const response = await registerMutation(signUpData).unwrap();

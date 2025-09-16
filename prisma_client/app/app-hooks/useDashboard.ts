@@ -13,7 +13,6 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import useWebSocket from "./useWebsocket";
 import { router } from "expo-router";
 
-
 const useDashboard = () => {
   const buttonColor = useThemeColor({}, "button");
   const primaryColor = useThemeColor({}, "primary");
@@ -61,7 +60,16 @@ const useDashboard = () => {
     }
   }, [appointments]);
 
-  // Stats configuration
+  /* Check for unrated services then set the unratedServices state */
+  const [isUnratedServices, setIsUnratedServices] = useState<boolean>(false);
+  useEffect(() => {
+    if (recentService) {
+      setIsUnratedServices(!recentService.is_reviewed);
+    }
+  }, [recentService]);
+
+
+  /* Configure the stats */
   const stats: StatCard[] = [
     {
       icon: "calendar",
@@ -204,6 +212,7 @@ const useDashboard = () => {
     stats,
     handleRefresh,
     isRefreshing,
+    isUnratedServices,
   };
 };
 

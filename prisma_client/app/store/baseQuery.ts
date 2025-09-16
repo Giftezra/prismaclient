@@ -12,6 +12,7 @@ import {
 
 // Create axios instance for RTK Query
 const baseURL = API_CONFIG.customerAppUrl;
+console.log("baseURL", baseURL);
 const axiosInstance = axios.create({
   baseURL,
   timeout: 10000,

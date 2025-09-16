@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   ScrollView,
   View,
   TouchableOpacity,
   Image,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -20,6 +19,7 @@ import { useAppSelector, RootState } from "@/app/store/main_store";
 import useBooking from "@/app/app-hooks/useBooking";
 import RescheduleComponent from "@/app/components/booking/RescheduleComponent";
 import ModalServices from "@/app/utils/ModalServices";
+import { useAlertContext } from "@/app/contexts/AlertContext";
 
 const UpcomingBookingScreen = () => {
   const [isRescheduleModalVisible, setIsRescheduleModalVisible] =
@@ -33,8 +33,8 @@ const UpcomingBookingScreen = () => {
   const buttonColor = useThemeColor({}, "button");
 
   const params = useLocalSearchParams();
-  const { appointments, callDetailer, isCancelling, handleCancelAppointment } =
-    useDashboard();
+  const { appointments, callDetailer } = useDashboard();
+  const { setAlertConfig } = useAlertContext();
 
   const {
     handleCancelBooking,
@@ -71,6 +71,121 @@ const UpcomingBookingScreen = () => {
       }
     }
   }, [params.appointmentId, appointments]);
+
+  // Helper function to check if appointment is in progress
+  const isAppointmentInProgress = useCallback(
+    (appointment: UpcomingAppointmentProps) => {
+      return (
+        appointment.status === "in_progress"
+      );
+    },
+    []
+  );
+
+  // Helper function to check if appointment is within 12 hours
+  const isWithin12Hours = useCallback(
+    (appointment: UpcomingAppointmentProps) => {
+      if (!appointment.booking_date || !appointment.start_time) return false;
+
+      const appointmentDateTime = new Date(
+        `${appointment.booking_date}T${appointment.start_time}`
+      );
+      const now = new Date();
+      const timeDifference = appointmentDateTime.getTime() - now.getTime();
+      const hoursDifference = timeDifference / (1000 * 60 * 60);
+
+      return hoursDifference <= 12 && hoursDifference > 0;
+    },
+    []
+  );
+
+  // Helper function to show refund warning alert
+  const showRefundWarningAlert = useCallback(
+    (onConfirm: () => void) => {
+      setAlertConfig({
+        isVisible: true,
+        title: "Cancellation Notice",
+        message:
+          "This appointment is starting within 12 hours. You will not receive a refund for this cancellation. Do you want to continue?",
+        type: "warning",
+        onConfirm: onConfirm,
+        onClose: () =>
+          setAlertConfig({
+            isVisible: false,
+            title: "",
+            message: "",
+            type: "error",
+          }),
+      });
+    },
+    [setAlertConfig]
+  );
+
+  const handleCencellationConfirm = useCallback(
+    async (appointmentId: string) => {
+      if (!appointment) return;
+
+      // Check if appointment is in progress
+      if (isAppointmentInProgress(appointment)) {
+        setAlertConfig({
+          isVisible: true,
+          title: "Cannot Cancel",
+          message:
+            "This appointment is currently in progress and cannot be cancelled.",
+          type: "error",
+          onClose: () =>
+            setAlertConfig({
+              isVisible: false,
+              title: "",
+              message: "",
+              type: "error",
+            }),
+        });
+        return;
+      }
+
+      // Check if appointment is within 12 hours
+      if (isWithin12Hours(appointment)) {
+        showRefundWarningAlert(async () => {
+          try {
+            await handleCancelBooking(appointmentId);
+          } catch (error) {
+            console.error("Error cancelling appointment:", error);
+          }
+        });
+      } else {
+        // Regular cancellation with confirmation
+        setAlertConfig({
+          isVisible: true,
+          title: "Cancel Appointment",
+          message: "Are you sure you want to cancel this appointment?",
+          type: "warning",
+          onConfirm: async () => {
+            try {
+              await handleCancelBooking(appointmentId);
+            } catch (error) {
+              console.error("Error cancelling appointment:", error);
+            }
+          },
+          onClose: () =>
+            setAlertConfig({
+              isVisible: false,
+              title: "",
+              message: "",
+              type: "error",
+            }),
+        });
+      }
+    },
+    [
+      appointment,
+      isAppointmentInProgress,
+      isWithin12Hours,
+      showRefundWarningAlert,
+      handleCancelBooking,
+      setAlertConfig,
+    ]
+  );
 
   if (!appointment) {
     return (
@@ -461,13 +576,34 @@ const UpcomingBookingScreen = () => {
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.cancelButton]}
-          onPress={() => handleCancelBooking(appointment.appointment_id)}
-          disabled={isLoadingCancelBooking}
+          style={[
+            styles.actionButton,
+            styles.cancelButton,
+            (isAppointmentInProgress(appointment) || isLoadingCancelBooking) &&
+              styles.disabledButton,
+          ]}
+          onPress={() => handleCencellationConfirm(appointment.appointment_id)}
+          disabled={
+            isAppointmentInProgress(appointment) || isLoadingCancelBooking
+          }
         >
-          <Ionicons name="close-circle" size={20} color="#F44336" />
-          <StyledText variant="bodyMedium" style={styles.cancelButtonText}>
-            {isLoadingCancelBooking ? "Please wait..." : "Cancel Appointment"}
+          <Ionicons
+            name="close-circle"
+            size={20}
+            color={isAppointmentInProgress(appointment) ? "#999" : "#F44336"}
+          />
+          <StyledText
+            variant="bodyMedium"
+            style={[
+              styles.cancelButtonText,
+              isAppointmentInProgress(appointment) && styles.disabledButtonText,
+            ]}
+          >
+            {isLoadingCancelBooking
+              ? "Please wait..."
+              : isAppointmentInProgress(appointment)
+              ? "Cannot Cancel (In Progress)"
+              : "Cancel Appointment"}
           </StyledText>
         </TouchableOpacity>
 
@@ -507,7 +643,7 @@ const UpcomingBookingScreen = () => {
           showCloseButton={true}
           animationType="slide"
           title="Reschedule Appointment"
-          modalType='fullscreen'
+          modalType="fullscreen"
         />
       )}
     </ScrollView>
@@ -757,5 +893,12 @@ const styles = StyleSheet.create({
     color: "green",
     marginLeft: 4,
     fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.5,
+    backgroundColor: "#f5f5f5",
+  },
+  disabledButtonText: {
+    color: "#999",
   },
 });

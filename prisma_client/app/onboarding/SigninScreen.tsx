@@ -11,8 +11,8 @@ import StyledText from "../components/helpers/StyledText";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import StyledTextInput from "../components/helpers/StyledTextInput";
 import StyledButton from "../components/helpers/StyledButton";
-import { Checkbox } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
+import { TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { useAuthContext } from "../contexts/AuthContextProvider";
 import { LinearGradient } from "expo-linear-gradient";
@@ -106,7 +106,7 @@ const SigninScreen = () => {
                   <Ionicons
                     name={isPasswordVisible ? "eye-off" : "eye"}
                     size={20}
-                    color={'black'}
+                    color={"black"}
                     onPress={() => setIsPasswordVisible(!isPasswordVisible)}
                   />
                 </View>
@@ -114,19 +114,33 @@ const SigninScreen = () => {
 
               {/* Remember Me & Forgot Password */}
               <View style={styles.optionsContainer}>
-                <View style={styles.rememberMeContainer}>
-                  <Checkbox
-                    status={rememberMe ? "checked" : "unchecked"}
-                    onPress={() => setRememberMe(!rememberMe)}
-                    color={primaryPurple}
-                  />
+                <TouchableOpacity
+                  style={styles.rememberMeContainer}
+                  onPress={() => setRememberMe(!rememberMe)}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.customCheckbox,
+                      {
+                        borderColor: textColor,
+                        backgroundColor: rememberMe
+                          ? primaryPurple
+                          : "transparent",
+                      },
+                    ]}
+                  >
+                    {rememberMe && (
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    )}
+                  </View>
                   <StyledText
                     variant="bodyMedium"
                     style={[styles.rememberText, { color: textColor }]}
                   >
                     Remember me
                   </StyledText>
-                </View>
+                </TouchableOpacity>
                 <StyledText
                   variant="bodySmall"
                   style={[styles.forgotPasswordText, { color: textColor }]}
@@ -157,7 +171,10 @@ const SigninScreen = () => {
               </StyledText>
               <StyledText
                 variant="bodySmall"
-                style={[styles.signUpLink, { color: iconColor, fontWeight: "700" }]}
+                style={[
+                  styles.signUpLink,
+                  { color: iconColor, fontWeight: "700" },
+                ]}
                 onPress={() => router.push("/onboarding/OnboardingScreen")}
               >
                 Sign up
@@ -228,6 +245,14 @@ const styles = StyleSheet.create({
   rememberMeContainer: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  customCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
   rememberText: {
     marginLeft: 8,

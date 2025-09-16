@@ -13,7 +13,7 @@ services:
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=prisma.settings
       - DJANGO_ALLOWED_HOSTS=*
-    command: daphne -b 0.0.0.0 -p 8000 prisma.asgi:application
+    command: python manage.py runserver 0.0.0.0:8000
     networks:
       - prisma_shared_net
     depends_on:

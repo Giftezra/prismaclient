@@ -99,16 +99,6 @@ const PromotionsCardComponent = ({
                   {promotion.description}
                 </StyledText>
 
-                {/* Promotion Image */}
-                {promotion.image && (
-                  <View style={styles.imageContainer}>
-                    <Image
-                      source={{ uri: promotion.image }}
-                      style={styles.promotionImage}
-                    />
-                  </View>
-                )}
-
                 {/* Validity */}
                 <View style={styles.validityContainer}>
                   <Ionicons

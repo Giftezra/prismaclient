@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Vehicles, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns
+from .models import User, Vehicles, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, LoyaltyProgram, Promotions
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import ValidationError   
 
@@ -38,9 +38,15 @@ class AddOnsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AddOns
         fields = '__all__'
-class AddOnsSerializer(serializers.ModelSerializer):
+
+class LoyaltyProgramSerializer(serializers.ModelSerializer):
     class Meta:
-        model = AddOns
+        model = LoyaltyProgram
+        fields = '__all__'
+
+class PromotionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Promotions
         fields = '__all__'
 
 """ Customise the token serializer to get the attrs sent from the client 
@@ -58,6 +64,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         user = self.user
         # Check if the user has an address
         address = Address.objects.filter(user=user).first()
+        loyalty = LoyaltyProgram.objects.filter(user=user).first()
+        loyalty_benefits = loyalty.get_tier_benefits() if loyalty else None
         
         # Add user data to the existing token data
         data.update({
@@ -71,7 +79,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                     'city': address.city if address else None,
                     'post_code': address.post_code if address else None,
                     'country': address.country if address else None,
-                }
+                },
+                'push_notification_token': user.allow_push_notifications,
+                'email_notification_token': user.allow_email_notifications,
+                'marketing_email_token': user.allow_marketing_emails,
+                'loyalty_tier': loyalty.current_tier if loyalty else None,
+                'loyalty_benefits': loyalty_benefits,
             }
         })
         return data

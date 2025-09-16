@@ -8,7 +8,10 @@ import {
   AddOnsProps,
 } from "@/app/interfaces/BookingInterfaces";
 import { MyVehiclesProps } from "@/app/interfaces/GarageInterface";
-import { MyAddressProps } from "@/app/interfaces/ProfileInterfaces";
+import {
+  MyAddressProps,
+  UserProfileProps,
+} from "@/app/interfaces/ProfileInterfaces";
 import StyledText from "@/app/components/helpers/StyledText";
 
 interface BookingSummaryProps {
@@ -26,6 +29,11 @@ interface BookingSummaryProps {
   addonPrice?: number;
   addonDuration?: number;
   formatPrice: (price: number) => string;
+  user?: UserProfileProps; // Add user to get loyalty benefits
+  // Add these new props for loyalty pricing
+  originalPrice?: number;
+  finalPrice?: number;
+  loyaltyDiscount?: number;
 }
 
 const BookingSummary: React.FC<BookingSummaryProps> = ({
@@ -43,11 +51,34 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
   addonPrice = 0,
   addonDuration = 0,
   formatPrice,
+  user,
+  originalPrice,
+  finalPrice,
+  loyaltyDiscount = 0,
 }) => {
   const cardColor = useThemeColor({}, "cards");
   const textColor = useThemeColor({}, "text");
   const primaryPurpleColor = useThemeColor({}, "primary");
   const buttonColor = useThemeColor({}, "button");
+
+  // Calculate loyalty discount internally if not provided as prop
+  const getLoyaltyDiscountInternal = (): number => {
+    if (!user?.loyalty_benefits?.discount) return 0;
+
+    const totalBeforeDiscount = basePrice + addonPrice + suvPrice;
+    return totalBeforeDiscount * (user.loyalty_benefits.discount / 100);
+  };
+
+  const calculatedLoyaltyDiscount =
+    loyaltyDiscount || getLoyaltyDiscountInternal();
+
+  // Calculate original total (before loyalty discount)
+  const calculatedOriginalPrice =
+    originalPrice || basePrice + addonPrice + suvPrice;
+
+  // Calculate final price (after loyalty discount)
+  const calculatedFinalPrice =
+    finalPrice || calculatedOriginalPrice - calculatedLoyaltyDiscount;
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-GB", {
@@ -309,6 +340,60 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
           </View>
         )}
 
+        {/* Loyalty Benefits Section - Only show if user has loyalty benefits */}
+        {user?.loyalty_tier &&
+          user?.loyalty_benefits &&
+          user.loyalty_benefits.discount > 0 && (
+            <View style={[styles.section, { backgroundColor: cardColor }]}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="star" size={24} color={primaryPurpleColor} />
+                <StyledText
+                  variant="titleMedium"
+                  style={[styles.sectionTitle, { color: textColor }]}
+                >
+                  Loyalty Benefits (
+                  {user.loyalty_tier.charAt(0).toUpperCase() +
+                    user.loyalty_tier.slice(1)}
+                  )
+                </StyledText>
+              </View>
+              <View style={styles.sectionContent}>
+                <View style={styles.loyaltyRow}>
+                  <StyledText
+                    variant="bodyMedium"
+                    style={[styles.loyaltyLabel, { color: textColor }]}
+                  >
+                    Discount Applied:
+                  </StyledText>
+                  <StyledText
+                    variant="bodyMedium"
+                    style={[styles.loyaltyValue, { color: "#10B981" }]}
+                  >
+                    -{formatPrice(calculatedLoyaltyDiscount)} (
+                    {user.loyalty_benefits.discount}%)
+                  </StyledText>
+                </View>
+                {user.loyalty_benefits.free_service &&
+                  user.loyalty_benefits.free_service.length > 0 && (
+                    <View style={styles.loyaltyRow}>
+                      <StyledText
+                        variant="bodyMedium"
+                        style={[styles.loyaltyLabel, { color: textColor }]}
+                      >
+                        Free Services:
+                      </StyledText>
+                      <StyledText
+                        variant="bodyMedium"
+                        style={[styles.loyaltyValue, { color: textColor }]}
+                      >
+                        {user.loyalty_benefits.free_service.join(", ")}
+                      </StyledText>
+                    </View>
+                  )}
+              </View>
+            </View>
+          )}
+
         {/* Price Summary */}
         <View style={[styles.section, { backgroundColor: cardColor }]}>
           <View style={styles.sectionHeader}>
@@ -367,6 +452,43 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 </StyledText>
               </View>
             )}
+
+            {/* Show original total if loyalty discount is applied */}
+            {calculatedLoyaltyDiscount > 0 && (
+              <View style={styles.priceRow}>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceLabel, { color: textColor }]}
+                >
+                  Subtotal:
+                </StyledText>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceValue, { color: textColor }]}
+                >
+                  {formatPrice(calculatedOriginalPrice)}
+                </StyledText>
+              </View>
+            )}
+
+            {/* Show loyalty discount */}
+            {calculatedLoyaltyDiscount > 0 && (
+              <View style={styles.priceRow}>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceLabel, { color: "#10B981" }]}
+                >
+                  Loyalty Discount:
+                </StyledText>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceValue, { color: "#10B981" }]}
+                >
+                  -{formatPrice(calculatedLoyaltyDiscount)}
+                </StyledText>
+              </View>
+            )}
+
             <View style={styles.totalRow}>
               <StyledText
                 variant="titleMedium"
@@ -378,7 +500,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 variant="titleLarge"
                 style={[styles.totalValue, { color: buttonColor }]}
               >
-                {formatPrice(totalPrice)}
+                {formatPrice(calculatedFinalPrice)}
               </StyledText>
             </View>
           </View>
@@ -480,5 +602,17 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     fontWeight: "bold",
+  },
+  loyaltyRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  loyaltyLabel: {
+    fontWeight: "500",
+  },
+  loyaltyValue: {
+    fontWeight: "600",
   },
 });

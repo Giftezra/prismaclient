@@ -32,6 +32,10 @@ export interface RecentServicesProps {
   detailer: DetailerProfileProps;
   valet_type: string;
   service_type: string;
+  tip: number;
+  rating: number;
+  is_reviewed: boolean;
+  booking_reference: string;
 }
 
 export interface StatCard {

@@ -1,0 +1,230 @@
+import { useCallback } from "react";
+import { useStripe } from "@stripe/stripe-react-native";
+import { useFetchPaymentSheetDetailsMutation } from "@/app/store/api/bookingApi";
+import { useAlertContext } from "@/app/contexts/AlertContext";
+import { PaymentSheetResponse } from "@/app/interfaces/BookingInterfaces";
+import { RootState, useAppSelector } from "../store/main_store";
+
+/**
+ * Custom hook for managing payment functionality using Stripe
+ *
+ * This hook provides a comprehensive interface for handling payment operations,
+ * including payment sheet initialization, payment processing, and error handling.
+ * It can be used across the application for various payment scenarios like
+ * booking payments, tips, subscriptions, etc.
+ *
+ * Features:
+ * - Payment sheet initialization with Stripe
+ * - Payment processing with error handling
+ * - Support for different currencies and countries
+ * - Comprehensive error handling for various payment scenarios
+ *
+ * @returns Object containing payment methods and utilities
+ */
+const usePayment = () => {
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const [fetchPaymentSheetDetails] = useFetchPaymentSheetDetailsMutation();
+  const { setAlertConfig, setIsVisible } = useAlertContext();
+
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  const userAddress = user?.address;
+
+  /**
+   * Fetches payment sheet details from the server
+   *
+   * @param finalPrice - The total price in euros
+   * @returns Promise that resolves to payment sheet details
+   */
+  const fetchPaymentSheetDetailsFromServer = useCallback(
+    async (finalPrice: number): Promise<PaymentSheetResponse> => {
+      try {
+        const amountInCents = Math.round(finalPrice * 100);
+        const response = await fetchPaymentSheetDetails(amountInCents).unwrap();
+        return response;
+      } catch (error) {
+        console.error("Error fetching payment sheet details:", error);
+        throw error;
+      }
+    },
+    [fetchPaymentSheetDetails]
+  );
+
+  /**
+   * Initializes the payment sheet when the checkout page is opened.
+   * Calls the fetchPaymentSheetDetails method to fetch the payment sheet details from the server.
+   * Then calls the initPaymentSheet method to initialize the payment sheet.
+   *
+   * @param finalPrice - The total price to charge
+   * @param userAddress - Optional user address for country/currency detection
+   * @param merchantDisplayName - Optional custom merchant display name (defaults to "Prisma Valet")
+   */
+  const initializePaymentSheet = useCallback(
+    async (
+      finalPrice: number,
+      merchantDisplayName: string = "Prisma Valet"
+    ) => {
+      /* Get the user and address from the state since this is stored in the state when the user is logged in.
+       * Use the address to get the country code and currency code.
+       * Set the country code to GBP if the user is in the United Kingdom.
+       * Set the country code to EUR if the user is in not in the United Kingdom.
+       */
+      const address = userAddress;
+      let countryCode = "";
+
+      if (address?.country === "United Kingdom") {
+        countryCode = "GB";
+      } else {
+        countryCode = "EUR";
+      }
+
+      try {
+        const { paymentIntent, ephemeralKey, customer } =
+          await fetchPaymentSheetDetailsFromServer(finalPrice);
+
+        const { error } = await initPaymentSheet({
+          paymentIntentClientSecret: paymentIntent,
+          merchantDisplayName: merchantDisplayName,
+          customerEphemeralKeySecret: ephemeralKey,
+          customerId: customer,
+          applePay: {
+            merchantCountryCode: countryCode,
+          },
+          googlePay: {
+            merchantCountryCode: countryCode,
+            testEnv: true,
+            currencyCode: countryCode,
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+      } catch (error: any) {
+        console.error("Error initializing payment sheet:", error);
+        throw error;
+      }
+    },
+    [fetchPaymentSheetDetailsFromServer, initPaymentSheet]
+  );
+
+  /**
+   * Opens the payment sheet when clicked on the checkout page.
+   * Calls the initializePaymentSheet method to initialize the payment sheet first on the server.
+   * Then calls the presentPaymentSheet method to present the payment sheet to the user.
+   *
+   * @param finalPrice - The total price to charge
+   * @param userAddress - Optional user address for country/currency detection
+   * @param merchantDisplayName - Optional custom merchant display name
+   * @returns Promise that resolves to true if payment successful, false if cancelled, throws error if failed
+   */
+  const openPaymentSheet = useCallback(
+    async (
+      finalPrice: number,
+      merchantDisplayName: string = "Prisma Valet"
+    ): Promise<boolean> => {
+      try {
+        await initializePaymentSheet(
+          finalPrice,
+          merchantDisplayName
+        );
+        const { error } = await presentPaymentSheet();
+
+        if (error) {
+          // Handle specific Stripe payment errors
+          let errorMessage = "An error occurred during payment";
+          let errorTitle = "Payment Error";
+
+          // Handle specific Stripe payment errors based on error type
+          if (error.code === "Canceled") {
+            // User cancelled the payment
+            errorMessage = "Payment was cancelled";
+            errorTitle = "Payment Cancelled";
+          } else if (error.code === "Failed") {
+            // Payment failed (insufficient funds, card declined, etc.)
+            errorMessage =
+              "Payment failed. Please check your payment method and try again.";
+            errorTitle = "Payment Failed";
+          } else {
+            // Use the error message from Stripe if available
+            errorMessage = error.message || errorMessage;
+          }
+
+          setAlertConfig({
+            title: errorTitle,
+            message: errorMessage,
+            type: "error",
+            isVisible: true,
+            onConfirm() {
+              setIsVisible(false);
+            },
+          });
+
+          // Don't throw the error for user cancellations, just return false
+          if (error.code === "Canceled") {
+            return false;
+          }
+
+          throw error;
+        }
+
+        return true;
+      } catch (error: any) {
+        console.error("Error in payment process:", error);
+
+        // Handle network or initialization errors
+        let errorMessage = "An error occurred during payment";
+        let errorTitle = "Payment Error";
+
+        if (error.message?.includes("network")) {
+          errorMessage =
+            "Network error. Please check your connection and try again.";
+          errorTitle = "Connection Error";
+        } else if (error.message?.includes("timeout")) {
+          errorMessage = "Request timed out. Please try again.";
+          errorTitle = "Timeout Error";
+        }
+
+        setAlertConfig({
+          title: errorTitle,
+          message: errorMessage,
+          type: "error",
+          isVisible: true,
+          onConfirm() {
+            setIsVisible(false);
+          },
+        });
+        throw error;
+      }
+    },
+    [initializePaymentSheet, presentPaymentSheet, setAlertConfig, setIsVisible]
+  );
+
+  /**
+   * Processes a tip payment
+   *
+   * @param tipAmount - The tip amount to charge
+   * @param userAddress - Optional user address for country/currency detection
+   * @returns Promise that resolves to true if payment successful, false if cancelled, throws error if failed
+   */
+  const processTipPayment = useCallback(
+    async (
+      tipAmount: number,
+    ): Promise<boolean> => {
+      return openPaymentSheet(tipAmount, "Prisma Valet - Tip");
+    },
+    [openPaymentSheet]
+  );
+
+
+  return {
+    // Core payment methods
+    fetchPaymentSheetDetailsFromServer,
+    initializePaymentSheet,
+    openPaymentSheet,
+
+    // Specialized payment methods
+    processTipPayment,
+  };
+};
+
+export default usePayment;

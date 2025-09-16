@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from .models import User, Vehicles, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification
+from .models import User, Vehicles, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification, LoyaltyProgram, Promotions
 
 
 admin.site.site_header = "Prisma Valet Admin"
@@ -143,4 +143,14 @@ class AddOnsAdmin(admin.ModelAdmin):
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ('user', 'title', 'type', 'status', 'message')
     list_filter = ('type', 'status')
+    search_fields = ('user__name', 'title')
+
+@admin.register(LoyaltyProgram)
+class LoyaltyProgramAdmin(admin.ModelAdmin):
+    list_display = ('user', 'current_tier', 'completed_bookings')
+    search_fields = ('user__name',)
+
+@admin.register(Promotions)
+class PromotionsAdmin(admin.ModelAdmin):
+    list_display = ('user', 'title', 'discount_percentage', 'valid_until', 'is_active', 'terms_conditions')
     search_fields = ('user__name', 'title')

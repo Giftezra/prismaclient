@@ -25,7 +25,8 @@ import AllowNotificationModal from "@/app/components/notification/AllowNotificat
 import { usePermissions } from "@/app/app-hooks/usePermissions";
 import useVehicles from "@/app/app-hooks/useVehicles";
 import ModalServices from "@/app/utils/ModalServices";
-import { StatCard } from "@/app/interfaces/DashboardInterfaces";
+import ReviewComponent from "@/app/components/booking/ReviewComponent";
+import { useAppSelector, RootState } from "@/app/store/main_store";
 
 const image = require("@/assets/images/user_image.jpg");
 const vehicleImage = require("@/assets/images/car.jpg");
@@ -39,6 +40,15 @@ const DashboardScreen = () => {
   const primaryColor = useThemeColor({}, "primary");
   const borderColor = useThemeColor({}, "borders");
 
+  /* Get the currency symbol by getting the user's country */
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  let currencySymbol = "$";
+  if (user?.address?.country === "United Kingdom") {
+    currencySymbol = "£";
+  } else if (user?.address?.country === "Ireland") {
+    currencySymbol = "€";
+  }
+
   /* Fetch the neccessary hooks */
   const { vehicles } = useVehicles();
   const {
@@ -51,9 +61,11 @@ const DashboardScreen = () => {
     stats,
     handleRefresh,
     isRefreshing,
+    isUnratedServices,
   } = useDashboard();
 
   const { permissionStatus, isLoading: permissionsLoading } = usePermissions();
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   // Show notification modal when dashboard loads, but only if notifications are not already granted
   // and we haven't asked for permissions yet in this session
@@ -75,6 +87,15 @@ const DashboardScreen = () => {
     permissionStatus.notifications.granted,
     hasAskedForPermissions,
   ]);
+
+  /**
+   * Handle the display for the modar review 
+   */
+  useEffect(() => {
+    if (isUnratedServices && recentService) {
+      setShowReviewModal(true);
+    }
+  }, [isUnratedServices, recentService]);
 
   /**
    * Render the upcoming appointment date
@@ -184,6 +205,17 @@ const DashboardScreen = () => {
         showCloseButton={true}
         animationType="slide"
         title="Allow Notifications"
+        modalType="fullscreen"
+      />
+
+      {/* Review Modal */}
+      <ModalServices
+        visible={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        component={<ReviewComponent currencySymbol={currencySymbol} />}
+        showCloseButton={true}
+        animationType="slide"
+        title="Review"
         modalType='fullscreen'
       />
     </>

@@ -11,6 +11,14 @@ export interface UserProfileProps {
   email: string;
   phone: string;
   address: MyAddressProps;
+  push_notification_token: boolean;
+  email_notification_token: boolean;
+  marketing_email_token: boolean;
+  loyalty_tier?: string;
+  loyalty_benefits?: {
+    discount: number;
+    free_service: string[];
+  };
   latitude?: number;
   longitude?: number;
 }
@@ -32,6 +40,9 @@ export interface MyServiceHistoryProps {
   detailer: DetailerProfileProps;
   status: string;
   total_amount: number;
+  rating: number;
+  tip: number;
+  is_reviewed: boolean;
 }
 
 export default interface ProfileState {

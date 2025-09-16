@@ -10,14 +10,21 @@ import {
   useAddNewAddressMutation,
   useUpdateExistingAddressMutation,
   useDeleteExistingAddressMutation,
+  useUpdatePushNotificationTokenMutation,
+  useUpdateEmailNotificationTokenMutation,
+  useUpdateMarketingEmailTokenMutation,
 } from "../store/api/profileApi";
 import {
   setNewAddress,
   clearNewAddress,
 } from "@/app/store/slices/profileSlice";
+import { updateUser } from "@/app/store/slices/authSlice";
 import { RootState, useAppDispatch, useAppSelector } from "../store/main_store";
 import { useAlertContext } from "../contexts/AlertContext";
-import { getUserFromStorage } from "@/app/utils/helpers/storage";
+import {
+  getUserFromStorage,
+  updateUserInStorage,
+} from "@/app/utils/helpers/storage";
 import * as SecureStore from "expo-secure-store";
 const image = require("@/assets/images/user_image.jpg");
 
@@ -26,6 +33,9 @@ const useProfile = () => {
   const user = useAppSelector((state: RootState) => state.auth.user);
   const [userFromStorage, setUserFromStorage] =
     useState<UserProfileProps | null>(null);
+
+  /* import and use the alert context to display an alert to the user when a neccessary action is performed */
+  const { setIsVisible, setAlertConfig } = useAlertContext();
 
   /* Get the new address state from the store */
   const newAddress = useAppSelector(
@@ -47,9 +57,150 @@ const useProfile = () => {
     updateExistingAddress,
     { isLoading: isLoadingUpdateAddress, error: errorUpdateAddress },
   ] = useUpdateExistingAddressMutation();
+  const [
+    updatePushNotificationToken,
+    {
+      isLoading: isLoadingUpdatePushNotificationToken,
+      error: errorUpdatePushNotificationToken,
+    },
+  ] = useUpdatePushNotificationTokenMutation();
+  const [
+    updateEmailNotificationToken,
+    {
+      isLoading: isLoadingUpdateEmailNotificationToken,
+      error: errorUpdateEmailNotificationToken,
+    },
+  ] = useUpdateEmailNotificationTokenMutation();
+  const [
+    updateMarketingEmailToken,
+    {
+      isLoading: isLoadingUpdateMarketingEmailToken,
+      error: errorUpdateMarketingEmailToken,
+    },
+  ] = useUpdateMarketingEmailTokenMutation();
 
-  /* import and use the alert context to display an alert to the user when a neccessary action is performed */
-  const { setIsVisible, setAlertConfig } = useAlertContext();
+  /**
+   * Update push notification setting on the server
+   * @param value - The new boolean value for push notifications
+   * @returns Promise<boolean> - Returns true if successful, false otherwise
+   */
+  const updatePushNotificationSetting = async (
+    value: boolean
+  ): Promise<boolean> => {
+    try {
+      const response = await updatePushNotificationToken({
+        update: value,
+      }).unwrap();
+      if (response.success) {
+        console.log("Push notification setting updated:", value);
+        // Update the user state with the new value
+        dispatch(updateUser({ field: "push_notification_token", value }));
+        // Update storage with the new user data
+        if (currentUser) {
+          const updatedUser = {
+            ...userProfile,
+            push_notification_token: value,
+          };
+          await updateUserInStorage(updatedUser);
+        }
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Error updating push notification setting:", error);
+      setAlertConfig({
+        title: "Error",
+        message: "Failed to update push notification setting",
+        type: "error",
+        isVisible: true,
+        onConfirm: () => {
+          setIsVisible(false);
+        },
+      });
+      return false;
+    }
+  };
+
+  /**
+   * Update email notification setting on the server
+   * @param value - The new boolean value for email notifications
+   * @returns Promise<boolean> - Returns true if successful, false otherwise
+   */
+  const updateEmailNotificationSetting = async (
+    value: boolean
+  ): Promise<boolean> => {
+    try {
+      const response = await updateEmailNotificationToken({
+        update: value,
+      }).unwrap();
+      if (response.success) {
+        console.log("Email notification setting updated:", value);
+        // Update the user state with the new value
+        dispatch(updateUser({ field: "email_notification_token", value }));
+        // Update storage with the new user data
+        if (currentUser) {
+          const updatedUser = {
+            ...userProfile,
+            email_notification_token: value,
+          };
+          await updateUserInStorage(updatedUser);
+        }
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Error updating email notification setting:", error);
+      setAlertConfig({
+        title: "Error",
+        message: "Failed to update email notification setting",
+        type: "error",
+        isVisible: true,
+        onConfirm: () => {
+          setIsVisible(false);
+        },
+      });
+      return false;
+    }
+  };
+
+  /**
+   * Update marketing email setting on the server
+   * @param value - The new boolean value for marketing emails
+   * @returns Promise<boolean> - Returns true if successful, false otherwise
+   */
+  const updateMarketingEmailSetting = async (
+    value: boolean
+  ): Promise<boolean> => {
+    try {
+      const response = await updateMarketingEmailToken({
+        update: value,
+      }).unwrap();
+      if (response.success) {
+        console.log("Marketing email setting updated:", value);
+        // Update the user state with the new value
+        dispatch(updateUser({ field: "marketing_email_token", value }));
+        // Update storage with the new user data
+        if (currentUser) {
+          const updatedUser = { ...userProfile, marketing_email_token: value };
+          await updateUserInStorage(updatedUser);
+        }
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Error updating marketing email setting:", error);
+      setAlertConfig({
+        title: "Error",
+        message: "Failed to update marketing email setting",
+        type: "error",
+        isVisible: true,
+        onConfirm: () => {
+          setIsVisible(false);
+        },
+      });
+      return false;
+    }
+  };
 
   /**
    * Use RTK Query hooks to fetch data directly
@@ -100,6 +251,11 @@ const useProfile = () => {
       city: currentUser?.address?.city || "",
       country: currentUser?.address?.country || "",
     },
+    push_notification_token: currentUser?.push_notification_token || false,
+    email_notification_token: currentUser?.email_notification_token || false,
+    marketing_email_token: currentUser?.marketing_email_token || false,
+    loyalty_tier: currentUser?.loyalty_tier || "",
+    loyalty_benefits: currentUser?.loyalty_benefits || undefined,
   };
 
   /**
@@ -144,7 +300,7 @@ const useProfile = () => {
      * Show an alert to warn the user and terminate the process.
      */
     const isDuplicate = addresses.some(
-      (address) =>
+      (address: MyAddressProps) =>
         address.address.toLowerCase() === newAddress.address.toLowerCase() &&
         address.post_code.toLowerCase() ===
           newAddress.post_code.toLowerCase() &&
@@ -346,16 +502,25 @@ const useProfile = () => {
     saveNewAddress,
     deleteAddress,
     editAddress,
+    updatePushNotificationSetting,
+    updateEmailNotificationSetting,
+    updateMarketingEmailSetting,
     isLoadingAddAddress,
     isLoadingDeleteAddress,
     isLoadingUpdateAddress,
     isLoadingAddresses,
     isLoadingServiceHistory,
+    isLoadingUpdatePushNotificationToken,
+    isLoadingUpdateEmailNotificationToken,
+    isLoadingUpdateMarketingEmailToken,
     errorAddAddress,
     errorDeleteAddress,
     errorUpdateAddress,
     errorAddresses,
     errorServiceHistory,
+    errorUpdatePushNotificationToken,
+    errorUpdateEmailNotificationToken,
+    errorUpdateMarketingEmailToken,
     refetchAddresses,
     refetchServiceHistory,
   };

@@ -19,9 +19,12 @@ import { useAlertContext } from "../contexts/AlertContext";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { BackHandler } from "react-native";
 import { Image } from "expo-image";
-
+import { useNotification } from "../app-hooks/useNotification";
 
 const CustomHeader = ({ name }: { name: string }) => {
+  // Call the useNotification hook to get the unread count
+  const { unreadCount } = useNotification();
+
   const backgroundColor = useThemeColor({}, "background");
   const iconColor = useThemeColor({}, "icons");
   const secondaryButtonColor = useThemeColor({}, "secondaryButton");
@@ -88,15 +91,29 @@ const CustomHeader = ({ name }: { name: string }) => {
         </StyledText>
       </View>
       <View style={styles.headerButtons}>
-        <Pressable
-          style={[
-            styles.profileButton,
-            { backgroundColor, shadowColor: textColor },
-          ]}
-          onPress={() => router.push("/main/NotificationScreen")}
-        >
-          <Ionicons name="notifications-outline" size={24} color={iconColor} />
-        </Pressable>
+        <View style={styles.notificationContainer}>
+          <Pressable
+            style={[
+              styles.profileButton,
+              { backgroundColor, shadowColor: textColor },
+            ]}
+            onPress={() => router.push("/main/NotificationScreen")}
+          >
+            <Ionicons
+              name="notifications-outline"
+              size={24}
+              color={iconColor}
+            />
+          </Pressable>
+          {/* Display a small red badge if there are unread notifications */}
+          {unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <StyledText variant="bodySmall" style={styles.unreadBadgeText}>
+                {unreadCount}
+              </StyledText>
+            </View>
+          )}
+        </View>
         <Pressable
           style={[
             styles.profileButton,
@@ -110,8 +127,6 @@ const CustomHeader = ({ name }: { name: string }) => {
     </View>
   );
 };
-
-
 
 export default function MainLayout() {
   const backgroundColor = useThemeColor({}, "background");
@@ -160,5 +175,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 3,
+  },
+  notificationContainer: {
+    position: "relative",
+  },
+  unreadBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#FF4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  unreadBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    fontFamily: "RobotoMedium",
+    color: "white",
   },
 });

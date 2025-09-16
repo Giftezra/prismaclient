@@ -5,10 +5,10 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
-BASE_URL = 'https://5c4bf44f17f7.ngrok-free.app'
-ALLOWED_ORIGINS = ['https://5c4bf44f17f7.ngrok-free.app'] 
-CSRF_TRUSTED_ORIGINS = ['https://5c4bf44f17f7.ngrok-free.app']   
-CORS_ALLOWED_ORIGINS = ['https://5c4bf44f17f7.ngrok-free.app']   
+BASE_URL = 'https://59008fd51784.ngrok-free.app'
+ALLOWED_ORIGINS = ['https://59008fd51784.ngrok-free.app']  
+CSRF_TRUSTED_ORIGINS = ['https://59008fd51784.ngrok-free.app']    
+CORS_ALLOWED_ORIGINS = ['https://59008fd51784.ngrok-free.app']   
 CORS_ALLOW_CREDENTIALS = True
 
 DEBUG = True

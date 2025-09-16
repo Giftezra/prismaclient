@@ -23,6 +23,7 @@ interface SettingItemProps {
   description: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  disabled?: boolean;
 }
 
 const SettingItem = ({
@@ -30,6 +31,7 @@ const SettingItem = ({
   description,
   value,
   onValueChange,
+  disabled = false,
 }: SettingItemProps) => {
   // Get theme-aware colors for dynamic styling
   const textColor = useThemeColor({}, "text");
@@ -43,13 +45,16 @@ const SettingItem = ({
     >
       <View style={styles.settingTextContainer}>
         <StyledText variant="labelLarge">{title}</StyledText>
-        <StyledText variant="bodySmall" style={styles.settingDescription}>{description}</StyledText>
+        <StyledText variant="bodySmall" style={styles.settingDescription}>
+          {description}
+        </StyledText>
       </View>
       <ToggleComponent
         label=""
         value={value}
         onValueChange={onValueChange}
         size="small"
+        disabled={disabled}
       />
     </View>
   );

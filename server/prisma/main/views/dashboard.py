@@ -5,6 +5,8 @@ from rest_framework import status
 from main.models import BookedAppointment
 from django.conf import settings
 from main.util.media_helper import get_full_media_url
+from django.utils import timezone
+from main.tasks import publish_review_to_detailer
 
 class DashboardView(APIView):
     permission_classes = [IsAuthenticated]
@@ -14,6 +16,7 @@ class DashboardView(APIView):
         'cancel_appointment': '_cancel_appointment',
         'get_recent_services': '_get_recent_services',
         'get_user_stats': '_get_user_stats',
+        'submit_review': 'submit_review',  # Add this line
     }
 
     """ Here we will override the crud methods and define the methods that would route the url to the appropriate function """
@@ -134,18 +137,16 @@ class DashboardView(APIView):
         
     def _get_recent_services(self, request):
         try:
-            # Get the most recent completed appointment
+            # Get the most recent completed appointment with related objects
             recent_service = BookedAppointment.objects.filter(
                 user=request.user, 
                 status='completed'
             ).select_related(
                 'detailer', 'vehicle', 'service_type', 'valet_type'
-            ).order_by('-appointment_date', '-start_time').first()
+            ).first()
             
             if not recent_service:
-                return Response(None, status=status.HTTP_200_OK)
-            
-            # Image fields removed - not currently needed
+                return Response({'error': 'No completed services found'}, status=status.HTTP_404_NOT_FOUND)
             
             # Format the response to match the frontend interface
             recent_service_data = {
@@ -156,16 +157,23 @@ class DashboardView(APIView):
                 "detailer": {
                     "id": str(recent_service.detailer.id),
                     "name": recent_service.detailer.name,
-                    "rating": float(recent_service.detailer.rating),
-                    "image": None,
+                    "rating": float(recent_service.detailer.rating) if recent_service.detailer.rating else 0.0,
                     "phone": recent_service.detailer.phone,
                 },
                 "valet_type": recent_service.valet_type.name,
                 "service_type": recent_service.service_type.name,
+                "tip": float(recent_service.review_tip) if recent_service.review_tip else 0.0,
+                "is_reviewed": recent_service.is_reviewed,
+                "rating": float(recent_service.review_rating) if recent_service.review_rating else 0.0,
+                "booking_reference": str(recent_service.booking_reference),
             }
+            print("recent_service_data", recent_service_data)
             
             return Response(recent_service_data, status=status.HTTP_200_OK)
         except Exception as e:
+            print(f"Error in _get_recent_services: {str(e)}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
             return Response({'error': f'Failed to fetch recent services: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
@@ -200,5 +208,75 @@ class DashboardView(APIView):
         except Exception as e:
             return Response({'error': f'Failed to fetch user stats: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        
-        
+
+
+    def submit_review(self, request):
+        """Submit review for a completed booking"""
+        try:
+            print(f"DEBUG: submit_review called with data: {request.data}")
+            
+            booking_reference = request.data.get('booking_reference')
+            rating = request.data.get('rating')
+            tip_amount = request.data.get('tip_amount', 0.00)
+
+            print(f"DEBUG: booking_reference={booking_reference}, rating={rating}, tip_amount={tip_amount}")
+
+            if not booking_reference or not rating:
+                return Response(
+                    {'error': 'Booking reference and rating are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate rating
+            if not isinstance(rating, int) or rating < 1 or rating > 5:
+                return Response(
+                    {'error': 'Rating must be an integer between 1 and 5'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get the booking
+            try:
+                print(f"DEBUG: Looking for booking with reference: {booking_reference}")
+                booking = BookedAppointment.objects.get(
+                    booking_reference=booking_reference,
+                    user=request.user,
+                    status='completed',
+                    is_reviewed=False
+                )
+                print(f"DEBUG: Found booking: {booking}")
+            except BookedAppointment.DoesNotExist:
+                print(f"DEBUG: Booking not found or already reviewed")
+                return Response(
+                    {'error': 'Unreviewed completed booking not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Update the booking with review data
+            booking.is_reviewed = True
+            booking.review_rating = rating
+            booking.review_tip = tip_amount
+            booking.review_submitted_at = timezone.now()
+            booking.save()
+            print(f"DEBUG: Booking updated successfully")
+
+            # Publish to Redis for detailer notification
+            publish_review_to_detailer.delay(
+                booking_reference,
+                rating,
+                tip_amount
+            )
+            print(f"DEBUG: Celery task queued")
+            
+            return Response({
+                'message': 'Review submitted successfully',
+                'booking_reference': booking_reference
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"DEBUG: Exception in submit_review: {str(e)}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
+            return Response(
+                {'error': f'Failed to submit review: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

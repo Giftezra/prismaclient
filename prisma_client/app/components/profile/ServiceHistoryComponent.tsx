@@ -9,6 +9,7 @@ import {
   formatCurrency,
 } from "@/app/utils/methods";
 import LinearGradientComponent from "../helpers/LinearGradientComponent";
+import { Ionicons } from "@expo/vector-icons";
 
 const ServiceHistoryComponent = ({
   booking_date,
@@ -20,17 +21,25 @@ const ServiceHistoryComponent = ({
   status,
   total_amount,
   detailer,
+  tip,
+  is_reviewed,
+  rating,
 }: MyServiceHistoryProps) => {
   const cardColor = useThemeColor({}, "cards");
   const borderColor = useThemeColor({}, "borders");
   const textColor = useThemeColor({}, "text");
   const primaryPurple = useThemeColor({}, "primary");
 
+  const cardStyle = [
+    styles.card,
+    ...(is_reviewed ? [] : [styles.unratedBorder]),
+  ];
+
   return (
     <LinearGradientComponent
       color1={cardColor}
       color2={borderColor}
-      style={styles.card}
+      style={cardStyle}
     >
       {/* Header with Status */}
       <View style={styles.header}>
@@ -51,10 +60,7 @@ const ServiceHistoryComponent = ({
       {/* Vehicle Information */}
       <View style={styles.section}>
         <StyledText variant="labelMedium" children="Vehicle" />
-        <StyledText
-          style={[styles.vehicleReg]}
-          children={vehicle_reg}
-        />
+        <StyledText style={[styles.vehicleReg]} children={vehicle_reg} />
       </View>
 
       {/* Dates */}
@@ -90,7 +96,29 @@ const ServiceHistoryComponent = ({
         <StyledText variant="labelMedium" children="Detailer" />
         <StyledText variant="labelSmall" children={detailer.name} />
         <StyledText variant="labelSmall" children={detailer.rating} />
+        {is_reviewed && rating > 0 && (
+          <View style={styles.ratingContainer}>
+            <Ionicons name="star" size={16} color="#FFD700" />
+            <StyledText
+              style={[styles.ratingText, { color: textColor }]}
+              variant="labelSmall"
+              children={`Your rating: ${rating.toFixed(1)}`}
+            />
+          </View>
+        )}
       </View>
+
+      {/* Tip Information */}
+      {tip > 0 && (
+        <View style={styles.section}>
+          <StyledText variant="labelMedium" children="Tip Amount" />
+          <StyledText
+            style={[styles.tipAmount, { color: "#4CAF50" }]}
+            variant="labelSmall"
+            children={formatCurrency(tip)}
+          />
+        </View>
+      )}
 
       {/* Footer with Price */}
       <View style={[styles.footer, { borderTopColor: borderColor }]}>
@@ -182,5 +210,23 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 18,
     fontWeight: "700",
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  ratingText: {
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: "500",
+  },
+  tipAmount: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  unratedBorder: {
+    borderWidth: 2,
+    borderColor: "#FFA500",
   },
 });

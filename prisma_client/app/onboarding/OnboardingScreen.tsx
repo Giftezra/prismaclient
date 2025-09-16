@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
   Dimensions,
   StatusBar,
@@ -30,6 +29,7 @@ const OnboardingScreen = () => {
     signUpData,
     collectSignupData: handleSignUpData,
     registerUser,
+    isRegisterLoading
   } = useOnboarding();
 
   const { setAlertConfig, setIsVisible } = useAlertContext();
@@ -82,6 +82,9 @@ const OnboardingScreen = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+        bounces={false}
       >
         {/* Header Section */}
         <View style={styles.headerSection}>
@@ -174,7 +177,7 @@ const OnboardingScreen = () => {
                 <MaterialIcons
                   name={isPasswordVisible ? "visibility" : "visibility-off"}
                   size={20}
-                  color={'black'}
+                  color={"black"}
                 />
               </Pressable>
             </View>
@@ -198,7 +201,7 @@ const OnboardingScreen = () => {
                     isConfirmPasswordVisible ? "visibility" : "visibility-off"
                   }
                   size={20}
-                  color={'black'}
+                  color={"black"}
                 />
               </Pressable>
               {signUpData?.password !== confirmPassword && confirmPassword && (
@@ -221,20 +224,19 @@ const OnboardingScreen = () => {
                   style={styles.countryCodeContainer}
                   onPress={() => setShowDialCodeOverlay(true)}
                 >
-                  <StyledText style={[styles.countryCode, { color: 'black' }]}>
+                  <StyledText style={[styles.countryCode, { color: "black" }]}>
                     {selectedDialCode}
                   </StyledText>
-                  <Ionicons name="chevron-down" size={16} color={'black'} />
+                  <Ionicons name="chevron-down" size={16} color={"black"} />
                 </TouchableOpacity>
                 <View style={styles.phoneDivider} />
                 <TextInput
-                  style={[styles.phoneInput, { color: 'black' }]}
+                  style={[styles.phoneInput, { color: "black" }]}
                   placeholder="Enter your phone number"
                   placeholderTextColor="#999999"
                   value={signUpData?.phone}
                   onChangeText={(text) => handleSignUpData("phone", text)}
                   keyboardType="phone-pad"
-                
                 />
               </View>
             </View>
@@ -296,7 +298,7 @@ const OnboardingScreen = () => {
 
             {/* Submit Button */}
             <StyledButton
-              title="Create Account"
+              title={isRegisterLoading ? "Creating Account..." : "Create Account"}
               onPress={handleSubmit}
               variant="large"
               style={styles.submitButton}
@@ -357,11 +359,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 20,
   },
   headerSection: {
     height: height * 0.2,

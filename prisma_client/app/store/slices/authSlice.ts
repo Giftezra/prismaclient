@@ -60,6 +60,18 @@ const authSlice = createSlice({
     clearSignUpData: (state) => {
       state.signUpData = null;
     },
+
+    /**
+     * Update specific user data fields in the state
+     * @param state - The current state of the auth slice
+     * @param action - The action payload containing the field and value to update
+     */
+    updateUser: (state, action) => {
+      const { field, value } = action.payload;
+      if (state.user) {
+        (state.user as any)[field] = value;
+      }
+    },
   },
 });
 
@@ -72,5 +84,6 @@ export const {
   logout,
   setAccessToken,
   setRefreshToken,
+  updateUser,
 } = authSlice.actions;
 export default authSlice.reducer;

@@ -2,6 +2,9 @@ from typing import Iterable
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 import uuid
+from django.utils import timezone
+from datetime import timedelta
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -27,6 +30,13 @@ class User(AbstractUser):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     notification_token = models.CharField(max_length=255, blank=True)
+    allow_marketing_emails = models.BooleanField(default=False)
+    allow_push_notifications = models.BooleanField(default=False)
+    allow_email_notifications = models.BooleanField(default=True)
+
+    # Add promotions fields
+    has_signup_promotions = models.BooleanField(default=True)
+    has_booking_promotions = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -40,8 +50,25 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         self.username = self.email
+        is_new_user = self.pk is None
         super().save(*args, **kwargs)
 
+        # Create a sign up promotions for new users
+        if is_new_user and self.has_signup_promotions:
+            from datetime import datetime, timedelta
+            valid_until = datetime.now() + timedelta(days=30)
+            Promotions.objects.create(
+                user=self,
+                title= "Welcome Bonus",
+                description="Get 10% off your first service!",
+                discount_percentage=10,
+                valid_until=valid_until,
+                is_active=True,
+                terms_conditions= f"Valid for 30 days from {datetime.now().strftime('%Y-%m-%d')}. New customers only. Cannot be combined with other offers.",
+            )
+        # Create a loyalty program for new users
+        if is_new_user:
+            LoyaltyProgram.objects.create(user=self)
 
 
 class Address(models.Model):
@@ -116,6 +143,8 @@ class AddOns(models.Model):
         return f"{self.name} - ${self.price}"
 
 
+
+
 class BookedAppointment(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -145,10 +174,23 @@ class BookedAppointment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+    # Add a review 
+    is_reviewed = models.BooleanField(default=False)
+    review_rating = models.IntegerField(null=True, blank=True)
+    review_tip = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    review_submitted_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return f"{self.user.name} - {self.vehicle.make} {self.vehicle.model} - {self.appointment_date}"
 
     def save(self, *args, **kwargs):
+        # Check the total number of completed booking. 
+        # if more then 3 in a 30 day period, create the promotions for the user
+        if self.user.has_booking_promotions:
+            # Add promotion logic here
+            pass
+        
         super().save(*args, **kwargs)
 
 
@@ -181,4 +223,67 @@ class Notification(models.Model):
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+
+
+
+class Promotions(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    discount_percentage = models.IntegerField()
+    valid_until = models.DateField()
+    is_active = models.BooleanField(default=True)
+    terms_conditions = models.TextField()
+    
+    # Simple tracking fields
+    is_used = models.BooleanField(default=False)
+    used_in_booking = models.ForeignKey('BookedAppointment', on_delete=models.SET_NULL, null=True, blank=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.discount_percentage}%"
+
+    def save(self, *args, **kwargs):
+        # Set is_active to False if:
+        # 1. 30 days have passed since creation, OR
+        # 2. Promotion has been used
+        if (self.created_at and timezone.now() - self.created_at > timedelta(days=30)) or self.is_used:
+            self.is_active = False
+        super().save(*args, **kwargs)
+    
+    def mark_as_used(self, booking):
+        """Mark promotion as used with booking reference"""
+        self.is_used = True
+        self.used_in_booking = booking
+        self.used_at = timezone.now()
+        self.is_active = False  # This will be set in save() but being explicit
+        self.save()
+
+
+
+class LoyaltyProgram(models.Model):
+    TIER_CHOICES = [
+        ('bronze', 'Bronze'),
+        ('silver', 'Silver'),
+        ('gold', 'Gold'),
+        ('platinum', 'Platinum'), 
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    current_tier = models.CharField(max_length=50, choices=TIER_CHOICES, default='bronze')
+    completed_bookings = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Create the tier benefit method to track what discounts a user gets based on their current tier
+    def get_tier_benefits(self):
+        benefits = {
+            'bronze': {'discount':0, 'free_service':[]},
+            'silver': {'discount':5, 'free_service':['Air freshner']},
+            'gold': {'discount':10, 'free_service':['Air freshner','Window cleaned']},
+            'platinum': {'discount':15, 'free_service':['Air freshner','Window cleaned','Interior protection', 'Basic wash']},
+        }
+        return benefits.get(self.current_tier, benefits['bronze'])
 

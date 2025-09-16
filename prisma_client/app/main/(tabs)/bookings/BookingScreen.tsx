@@ -81,6 +81,7 @@ const BookingScreen = () => {
     isLoadingAddOns,
     isLoadingServiceTypes,
     isLoadingValetTypes,
+    user,
 
     // Handlers
     handleVehicleSelection,
@@ -126,6 +127,11 @@ const BookingScreen = () => {
     formatDuration,
     handleBookingConfirmation,
     isLoadingBooking,
+
+    // Loyalty-related methods
+    getOriginalPrice,
+    getFinalPrice,
+    getLoyaltyDiscount,
   } = useBooking();
 
   const { addresses } = useAddresses();
@@ -141,7 +147,6 @@ const BookingScreen = () => {
     { id: 4, title: "Details", icon: "calendar" },
     { id: 5, title: "Summary", icon: "checkmark-circle" },
   ];
-
 
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>
@@ -344,6 +349,10 @@ const BookingScreen = () => {
                   addonPrice={getAddonPrice()}
                   addonDuration={getAddonDuration()}
                   formatPrice={formatPrice}
+                  user={user}
+                  originalPrice={getOriginalPrice()}
+                  finalPrice={getFinalPrice()}
+                  loyaltyDiscount={getLoyaltyDiscount()}
                 />
               )}
           </View>
@@ -411,16 +420,18 @@ const BookingScreen = () => {
       <ModalServices
         visible={isAddonModalVisible}
         onClose={handleCloseAddonModal}
-        component={<AddonSelection
-          onClose={handleCloseAddonModal}
-          onConfirm={handleConfirmAddons}
-          addons={addOns || []}
-          selectedAddons={selectedAddons}
-          onAddonSelect={handleAddonSelectionWithRefresh}
-          totalAddonPrice={getAddonPrice()}
-          totalAddonDuration={getAddonDuration()}
-          formatPrice={formatPrice}
-        />}
+        component={
+          <AddonSelection
+            onClose={handleCloseAddonModal}
+            onConfirm={handleConfirmAddons}
+            addons={addOns || []}
+            selectedAddons={selectedAddons}
+            onAddonSelect={handleAddonSelectionWithRefresh}
+            totalAddonPrice={getAddonPrice()}
+            totalAddonDuration={getAddonDuration()}
+            formatPrice={formatPrice}
+          />
+        }
         title="Add-ons"
         modalType="fullscreen"
         animationType="slide"
@@ -502,8 +513,8 @@ const styles = StyleSheet.create({
     padding: 5,
     borderTopWidth: 1,
     borderTopColor: "#E5E5E5",
-    gap:10,
-    marginHorizontal:5,
+    gap: 10,
+    marginHorizontal: 5,
   },
   navButton: {
     flexDirection: "row",

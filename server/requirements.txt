@@ -17,4 +17,4 @@ requests==2.32.3
 channels>=4.0.0
 channels-redis>=4.1.0
 daphne>=4.0.0
-
+exponent-server-sdk>=2.1.0

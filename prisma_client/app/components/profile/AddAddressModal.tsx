@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -152,132 +154,141 @@ const AddAddressModal: React.FC<AddAddressModalProps> = ({
 
   return (
     <View style={[styles.container]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <StyledText variant="titleSmall">{title}</StyledText>
-        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-          <MaterialCommunityIcons name="close" size={20} color={textColor} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Use Current Location Section */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={[styles.locationCard, { borderColor: borderColor }]}
-            onPress={handleUseCurrentLocation}
-            activeOpacity={0.7}
-            disabled={isLocationRequesting || isLocationLoading}
-          >
-            <View style={styles.locationIconContainer}>
-              <MaterialCommunityIcons
-                name={
-                  isLocationRequesting || isLocationLoading
-                    ? "loading"
-                    : "crosshairs-gps"
-                }
-                size={20}
-                color={primaryPurpleColor}
-              />
-            </View>
-            <View style={styles.locationContent}>
-              <StyledText variant="labelMedium">
-                {isLocationRequesting || isLocationLoading
-                  ? "Getting Location..."
-                  : "Use Current Location"}
-              </StyledText>
-              <StyledText variant="bodySmall">
-                {isLocationRequesting || isLocationLoading
-                  ? "Please wait while we detect your location"
-                  : "Automatically detect your location"}
-              </StyledText>
-            </View>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={20}
-              color={textColor}
-            />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <StyledText variant="titleSmall">{title}</StyledText>
+          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <MaterialCommunityIcons name="close" size={20} color={textColor} />
           </TouchableOpacity>
         </View>
 
-        {/* Divider */}
-        <View style={styles.dividerContainer}>
-          <Divider style={[styles.divider, { backgroundColor: borderColor }]} />
-          <StyledText
-            variant="bodySmall"
-            style={[styles.dividerText, { color: textColor }]}
-          >
-            OR
-          </StyledText>
-          <Divider style={[styles.divider, { backgroundColor: borderColor }]} />
-        </View>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Use Current Location Section */}
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={[styles.locationCard, { borderColor: borderColor }]}
+              onPress={handleUseCurrentLocation}
+              activeOpacity={0.7}
+              disabled={isLocationRequesting || isLocationLoading}
+            >
+              <View style={styles.locationIconContainer}>
+                <MaterialCommunityIcons
+                  name={
+                    isLocationRequesting || isLocationLoading
+                      ? "loading"
+                      : "crosshairs-gps"
+                  }
+                  size={20}
+                  color={primaryPurpleColor}
+                />
+              </View>
+              <View style={styles.locationContent}>
+                <StyledText variant="labelMedium">
+                  {isLocationRequesting || isLocationLoading
+                    ? "Getting Location..."
+                    : "Use Current Location"}
+                </StyledText>
+                <StyledText variant="bodySmall">
+                  {isLocationRequesting || isLocationLoading
+                    ? "Please wait while we detect your location"
+                    : "Automatically detect your location"}
+                </StyledText>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={20}
+                color={textColor}
+              />
+            </TouchableOpacity>
+          </View>
 
-        {/* Manual Address Form */}
-        <View style={styles.section}>
-          <StyledText
-            variant="titleMedium"
-            style={[styles.sectionTitle, { color: textColor }]}
-          >
-            Enter Address Manually
-          </StyledText>
-
-          <View style={styles.formContainer}>
-            <StyledTextInput
-              label="Street Address"
-              placeholder="Enter your street address"
-              value={newAddress?.address}
-              onChangeText={(text) => collectNewAddress("address", text)}
-              autoCapitalize="words"
-              style={styles.input}
+          {/* Divider */}
+          <View style={styles.dividerContainer}>
+            <Divider
+              style={[styles.divider, { backgroundColor: borderColor }]}
             />
+            <StyledText
+              variant="bodySmall"
+              style={[styles.dividerText, { color: textColor }]}
+            >
+              OR
+            </StyledText>
+            <Divider
+              style={[styles.divider, { backgroundColor: borderColor }]}
+            />
+          </View>
 
-            <View style={styles.inputRow}>
+          {/* Manual Address Form */}
+          <View style={styles.section}>
+            <StyledText
+              variant="titleMedium"
+              style={[styles.sectionTitle, { color: textColor }]}
+            >
+              Enter Address Manually
+            </StyledText>
+
+            <View style={styles.formContainer}>
               <StyledTextInput
-                label="Post Code"
-                placeholder="Post code"
-                value={newAddress?.post_code}
-                onChangeText={(text) => collectNewAddress("post_code", text)}
-                autoCapitalize="characters"
+                label="Street Address"
+                placeholder="Enter your street address"
+                value={newAddress?.address}
+                onChangeText={(text) => collectNewAddress("address", text)}
+                autoCapitalize="words"
                 style={styles.input}
               />
+
+              <View style={styles.inputRow}>
+                <StyledTextInput
+                  label="Post Code"
+                  placeholder="Post code"
+                  value={newAddress?.post_code}
+                  onChangeText={(text) => collectNewAddress("post_code", text)}
+                  autoCapitalize="characters"
+                  style={styles.input}
+                />
+                <StyledTextInput
+                  label="City"
+                  placeholder="City"
+                  value={newAddress?.city}
+                  onChangeText={(text) => collectNewAddress("city", text)}
+                  autoCapitalize="words"
+                  style={styles.input}
+                />
+              </View>
+
               <StyledTextInput
-                label="City"
-                placeholder="City"
-                value={newAddress?.city}
-                onChangeText={(text) => collectNewAddress("city", text)}
+                label="Country"
+                placeholder="Enter country"
+                value={newAddress?.country}
+                onChangeText={(text) => collectNewAddress("country", text)}
                 autoCapitalize="words"
                 style={styles.input}
               />
             </View>
-
-            <StyledTextInput
-              label="Country"
-              placeholder="Enter country"
-              value={newAddress?.country}
-              onChangeText={(text) => collectNewAddress("country", text)}
-              autoCapitalize="words"
-              style={styles.input}
-            />
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
 
-      {/* Action Buttons */}
-      <View style={styles.footer}>
-        <StyledButton
-          title="Cancel"
-          variant="tonal"
-          onPress={handleClose}
-          style={[styles.cancelButton, { borderColor: borderColor }]}
-        />
-        <StyledButton
-          title={isLoading ? "Saving..." : "Save Address"}
-          variant="medium"
-          onPress={onSave}
-          disabled={isLoading}
-          style={styles.saveButton}
-        />
-      </View>
+        {/* Action Buttons */}
+        <View style={styles.footer}>
+          <StyledButton
+            title="Cancel"
+            variant="tonal"
+            onPress={handleClose}
+            style={[styles.cancelButton, { borderColor: borderColor }]}
+          />
+          <StyledButton
+            title={isLoading ? "Saving..." : "Save Address"}
+            variant="medium"
+            onPress={onSave}
+            disabled={isLoading}
+            style={styles.saveButton}
+          />
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 };

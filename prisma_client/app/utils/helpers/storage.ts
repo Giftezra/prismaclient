@@ -40,3 +40,16 @@ export const getUserFromStorage =
       return null;
     }
   };
+
+/**
+ * Update user data in storage
+ * @param user - The updated user data to save
+ */
+export const updateUserInStorage = async (user: UserProfileProps) => {
+  try {
+    await SecureStore.setItemAsync("user", JSON.stringify(user));
+    console.log("User data updated in storage");
+  } catch (error) {
+    console.error("Error updating user data in storage:", error);
+  }
+};

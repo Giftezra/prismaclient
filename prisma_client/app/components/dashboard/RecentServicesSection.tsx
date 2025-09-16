@@ -6,6 +6,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import StyledText from "../helpers/StyledText";
 import StyledButton from "../helpers/StyledButton";
 import { RecentServicesProps } from "@/app/interfaces/DashboardInterfaces";
+import { useAppSelector, RootState } from "@/app/store/main_store";
 
 interface RecentServicesSectionProps {
   bookings: RecentServicesProps | null;
@@ -14,6 +15,14 @@ interface RecentServicesSectionProps {
 const ServiceCard: React.FC<{
   booking: RecentServicesProps | null;
 }> = ({ booking }) => {
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  let currencySymbol = "";
+  if (user?.address?.country === "United Kingdom") {
+    currencySymbol = "£";
+  } else if (user?.address?.country === "Ireland") {
+    currencySymbol = "€";
+  }
+
   const cardsColor = useThemeColor({}, "cards");
   const textColor = useThemeColor({}, "text");
 
@@ -35,7 +44,13 @@ const ServiceCard: React.FC<{
   };
 
   return (
-    <View style={[styles.serviceCard, { backgroundColor: cardsColor }]}>
+    <View
+      style={[
+        styles.serviceCard,
+        { backgroundColor: cardsColor },
+        !booking.is_reviewed && styles.unratedBorder,
+      ]}
+    >
       <View style={styles.serviceHeader}>
         <StyledText
           style={[styles.serviceDate, { color: textColor }]}
@@ -64,24 +79,43 @@ const ServiceCard: React.FC<{
         <StyledText
           style={[styles.serviceType, { color: textColor }]}
           variant="bodyMedium"
-          children={`${booking.service_type} • $${booking.cost}`}
+          children={`${booking.service_type} • ${currencySymbol}${booking.cost}`}
         />
         <StyledText
           style={[styles.serviceType, { color: "grey" }]}
           variant="bodyMedium"
           children={`${booking.valet_type}`}
         />
+        {booking.tip > 0 && (
+          <StyledText
+            style={[styles.serviceType, { color: "#4CAF50" }]}
+            variant="bodyMedium"
+            children={`Tip: ${currencySymbol}${booking.tip}`}
+          />
+        )}
       </View>
       <View style={styles.serviceDetailer}>
         <Image
-          source={booking.detailer.image}
+          source={require("@/assets/images/user_image.jpg")}
           style={styles.serviceDetailerImage}
         />
-        <StyledText
-          style={[styles.serviceDetailerName, { color: textColor }]}
-          variant="bodyMedium"
-          children={booking.detailer.name}
-        />
+        <View style={styles.detailerInfo}>
+          <StyledText
+            style={[styles.serviceDetailerName, { color: textColor }]}
+            variant="bodyMedium"
+            children={booking.detailer.name}
+          />
+          {booking.is_reviewed && booking.rating > 0 && (
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={14} color="#FFD700" />
+              <StyledText
+                style={[styles.ratingText, { color: textColor }]}
+                variant="bodySmall"
+                children={booking.rating.toFixed(1)}
+              />
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -202,9 +236,26 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 8,
   },
+  detailerInfo: {
+    flex: 1,
+  },
   serviceDetailerName: {
     fontSize: 14,
     fontWeight: "500",
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
+  },
+  ratingText: {
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: "500",
+  },
+  unratedBorder: {
+    borderWidth: 2,
+    borderColor: "#FFA500",
   },
   emptyStateContainer: {
     padding: 10,

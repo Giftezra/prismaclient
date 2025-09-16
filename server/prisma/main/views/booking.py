@@ -7,6 +7,7 @@ import stripe
 from django.conf import settings
 from datetime import datetime
 from main.tasks import publish_booking_cancelled, publish_booking_rescheduled
+from main.services.NotificationServices import NotificationService
 
 # Initialize Stripe with your secret key
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -108,6 +109,7 @@ class BookingView(APIView):
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
+
     def cancel_booking(self, request):
         """ Cancel a booking for the user.
             ARGS : void
@@ -119,14 +121,22 @@ class BookingView(APIView):
             booking = BookedAppointment.objects.get(booking_reference=booking_reference)
             booking.status = 'cancelled'
             booking.save()
-
-            # Publish the message to the redis channel
             publish_booking_cancelled.delay(booking_reference)
+
+            # Send booking cancelled notification
+            self.send_push_notification(request.user, "Booking Cancelled!", f"Your valet service has been cancelled for {booking.appointment_date} at {booking.start_time}", {
+                "type": "booking_cancelled",
+                "booking_reference": booking.booking_reference,
+                "booking_reference": booking.booking_reference,
+                "screen": "booking_details"
+            })
+
 
             vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}"
             return Response(f'You have cancelled your booking for {vehicle_name} on {booking.appointment_date}', status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
     def reschedule_booking(self, request):
@@ -145,6 +155,14 @@ class BookingView(APIView):
             booking.status = 'pending'
             booking.save()
             publish_booking_rescheduled.delay(booking.booking_reference, booking.appointment_date, booking.start_time, booking.total_amount)
+
+            # Send booking rescheduled notification
+            self.send_push_notification(request.user, "Booking Rescheduled! 📅", f"Your valet service has been rescheduled for {booking.appointment_date} at {booking.start_time}", {
+                "type": "booking_rescheduled",
+                "booking_reference": booking.booking_reference,
+                "booking_reference": booking.booking_reference,
+                "screen": "booking_details"
+            })
 
             vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}"
             return Response({'message': f'You have rescheduled your booking for {vehicle_name} on {booking.appointment_date}'}, status=status.HTTP_200_OK)
@@ -206,13 +224,16 @@ class BookingView(APIView):
                 addon_ids = [addon.get('id') for addon in addons_data]
                 addons = AddOns.objects.filter(id__in=addon_ids)
                 appointment.add_ons.set(addons)
-
             appointment.save()
 
-            print('Booked appointement as it is from the db', appointment.booking_reference)
+            # Send booking confirmation notification
+            self.send_push_notification(request.user, "Booking Confirmed! 🎉", f"Your valet service is confirmed for {appointment.appointment_date} at {appointment.start_time}", {
+                "type": "booking_confirmed",
+                "booking_reference": appointment.booking_reference,
+                "booking_reference": appointment.booking_reference,
+                "screen": "booking_details"
+            })
 
-            
-            
             return Response({'appointment_id': str(appointment.id)}, status=status.HTTP_200_OK)
         except Exception as e:
             print(f"Error creating appointment: {str(e)}")
@@ -323,3 +344,35 @@ class BookingView(APIView):
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+
+
+    
+    def send_push_notification(self, user, title, body, data=None):
+        """Send push notification using NotificationService"""
+        try:
+            # Check if user has push notifications enabled and has a token
+            if not user.allow_push_notifications:
+                print(f"Push notifications disabled for user {user.id}")
+                return False
+                
+            if not user.notification_token:
+                print(f"No notification token for user {user.id}")
+                return False
+            
+            # Send push notification
+            result = self.notification_service._send_push_notification(
+                user=user,
+                title=title,
+                body=body,
+                data=data or {}
+            )
+            
+            print(f"Push notification sent to user {user.id}: {title}")
+            return True
+            
+        except Exception as e:
+            print(f"Failed to send push notification to user {user.id}: {e}")
+            logger.error(f"Push notification error for user {user.id}: {str(e)}")
+            return False

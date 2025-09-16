@@ -3,11 +3,11 @@ from rest_framework.permissions import AllowAny
 from ..serializer import UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
-from ..models import User, Address
+from ..models import User, Address, LoyaltyProgram
 from ..serializer import CustomTokenObtainPairSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from main.tasks import send_welcome_email
+from main.tasks import send_welcome_email, send_promotional_email
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -56,6 +56,10 @@ class AuthenticationView(CreateAPIView):
                 phone=data['phone'],
                 password=data['password']
             )
+            # Send the welcome and promotional emails to the user even if they have not allowed them as this is a new user
+            send_welcome_email.delay(user.email)
+            send_promotional_email.delay(user.email, user.name)
+            
             # Generate tokens for the newly created user
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
@@ -63,8 +67,9 @@ class AuthenticationView(CreateAPIView):
             
             # Get user address data (if any)
             address = Address.objects.filter(user=user).first()
-            
-            # Return the same response structure as login
+            loyalty = LoyaltyProgram.objects.filter(user=user).first()
+            loyalty_benefits = loyalty.get_tier_benefits() if loyalty else None
+       
             return Response({
                 'message': 'Welcome to PRISMA VALLET. You have successfully created your account.',
                 'user': {
@@ -76,7 +81,9 @@ class AuthenticationView(CreateAPIView):
                         'city': address.city if address else None,
                         'post_code': address.post_code if address else None,
                         'country': address.country if address else None,
-                    }
+                    },
+                    'loyalty_tier': loyalty.current_tier if loyalty else None,
+                    'loyalty_benefits': loyalty_benefits,
                 },
                 'access': access_token,
                 'refresh': refresh_token

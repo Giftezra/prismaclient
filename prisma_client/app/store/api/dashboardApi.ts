@@ -57,6 +57,21 @@ export const dashboardApi = createApi({
       }),
       transformResponse: (response: RecentServicesProps) => response,
     }),
+
+    submitReview: builder.mutation<
+      any,
+      {
+        booking_reference: string;
+        rating: number;
+        tip_amount: number;
+      }
+    >({
+      query: (data) => ({
+        url: "/api/v1/dashboard/submit_review/",
+        method: "PATCH",
+        data: data,
+      }),
+    }),
   }),
 });
 
@@ -65,5 +80,6 @@ export const {
   useCancelAppointmentMutation,
   useFetchRecentServicesQuery,
   useFetchUserStatsQuery,
+  useSubmitReviewMutation,
 } = dashboardApi;
 export default dashboardApi;

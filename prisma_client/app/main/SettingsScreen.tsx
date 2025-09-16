@@ -15,12 +15,13 @@
  */
 
 import { ScrollView, StyleSheet, View } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useThemeContext } from "@/app/contexts/ThemeProvider";
 import SettingSection from "../components/settings/SettingSection";
 import SettingItem from "../components/settings/SettingItem";
 import StyledText from "../components/helpers/StyledText";
+import useProfile from "../app-hooks/useProfile";
 
 /**
  * Main Settings Screen Component
@@ -33,8 +34,16 @@ import StyledText from "../components/helpers/StyledText";
  * - Responsive design with proper scrolling
  */
 const SettingScreen = () => {
-  // Get theme context for theme switching functionality
   const { theme, setTheme } = useThemeContext();
+  const {
+    userProfile,
+    updatePushNotificationSetting,
+    updateEmailNotificationSetting,
+    updateMarketingEmailSetting,
+    isLoadingUpdatePushNotificationToken,
+    isLoadingUpdateEmailNotificationToken,
+    isLoadingUpdateMarketingEmailToken,
+  } = useProfile();
 
   // State for managing which sections are expanded
   const [expandedSections, setExpandedSections] = useState<{
@@ -47,15 +56,30 @@ const SettingScreen = () => {
     general: false,
   });
 
-  // Notification settings state
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [marketingNotifications, setMarketingNotifications] = useState(false);
+  // Notification settings state - initialized from server data
+  const [emailNotifications, setEmailNotifications] = useState(
+    userProfile.email_notification_token
+  );
+  const [pushNotifications, setPushNotifications] = useState(
+    userProfile.push_notification_token
+  );
+  const [marketingNotifications, setMarketingNotifications] = useState(
+    userProfile.marketing_email_token
+  );
 
   // General settings state
   const [autoSave, setAutoSave] = useState(true);
   const [locationServices, setLocationServices] = useState(true);
   const [analytics, setAnalytics] = useState(false);
+
+  // Sync notification settings with server data when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      setEmailNotifications(userProfile.email_notification_token);
+      setPushNotifications(userProfile.push_notification_token);
+      setMarketingNotifications(userProfile.marketing_email_token);
+    }
+  }, [userProfile]);
 
   /**
    * Toggle the expanded state of a section
@@ -70,12 +94,14 @@ const SettingScreen = () => {
 
   /**
    * Handle notification setting changes
-   * Updates state and logs changes to console
+   * Updates state and server, logs changes to console
    * @param type - The type of notification (email, push, marketing)
    * @param value - The new boolean value
    */
-  const handleNotificationToggle = (type: string, value: boolean) => {
+  const handleNotificationToggle = async (type: string, value: boolean) => {
     console.log(`${type} notifications: ${value}`);
+
+    // Update local state immediately for better UX
     switch (type) {
       case "email":
         setEmailNotifications(value);
@@ -86,6 +112,35 @@ const SettingScreen = () => {
       case "marketing":
         setMarketingNotifications(value);
         break;
+    }
+
+    // Update server
+    let success = false;
+    switch (type) {
+      case "email":
+        success = await updateEmailNotificationSetting(value);
+        break;
+      case "push":
+        success = await updatePushNotificationSetting(value);
+        break;
+      case "marketing":
+        success = await updateMarketingEmailSetting(value);
+        break;
+    }
+
+    // If server update failed, revert local state
+    if (!success) {
+      switch (type) {
+        case "email":
+          setEmailNotifications(!value);
+          break;
+        case "push":
+          setPushNotifications(!value);
+          break;
+        case "marketing":
+          setMarketingNotifications(!value);
+          break;
+      }
     }
   };
 
@@ -157,12 +212,14 @@ const SettingScreen = () => {
               onValueChange={(value) =>
                 handleNotificationToggle("email", value)
               }
+              disabled={isLoadingUpdateEmailNotificationToken}
             />
             <SettingItem
               title="Push Notifications"
               description="Get instant notifications on your device"
               value={pushNotifications}
               onValueChange={(value) => handleNotificationToggle("push", value)}
+              disabled={isLoadingUpdatePushNotificationToken}
             />
             <SettingItem
               title="Marketing Communications"
@@ -171,6 +228,7 @@ const SettingScreen = () => {
               onValueChange={(value) =>
                 handleNotificationToggle("marketing", value)
               }
+              disabled={isLoadingUpdateMarketingEmailToken}
             />
           </SettingSection>
 

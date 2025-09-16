@@ -86,6 +86,9 @@ export interface CreateBookingProps {
   booking_date: string;
   start_time: string;
   end_time: string;
+  // Only these two fields for detailer
+  loyalty_tier?: string;
+  loyalty_benefits?: string[]; // Array of free services
 }
 
 /**

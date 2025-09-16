@@ -103,10 +103,16 @@ export default function WelcomeScreen() {
 
               <View style={styles.heroButtons}>
                 <StyledButton
-                  variant="large"
+                  variant="small"
                   onPress={() => router.push("/onboarding/OnboardingScreen")}
-                  style={styles.primaryButton}
+                  style={styles.secondaryButton}
                   title="Join Us"
+                />
+                <StyledButton
+                  variant="small"
+                  onPress={() => router.push("/onboarding/SigninScreen")}
+                  style={styles.primaryButton}
+                  title="Sign In"
                 />
               </View>
             </View>

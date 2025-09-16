@@ -14,16 +14,11 @@ class ProfileView(APIView):
         "update_address": "update_address",
         "delete_address": "delete_address",
         'get_service_history': 'get_service_history',
+        'update_push_notification_token': 'update_push_notification_token',
+        'update_email_notification_token': 'update_email_notification_token',
+        'update_marketing_email_token': 'update_marketing_email_token',
     }
 
-    """ Override the get method to route the get url to the appropriate function using the action handlers.
-    ARGS
-        request: The request object
-        *args: The positional arguments
-        **kwargs: The keyword arguments
-    RETURNS:
-        A response object containing the data of the action to route the url to the appropriate function
-    """
     def get(self, request, *args, **kwargs):
         action = kwargs.get('action')
         if action not in self.action_handlers:
@@ -32,14 +27,6 @@ class ProfileView(APIView):
         handler = getattr(self, self.action_handlers[action])
         return handler(request)
     
-    """ Override the post method to route the post url to the appropriate function using the action handlers.
-    ARGS
-        request: The request object
-        *args: The positional arguments
-        **kwargs: The keyword arguments
-    RETURNS:
-        A response object containing the data of the action to route the url to the appropriate function
-    """
     def post(self, request, *args, **kwargs):
         action = kwargs.get('action')
         if action not in self.action_handlers:
@@ -48,14 +35,7 @@ class ProfileView(APIView):
         handler = getattr(self, self.action_handlers[action])
         return handler(request)
     
-    """ Override the patch method to route the patch url to the appropriate function using the action handlers.
-    ARGS
-        request: The request object
-        *args: The positional arguments
-        **kwargs: The keyword arguments
-    RETURNS:
-        A response object containing the data of the action to route the url to the appropriate function
-    """
+
     def patch(self, request, *args, **kwargs):
         action = kwargs.get('action')
         if action not in self.action_handlers:
@@ -64,14 +44,7 @@ class ProfileView(APIView):
         handler = getattr(self, self.action_handlers[action])
         return handler(request)
     
-    """ Override the delete method to route the delete url to the appropriate function using the action handlers.
-    ARGS
-        request: The request object
-        *args: The positional arguments
-        **kwargs: The keyword arguments
-    RETURNS:
-        A response object containing the data of the action to route the url to the appropriate function
-    """
+
     def delete(self, request, *args, **kwargs):
         action = kwargs.get('action')
         if action not in self.action_handlers:
@@ -286,3 +259,77 @@ class ProfileView(APIView):
         except Exception as e:
             print(f"Service history error: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    def update_push_notification_token(self, request):
+        try:
+            update_value = request.data.get('update')
+            
+            if update_value is None:
+                return Response(
+                    {'error': 'Update value is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            request.user.allow_push_notifications = update_value
+            request.user.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Push notification setting updated successfully',
+                'value': update_value
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    def update_email_notification_token(self, request):
+        try:
+            update_value = request.data.get('update')
+            
+            if update_value is None:
+                return Response(
+                    {'error': 'Update value is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Update the user's email notification setting
+            request.user.allow_email_notifications = update_value
+            request.user.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Email notification setting updated successfully',
+                'value': update_value
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    def update_marketing_email_token(self, request):
+        try:
+            update_value = request.data.get('update')
+            
+            if update_value is None:
+                return Response(
+                    {'error': 'Update value is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Update the user's marketing email setting
+            request.user.allow_marketing_emails = update_value
+            request.user.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Marketing email setting updated successfully',
+                'value': update_value
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            

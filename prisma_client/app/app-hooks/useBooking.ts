@@ -2,7 +2,6 @@ import {
   ServiceTypeProps,
   ValetTypeProps,
   AddOnsProps,
-  PaymentSheetResponse,
   CreateBookingProps,
 } from "@/app/interfaces/BookingInterfaces";
 import React, { useEffect, useCallback, useState } from "react";
@@ -17,7 +16,6 @@ import {
   useFetchServiceTypeQuery,
   useFetchValetTypeQuery,
   useFetchAddOnsQuery,
-  useFetchPaymentSheetDetailsMutation,
   useBookAppointmentMutation,
   useCancelBookingMutation,
   useRescheduleBookingMutation,
@@ -27,12 +25,11 @@ import { useAlertContext } from "@/app/contexts/AlertContext";
 import dayjs from "dayjs";
 import { TimeSlot, CalendarDay } from "@/app/interfaces/BookingInterfaces";
 import { formatCurrency } from "@/app/utils/methods";
-import { useStripe } from "@stripe/stripe-react-native";
-import { loadStripe } from "@stripe/stripe-js";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 import { ReturnBookingProps } from "../interfaces/OtherInterfaces";
 import useDashboard from "./useDashboard";
+import usePayment from "./usePayment";
 import { API_CONFIG } from "@/constants/Config";
 /**
  * Custom hook for managing the booking process state and logic.
@@ -55,6 +52,7 @@ const useBooking = () => {
   const user = useAppSelector((state: RootState) => state.auth.user);
   const userAddress = user?.address;
   const { refetchAppointments } = useDashboard();
+  const { openPaymentSheet } = usePayment();
 
   /* Api hooks */
 
@@ -100,161 +98,6 @@ const useBooking = () => {
   );
   const [selectedDay, setSelectedDay] = useState<dayjs.Dayjs>(
     dayjs(selectedDate)
-  );
-
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
-  const [fetchPaymentSheetDetails] = useFetchPaymentSheetDetailsMutation();
-
-  /**
-   * Fetches payment sheet details from the server
-   *
-   * @param finalPrice - The total price in euros
-   * @returns Promise that resolves to payment sheet details
-   */
-  const fetchPaymentSheetDetailsFromServer = useCallback(
-    async (finalPrice: number): Promise<PaymentSheetResponse> => {
-      try {
-        const amountInCents = Math.round(finalPrice * 100);
-        const response = await fetchPaymentSheetDetails(amountInCents).unwrap();
-        return response;
-      } catch (error) {
-        console.error("Error fetching payment sheet details:", error);
-        throw error;
-      }
-    },
-    [fetchPaymentSheetDetails]
-  );
-
-  /**
-   * The method is designed to initialize the payment sheet when the checkout page is opened.
-   * Call the fetchPaymentSheetDetails method to fetch the payment sheet details from the server.
-   * Then call the initPaymentSheet method to initialize the payment sheet.
-   */
-  const initializePaymentSheet = useCallback(
-    async (finalPrice: number) => {
-      /* Get the user and address from the state since this is stored in the state when the user is logged in.
-       * Use the address to get the country code and currency code.
-       * Set the country code to GBP if the user is in the United Kingdom.
-       * Set the country code to EUR if the user is in not in the United Kingdom.
-       */
-      const address = userAddress;
-      let countryCode = "GB";
-
-      if (address?.country === "United Kingdom") {
-        countryCode = "GB";
-      } else {
-        countryCode = "GB";
-      }
-
-      try {
-        const { paymentIntent, ephemeralKey, customer } =
-          await fetchPaymentSheetDetailsFromServer(finalPrice);
-
-        const { error } = await initPaymentSheet({
-          paymentIntentClientSecret: paymentIntent,
-          merchantDisplayName: "Prisma Valet",
-          customerEphemeralKeySecret: ephemeralKey,
-          customerId: customer,
-          applePay: {
-            merchantCountryCode: countryCode,
-          },
-          googlePay: {
-            merchantCountryCode: countryCode,
-            testEnv: true,
-            currencyCode: countryCode,
-          },
-        });
-
-        if (error) {
-          throw error;
-        }
-      } catch (error: any) {
-        console.error("Error initializing payment sheet:", error);
-        throw error;
-      }
-    },
-    [fetchPaymentSheetDetailsFromServer, initPaymentSheet, userAddress]
-  );
-
-  /**
-   * The method is designed to open the payment sheet when clicked on the checkout page.
-   * Call the initializePaymentSheet method to initialize the payment sheet first on the server.
-   * Then call the presentPaymentSheet method to present the payment sheet to the user.
-   */
-  const openPaymentSheet = useCallback(
-    async (finalPrice: number) => {
-      try {
-        await initializePaymentSheet(finalPrice);
-        const { error } = await presentPaymentSheet();
-
-        if (error) {
-          // Handle specific Stripe payment errors
-          let errorMessage = "An error occurred during payment";
-          let errorTitle = "Payment Error";
-
-          // Handle specific Stripe payment errors based on error type
-          if (error.code === "Canceled") {
-            // User cancelled the payment
-            errorMessage = "Payment was cancelled";
-            errorTitle = "Payment Cancelled";
-          } else if (error.code === "Failed") {
-            // Payment failed (insufficient funds, card declined, etc.)
-            errorMessage =
-              "Payment failed. Please check your payment method and try again.";
-            errorTitle = "Payment Failed";
-          } else {
-            // Use the error message from Stripe if available
-            errorMessage = error.message || errorMessage;
-          }
-
-          setAlertConfig({
-            title: errorTitle,
-            message: errorMessage,
-            type: "error",
-            isVisible: true,
-            onConfirm() {
-              setIsVisible(false);
-            },
-          });
-
-          // Don't throw the error for user cancellations, just return false
-          if (error.code === "Canceled") {
-            return false;
-          }
-
-          throw error;
-        }
-
-        return true;
-      } catch (error: any) {
-        console.error("Error in payment process:", error);
-
-        // Handle network or initialization errors
-        let errorMessage = "An error occurred during payment";
-        let errorTitle = "Payment Error";
-
-        if (error.message?.includes("network")) {
-          errorMessage =
-            "Network error. Please check your connection and try again.";
-          errorTitle = "Connection Error";
-        } else if (error.message?.includes("timeout")) {
-          errorMessage = "Request timed out. Please try again.";
-          errorTitle = "Timeout Error";
-        }
-
-        setAlertConfig({
-          title: errorTitle,
-          message: errorMessage,
-          type: "error",
-          isVisible: true,
-          onConfirm() {
-            setIsVisible(false);
-          },
-        });
-        throw error;
-      }
-    },
-    [initializePaymentSheet, presentPaymentSheet, setAlertConfig]
   );
 
   /**
@@ -1217,6 +1060,37 @@ const useBooking = () => {
   }, [selectedServiceType]);
 
   /**
+   * Gets the loyalty discount amount
+   *
+   * This method calculates the loyalty discount amount based on the user's tier and the selected addons.
+   *
+   * @returns The loyalty discount amount in euros
+   * @type {number}
+   *
+   * @example
+   * const loyaltyDiscount = getLoyaltyDiscount(); // Returns 10 if user has 10% discount and total price is 100
+   */
+  const getLoyaltyDiscount = useCallback((): number => {
+    if (!user?.loyalty_benefits?.discount) return 0;
+
+    const basePrice = selectedServiceType?.price || 0;
+    const addonCosts = selectedAddons.reduce(
+      (total, addon) => total + addon.price,
+      0
+    );
+    const totalBeforeSurcharge = basePrice + addonCosts;
+    const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
+    const totalBeforeDiscount = totalBeforeSurcharge + suvSurcharge;
+
+    // Apply loyalty discount as percentage
+    return totalBeforeDiscount * (user.loyalty_benefits.discount / 100);
+  }, [
+    user?.loyalty_benefits?.discount,
+    selectedServiceType,
+    selectedAddons,
+    isSUV,
+  ]);
+  /**
    * Gets the SUV surcharge amount
    *
    * This method returns the SUV surcharge amount if the vehicle is marked as an SUV.
@@ -1237,6 +1111,35 @@ const useBooking = () => {
     const totalBeforeSurcharge = basePrice + addonCosts;
     return isSUV ? totalBeforeSurcharge * 0.1 : 0;
   }, [isSUV, selectedServiceType, selectedAddons]);
+
+  /**
+   * Gets the original price before loyalty discount (for display purposes)
+   *
+   * @returns The original price before any loyalty discount
+   */
+  const getOriginalPrice = useCallback((): number => {
+    const basePrice = selectedServiceType?.price || 0;
+    const addonCosts = selectedAddons.reduce(
+      (total, addon) => total + addon.price,
+      0
+    );
+    const totalBeforeSurcharge = basePrice + addonCosts;
+    const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
+
+    return totalBeforeSurcharge + suvSurcharge;
+  }, [selectedServiceType, isSUV, selectedAddons]);
+
+  /**
+   * Gets the final price after loyalty discount (for payment)
+   *
+   * @returns The final price after loyalty discount
+   */
+  const getFinalPrice = useCallback((): number => {
+    const originalPrice = getOriginalPrice();
+    const loyaltyDiscount = getLoyaltyDiscount();
+
+    return originalPrice - loyaltyDiscount;
+  }, [getOriginalPrice, getLoyaltyDiscount]);
 
   /**
    * Gets the total cost of selected addons
@@ -1425,13 +1328,15 @@ const useBooking = () => {
         valet_type: selectedValetType?.name || "",
         addons: selectedAddons.map((addon) => addon.name || ""),
         special_instructions: specialInstructions || "",
-        total_amount: getTotalPrice(),
+        total_amount: getOriginalPrice(), // Send original price to detailer (no discount info)
         status: "pending",
         booking_reference: `APT${Date.now()}-${user?.id}`,
         service_type: selectedServiceType?.name || "",
         booking_date: selectedDate?.toISOString().split("T")[0] || "",
         start_time: startTime.toISOString().split("T")[1].replace("Z", ""),
         end_time: endTime.toISOString().split("T")[1].replace("Z", ""),
+        loyalty_tier: user?.loyalty_tier || "",
+        loyalty_benefits: user?.loyalty_benefits?.free_service || [],
       };
       /* Send the data to the detailer app stack and append the booking data to the url as params
        * The stack returns the DetailerProfileProps
@@ -1526,8 +1431,8 @@ const useBooking = () => {
       setIsLoading(true);
 
       // First, handle payment
-      const totalPrice = getTotalPrice();
-      const paymentResult = await openPaymentSheet(totalPrice);
+      const finalPrice = getFinalPrice();
+      const paymentResult = await openPaymentSheet(finalPrice);
 
       // If payment was cancelled, don't proceed with booking
       if (paymentResult === false) {
@@ -1545,7 +1450,7 @@ const useBooking = () => {
           detailer: booking.detailer,
           address: selectedAddress!,
           status: "pending",
-          total_amount: getTotalPrice(),
+          total_amount: getFinalPrice(),
           addons: selectedAddons,
           start_time: selectedDate
             ?.toISOString()
@@ -1589,7 +1494,7 @@ const useBooking = () => {
     }
   }, [
     openPaymentSheet,
-    getTotalPrice,
+    getFinalPrice,
     createBooking,
     resetBooking,
     refetchAppointments,
@@ -1716,6 +1621,7 @@ const useBooking = () => {
     addOns,
     serviceTypes,
     valetTypes,
+    user,
     isLoadingAddOns,
     isLoadingServiceTypes,
     isLoadingValetTypes,
@@ -1767,10 +1673,11 @@ const useBooking = () => {
     isLoadingBooking,
     handleRescheduleBooking,
     isLoadingRescheduleBooking,
-
-    // Booking cancellation
     handleCancelBooking,
     isLoadingCancelBooking,
+    getOriginalPrice,
+    getFinalPrice,
+    getLoyaltyDiscount,
   };
 };
 
