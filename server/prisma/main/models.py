@@ -1,6 +1,7 @@
 from typing import Iterable
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.core.validators import FileExtensionValidator
 import uuid
 from django.utils import timezone
 from datetime import timedelta
@@ -92,6 +93,12 @@ class Vehicles(models.Model):
     year = models.IntegerField()
     color = models.CharField(max_length=100)
     licence = models.CharField(max_length=100)  # Changed from registration to licence to match interface
+    image = models.ImageField(
+        upload_to='vehicles/images/%Y/%m/%d/', 
+        null=True, 
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
