@@ -100,11 +100,12 @@ class GarageView(APIView):
             year = request.data.get('year')
             color = request.data.get('color')
             licence = request.data.get('licence')
+            image = request.FILES.get('image')  # Handle file upload
             
             if not all([make, model, year, color, licence]):
                 return Response({'error': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # Create vehicle without image first
+            # Create vehicle with image
             new_vehicle = Vehicles.objects.create(
                 user=request.user,
                 make=make,
@@ -112,11 +113,14 @@ class GarageView(APIView):
                 year=year,
                 color=color,
                 licence=licence,
+                image=image,  # This will automatically upload to S3 if configured
             )
             # Return the vehicle object
             print(f'You just added {new_vehicle.make} {new_vehicle.model} {new_vehicle.year} to your garage')
             return Response({
                 'message': f'You just added {new_vehicle.make} {new_vehicle.model} {new_vehicle.year} to your garage',
+                'vehicle_id': new_vehicle.id,
+                'image_url': get_full_media_url(new_vehicle.image.url) if new_vehicle.image else None,
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -153,6 +157,7 @@ class GarageView(APIView):
                     'year': vehicle.year,
                     'color': vehicle.color,
                     'licence': vehicle.licence,
+                    'image': get_full_media_url(vehicle.image.url) if vehicle.image else None,
                 })
             return Response({'vehicles': vehicles_list}, status=status.HTTP_200_OK)
         except Exception as e:
