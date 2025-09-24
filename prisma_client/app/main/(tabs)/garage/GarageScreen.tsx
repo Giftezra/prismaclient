@@ -10,7 +10,7 @@ import {
 import React, { useCallback, useState } from "react";
 import StyledText from "@/app/components/helpers/StyledText";
 import MyVehicleStatsComponent from "@/app/components/garage/MyVehicleStatsComponent";
-import PromotionsCardComponent from "@/app/components/garage/PromotionsCardComponent";
+import PromotionsCardComponent from "@/app/components/booking/PromotionsCard";
 import useGarage from "@/app/app-hooks/useGarage";
 import GarageVehicleComponent from "@/app/components/garage/GarageVehicleComponent";
 import StyledButton from "@/app/components/helpers/StyledButton";
@@ -24,7 +24,6 @@ const GarageScreen = () => {
   const {
     vehicleStats,
     vehicles,
-    promotions,
     isModalVisible,
     setIsModalVisible,
     isLoadingVehicles,
@@ -73,7 +72,7 @@ const GarageScreen = () => {
             }}
           />
         </View>
-        {/* Display the list of cars the user has added in a compact and scrollable view */}
+        {/* Display the list of cars the user has added in a 2-column grid */}
         <View style={styles.myvehiclecontainer}>
           {isLoadingVehicles ? (
             <StyledText
@@ -83,22 +82,24 @@ const GarageScreen = () => {
               Loading vehicles...
             </StyledText>
           ) : vehicles && vehicles.length > 0 ? (
-            vehicles.map((vehicle, index) => (
-              <GarageVehicleComponent
-                key={index}
-                vehicle={vehicle}
-                onViewDetailsPress={async () => {
-                  const success = await handleViewDetailsPress(vehicle.id);
-                  if (success) {
-                    setIsModalVisible(true);
-                  }
-                }}
-                onBookServicePress={() => {
-                  router.push("/main/bookings/BookingScreen");
-                }}
-                onDeletePress={() => handleDeleteVehicle(vehicle.id)}
-              />
-            ))
+            <View style={styles.vehiclesGrid}>
+              {vehicles.map((vehicle, index) => (
+                <GarageVehicleComponent
+                  key={index}
+                  vehicle={vehicle}
+                  onViewDetailsPress={async () => {
+                    const success = await handleViewDetailsPress(vehicle.id);
+                    if (success) {
+                      setIsModalVisible(true);
+                    }
+                  }}
+                  onBookServicePress={() => {
+                    router.push("/main/(tabs)/bookings/BookingScreen");
+                  }}
+                  onDeletePress={() => handleDeleteVehicle(vehicle.id)}
+                />
+              ))}
+            </View>
           ) : (
             <View style={styles.emptyStateContainer}>
               <MaterialIcons
@@ -130,8 +131,12 @@ const GarageScreen = () => {
       <ModalServices
         visible={isAddVehicleModalVisible}
         onClose={() => setIsAddVehicleModalVisible(false)}
-        component={<AddNewVehicle />}
-        modalType="sheet"
+        component={
+          <AddNewVehicle
+            setIsAddVehicleModalVisible={setIsAddVehicleModalVisible}
+          />
+        }
+        modalType="fullscreen"
         animationType="slide"
         showCloseButton={true}
         title="Add New Vehicle"
@@ -143,7 +148,7 @@ const GarageScreen = () => {
         component={
           <MyVehicleStatsComponent
             onBookWash={() => {
-              router.push("/main/bookings/BookingScreen");
+              router.push("/main/(tabs)/bookings/BookingScreen");
             }}
             vehicleStats={vehicleStats}
           />
@@ -171,10 +176,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   myvehiclecontainer: {
-    overflow: "hidden",
+    flex: 1,
+    paddingHorizontal: 10,
   },
-  myvehicleScroll: {
-    overflow: "hidden",
+  vehiclesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    paddingHorizontal: 5,
   },
   modalHeader: {
     flexDirection: "row",

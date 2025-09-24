@@ -13,6 +13,7 @@ import { useRegisterMutation } from "../store/api/authApi";
 import { useAlertContext } from "../contexts/AlertContext";
 import { router } from "expo-router";
 import { saveDataToStorage } from "@/app/utils/helpers/storage";
+import { useState } from "react";
 
 const useOnboarding = () => {
   const dispatch = useAppDispatch();
@@ -24,6 +25,10 @@ const useOnboarding = () => {
 
   /* Import the alert contexts here to use the alert modal */
   const { setAlertConfig, setIsVisible } = useAlertContext();
+
+  // Terms and conditions state
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   /* Handle the collection of the users data to create an account */
   const collectSignupData = (field: string, value: string) => {
@@ -44,6 +49,19 @@ const useOnboarding = () => {
         isVisible: true,
         onConfirm: () => {
           setIsVisible(false);
+        },
+      });
+      return;
+    }
+    if (!termsAccepted) {
+      setAlertConfig({
+        title: "Terms Required",
+        message: "You must accept the terms and conditions to create an account",
+        type: "error",
+        isVisible: true,
+        onConfirm: () => {
+          setIsVisible(false);
+          setShowTermsModal(true);
         },
       });
       return;
@@ -89,11 +107,25 @@ const useOnboarding = () => {
     }
   };
 
+  const handleAcceptTerms = () => {
+    setTermsAccepted(true);
+    setShowTermsModal(false);
+  };
+
+  const handleShowTerms = () => {
+    setShowTermsModal(true);
+  };
+
   return {
     signUpData,
     isRegisterLoading,
     collectSignupData,
     registerUser,
+    termsAccepted,
+    showTermsModal,
+    handleAcceptTerms,
+    handleShowTerms,
+    setShowTermsModal,
   };
 };
 

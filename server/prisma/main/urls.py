@@ -5,6 +5,8 @@ from main.views.profile import ProfileView
 from main.views.garage import GarageView
 from main.views.booking import BookingView
 from main.views.dashboard import DashboardView
+from main.views.payment import PaymentView, StripeWebhookView
+from main.views.terms import TermsView
 from django.conf import settings
 from django.conf.urls.static import static
 from main.views.notifications import NotificationsView
@@ -22,6 +24,11 @@ urlpatterns = [
     path('booking/<action>/', BookingView.as_view(), name='booking'),
     path('dashboard/<action>/', DashboardView.as_view(), name='dashboard'),
     path('notifications/<action>/', NotificationsView.as_view(), name='notifications'),
+    path('terms/<action>/', TermsView.as_view(), name='terms'),
+    
+    # Payment and webhook endpoints
+    path('payment/<action>/', PaymentView.as_view(), name='payment'),
+    path('payment/stripe-webhook/', StripeWebhookView.as_view(), name='stripe_webhook'),
 ]
 
 

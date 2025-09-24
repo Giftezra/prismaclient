@@ -21,6 +21,7 @@ import {
 import { updateUser } from "@/app/store/slices/authSlice";
 import { RootState, useAppDispatch, useAppSelector } from "../store/main_store";
 import { useAlertContext } from "../contexts/AlertContext";
+import { useSnackbar } from "../contexts/SnackbarContext";
 import {
   getUserFromStorage,
   updateUserInStorage,
@@ -36,6 +37,9 @@ const useProfile = () => {
 
   /* import and use the alert context to display an alert to the user when a neccessary action is performed */
   const { setIsVisible, setAlertConfig } = useAlertContext();
+
+  /* import and use the snackbar context to display success messages */
+  const { showSnackbarWithConfig } = useSnackbar();
 
   /* Get the new address state from the store */
   const newAddress = useAppSelector(
@@ -327,19 +331,14 @@ const useProfile = () => {
       const response = await addNewAddress(newAddress).unwrap();
 
       if (response && response.id && response.address) {
-        // Show success message
-        setAlertConfig({
-          title: "Address Added",
-          message: "You have successfully added a new address",
+        showSnackbarWithConfig({
+          message: "Address added successfully",
           type: "success",
-          isVisible: true,
-          onConfirm: () => {
-            setIsVisible(false);
-            // RTK Query will automatically update the cache
-            refetchAddresses();
-            dispatch(clearNewAddress());
-          },
+          duration: 3000,
         });
+        // RTK Query will automatically update the cache
+        refetchAddresses();
+        dispatch(clearNewAddress());
       }
     } catch (error: any) {
       // Handle different types of errors
@@ -347,6 +346,8 @@ const useProfile = () => {
 
       if (error?.data?.error) {
         errorMessage = error.data.error;
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message;
       } else if (error?.status === 400) {
         errorMessage = "Invalid address data. Please check your input.";
       } else if (error?.status === 401) {
@@ -374,6 +375,7 @@ const useProfile = () => {
     setAlertConfig,
     setIsVisible,
     refetchAddresses,
+    showSnackbarWithConfig,
   ]);
 
   /**
@@ -404,6 +406,8 @@ const useProfile = () => {
       let errorMessage = "Failed to delete address. Please try again.";
       if (error?.data?.error) {
         errorMessage = error.data.error;
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message;
       } else if (error?.status === 400) {
         errorMessage = "Invalid address data. Please check your input.";
       } else if (error?.status === 401) {
@@ -474,6 +478,8 @@ const useProfile = () => {
       let errorMessage = "Failed to edit address. Please try again.";
       if (error?.data?.error) {
         errorMessage = error.data.error;
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message;
       } else if (error?.status === 400) {
         errorMessage = "Invalid address data. Please check your input.";
       } else if (error?.status === 401) {

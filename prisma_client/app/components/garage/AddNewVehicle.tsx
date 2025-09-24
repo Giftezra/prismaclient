@@ -12,6 +12,7 @@ import StyledTextInput from "@/app/components/helpers/StyledTextInput";
 import StyledText from "@/app/components/helpers/StyledText";
 import useGarage from "@/app/app-hooks/useGarage";
 import StyledButton from "@/app/components/helpers/StyledButton";
+import { useThemeColor } from "@/hooks/useThemeColor";
 
 /**
  * AddNewVehicleScreen Component
@@ -20,8 +21,18 @@ import StyledButton from "@/app/components/helpers/StyledButton";
  * All business logic and state management is handled by the useGarage hook.
  * This component focuses purely on rendering the UI and delegating user interactions to the hook.
  */
-const AddNewVehicleScreen = () => {
+const AddNewVehicleScreen = ({
+  setIsAddVehicleModalVisible,
+}: {
+  setIsAddVehicleModalVisible: (visible: boolean) => void;
+}) => {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  // Theme colors
+  const backgroundColor = useThemeColor({}, "background");
+  const textColor = useThemeColor({}, "text");
+  const primaryColor = useThemeColor({}, "primary");
+  const borderColor = useThemeColor({}, "borders");
 
   // Extract all needed methods and state from the useGarage hook
   const { newVehicle, collectNewVehicleData, handleSubmit, isLoadingVehicles } =
@@ -103,6 +114,7 @@ const AddNewVehicleScreen = () => {
               placeholder="e.g., ABC123"
               value={newVehicle?.licence || ""}
               onChangeText={(text) => collectNewVehicleData("licence", text)}
+              maxLength={12}
             />
           </View>
         </View>
@@ -114,8 +126,11 @@ const AddNewVehicleScreen = () => {
           ) : (
             <StyledButton
               title={"Add New Vehicle"}
-              onPress={handleSubmit}
-              variant="small"
+              onPress={() => {
+                handleSubmit();
+                setIsAddVehicleModalVisible(false);
+              }}
+              variant="medium"
               style={styles.submitButton}
               disabled={isLoadingVehicles}
             />
@@ -130,7 +145,7 @@ export default AddNewVehicleScreen;
 
 const styles = StyleSheet.create({
   mainContainer: {
-    flex: 1,
+    flex: 1
   },
   scrollContent: {
     flexGrow: 1,

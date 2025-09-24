@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from .models import User, Vehicles, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification, LoyaltyProgram, Promotions
+from django.utils import timezone
+from .models import User, Vehicles, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification, LoyaltyProgram, Promotions, PaymentTransaction, RefundRecord, TermsAndConditions
 
 
 admin.site.site_header = "Prisma Valet Admin"
@@ -154,3 +155,39 @@ class LoyaltyProgramAdmin(admin.ModelAdmin):
 class PromotionsAdmin(admin.ModelAdmin):
     list_display = ('user', 'title', 'discount_percentage', 'valid_until', 'is_active', 'terms_conditions')
     search_fields = ('user__name', 'title')
+
+@admin.register(PaymentTransaction)
+class PaymentTransactionAdmin(admin.ModelAdmin):
+    list_display = ['booking', 'user', 'transaction_type', 'amount', 'status', 'created_at']
+    list_filter = ['transaction_type', 'status', 'created_at']
+    search_fields = ['booking__booking_reference', 'user__email', 'stripe_payment_intent_id']
+    readonly_fields = ['created_at', 'processed_at']
+
+@admin.register(RefundRecord)
+class RefundRecordAdmin(admin.ModelAdmin):
+    list_display = ['booking', 'user', 'requested_amount', 'status', 'created_at', 'dispute_resolved']
+    list_filter = ['status', 'dispute_resolved', 'created_at']
+    search_fields = ['booking__booking_reference', 'user__email', 'stripe_refund_id']
+    actions = ['resolve_disputes', 'mark_as_resolved']
+    readonly_fields = ['created_at', 'processed_at', 'dispute_resolved_at']
+    
+    def resolve_disputes(self, request, queryset):
+        """Mark disputes as resolved"""
+        updated = queryset.filter(status='disputed').update(
+            dispute_resolved=True,
+            dispute_resolved_at=timezone.now()
+        )
+        self.message_user(request, f"Marked {updated} disputes as resolved")
+    resolve_disputes.short_description = "Mark selected disputes as resolved"
+    
+    def mark_as_resolved(self, request, queryset):
+        """Mark refunds as resolved"""
+        updated = queryset.update(dispute_resolved=True, dispute_resolved_at=timezone.now())
+        self.message_user(request, f"Marked {updated} refunds as resolved")
+    mark_as_resolved.short_description = "Mark selected refunds as resolved"
+
+@admin.register(TermsAndConditions)
+class TermsAndConditionsAdmin(admin.ModelAdmin):
+    list_display = ('version', 'last_updated')
+    ordering = ('-last_updated',)
+    

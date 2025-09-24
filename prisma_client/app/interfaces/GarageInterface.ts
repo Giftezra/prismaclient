@@ -5,6 +5,7 @@ export interface MyVehiclesProps {
   year: number;
   color: string;
   licence: string;
+  image?: string | null | any;
 }
 
 export interface MyVehicleStatsProps {
@@ -18,7 +19,6 @@ export interface MyVehicleStatsProps {
 export interface PromotionsProps {
   id: string;
   title: string;
-  description: string;
   discount_percentage: number;
   valid_until: string;
   is_active: boolean;

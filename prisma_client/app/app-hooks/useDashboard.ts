@@ -10,7 +10,6 @@ import { useAlertContext } from "../contexts/AlertContext";
 import * as Linking from "expo-linking";
 import { StatCard } from "../interfaces/DashboardInterfaces";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import useWebSocket from "./useWebsocket";
 import { router } from "expo-router";
 
 const useDashboard = () => {
@@ -56,9 +55,11 @@ const useDashboard = () => {
       const inProgress = appointments.find(
         (appointment) => appointment.status === "in_progress"
       );
-      setUpcomingAppointment(inProgress || appointments[0]); // Fallback to first appointment if no in-progress
+      setUpcomingAppointment(inProgress || appointments[0]);
     }
   }, [appointments]);
+
+
 
   /* Check for unrated services then set the unratedServices state */
   const [isUnratedServices, setIsUnratedServices] = useState<boolean>(false);
@@ -67,7 +68,6 @@ const useDashboard = () => {
       setIsUnratedServices(!recentService.is_reviewed);
     }
   }, [recentService]);
-
 
   /* Configure the stats */
   const stats: StatCard[] = [
@@ -90,7 +90,7 @@ const useDashboard = () => {
    * and into their dialer
    * @param phoneNumber - The phone number to call
    */
-  const callDetailer = (phoneNumber: string) => {
+  const callDetailer = useCallback((phoneNumber: string) => {
     if (!phoneNumber) {
       return;
     }
@@ -108,7 +108,7 @@ const useDashboard = () => {
         setIsVisible(false);
       },
     });
-  };
+  }, [setAlertConfig, setIsVisible]);
 
   /**
    * Handle the refresh of the screen.
@@ -188,8 +188,6 @@ const useDashboard = () => {
     },
     [cancelAppointment, refetchAppointments, setAlertConfig, setIsVisible]
   );
-
-  useWebSocket(handleBookingUpdate);
 
   return {
     inProgressAppointment,

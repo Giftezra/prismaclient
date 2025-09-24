@@ -57,3 +57,12 @@ export const formatCurrency = (amount: number, country?: string) => {
     });
   }
 };
+
+
+export const formatDuration = (duration: number) => {
+  if (duration < 60) {
+    return `${duration}m`;
+  } else {
+    return `${Math.floor(duration / 60)}h ${duration % 60}m`;
+  }
+};

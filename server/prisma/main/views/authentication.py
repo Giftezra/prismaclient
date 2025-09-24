@@ -71,7 +71,7 @@ class AuthenticationView(CreateAPIView):
             loyalty_benefits = loyalty.get_tier_benefits() if loyalty else None
        
             return Response({
-                'message': 'Welcome to PRISMA VALLET. You have successfully created your account.',
+                'message': 'Welcome to PRISMA VALLET. Your account has been created successfully.\n\nPlease check your email for further updates',
                 'user': {
                     'name': user.name,
                     'email': user.email,

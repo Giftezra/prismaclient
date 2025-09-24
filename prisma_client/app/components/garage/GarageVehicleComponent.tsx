@@ -1,11 +1,10 @@
 import React from "react";
-import { StyleSheet, View, Image, TouchableOpacity } from "react-native";
+import { StyleSheet, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MyVehiclesProps } from "../../interfaces/GarageInterface";
 import StyledText from "../helpers/StyledText";
 import StyledButton from "../helpers/StyledButton";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import LinearGradientComponent from "../helpers/LinearGradientComponent";
 
 interface GarageVehicleComponentProps {
   vehicle: MyVehiclesProps;
@@ -25,168 +24,150 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
   const cardsColor = useThemeColor({}, "cards");
   const textColor = useThemeColor({}, "text");
   const iconColor = useThemeColor({}, "icons");
+  const borderColor = useThemeColor({}, "borders");
 
   return (
-    <LinearGradientComponent
-      style={[styles.cardContent]}
-      color1={cardsColor}
-      color2={textColor}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 3, y: 1 }}
+    <View
+      style={[
+        styles.cardContainer,
+        { backgroundColor: cardsColor, borderColor },
+      ]}
     >
-      {/* Vehicle Image Section */}
-      <View style={styles.imageSection}>
-        <View style={styles.imageContainer}>
-          <Image
-            source={require("../../../assets/images/car.jpg")}
-            style={styles.vehicleImage}
-          />
+      {/* Header with delete button */}
+      <View style={styles.header}>
+        <View style={styles.vehicleIcon}>
+          <Ionicons name="car" size={24} color={iconColor} />
         </View>
-
-        <View style={styles.imageOverlay}>
-          <TouchableOpacity
-            style={[styles.actionButton]}
-            onPress={() => onDeletePress?.(vehicle.id)}
-          >
-            <Ionicons name="trash" size={24} color={iconColor} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.deleteButton, { backgroundColor: borderColor }]}
+          onPress={() => onDeletePress?.(vehicle.id)}
+        >
+          <Ionicons name="trash-outline" size={16} color={textColor} />
+        </TouchableOpacity>
       </View>
 
-      {/* Vehicle Information Section */}
-      <View style={styles.infoSection}>
-        {/* Main Vehicle Details */}
-        <View style={styles.mainDetails}>
-          <StyledText variant="labelLarge">
-            {vehicle.year} {vehicle.make} {vehicle.model}
-          </StyledText>
-          <View style={styles.vehicleMeta}>
-            <View style={styles.metaItem}>
-              <Ionicons name="color-palette" size={16} color={iconColor} />
-              <StyledText variant="bodyMedium" style={styles.metaText}>
-                {vehicle.color}
-              </StyledText>
-            </View>
-            <View style={styles.metaItem}>
-              <Ionicons name="card" size={16} color={iconColor} />
-              <StyledText variant="bodyMedium" style={styles.metaText}>
-                {vehicle.licence}
-              </StyledText>
-            </View>
+      {/* Vehicle Information */}
+      <View style={styles.content}>
+        <StyledText
+          variant="labelLarge"
+          style={[styles.vehicleTitle, { color: textColor }]}
+        >
+          {vehicle.year} {vehicle.make} {vehicle.model}
+        </StyledText>
+
+        <View style={styles.details}>
+          <View style={styles.detailRow}>
+            <Ionicons
+              name="color-palette-outline"
+              size={14}
+              color={iconColor}
+            />
+            <StyledText
+              variant="bodySmall"
+              style={[styles.detailText, { color: textColor }]}
+            >
+              {vehicle.color}
+            </StyledText>
+          </View>
+          <View style={styles.detailRow}>
+            <Ionicons name="card-outline" size={14} color={iconColor} />
+            <StyledText
+              variant="bodySmall"
+              style={[styles.detailText, { color: textColor }]}
+            >
+              {vehicle.licence}
+            </StyledText>
           </View>
         </View>
 
-        {/* Vehicle ID */}
-        <View style={styles.idSection}>
-          <StyledText variant="bodySmall" style={styles.idLabel}>
-            Vehicle ID
-          </StyledText>
-          <StyledText variant="bodyMedium" style={styles.idValue}>
-            {vehicle.id}
-          </StyledText>
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
+        {/* Action Buttons */}
+        <View style={styles.actions}>
           <StyledButton
-            title="View Details"
+            title="Details"
             variant="tonal"
             onPress={() => onViewDetailsPress?.(vehicle.id)}
-            style={styles.detailButton}
+            style={styles.actionButton}
             isLoading={isLoadingVehicleStats}
           />
           <StyledButton
-            title="Book Service"
+            title="Book"
             variant="tonal"
             onPress={() => onBookServicePress?.(vehicle.id)}
-            style={styles.serviceButton}
+            style={styles.actionButton}
           />
         </View>
       </View>
-    </LinearGradientComponent>
+    </View>
   );
 };
 
 export default GarageVehicleComponent;
 
 const styles = StyleSheet.create({
-  cardContent: {
-    margin: 5,
-    borderRadius: 5,
-    marginBottom: 10,
+  cardContainer: {
+    width: "48%",
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  imageSection: {
-    height: 200,
-    borderRadius: 5,
-    overflow: "hidden",
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 12,
+    paddingBottom: 8,
   },
-  imageContainer: {
-    width: "100%",
-    height: "100%",
+  vehicleIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    opacity: 0.8,
   },
-  image: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  vehicleImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  imageOverlay: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-    zIndex: 1,
-  },
-  actionButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 30,
+  deleteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
-  infoSection: {
-    padding: 5,
+  content: {
+    padding: 12,
+    paddingTop: 0,
   },
-  mainDetails: {
-    marginBottom: 16,
+  vehicleTitle: {
+    fontWeight: "600",
+    marginBottom: 8,
+    lineHeight: 20,
   },
-  vehicleMeta: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 16,
+  details: {
+    marginBottom: 12,
   },
-  metaItem: {
+  detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-  },
-  metaText: {
-    fontWeight: "500",
-  },
-  idSection: {
-    marginBottom: 5,
-    padding: 5,
-    borderRadius: 8,
-  },
-  idLabel: {
-    opacity: 0.7,
     marginBottom: 4,
   },
-  idValue: {
-    fontWeight: "600",
-    fontFamily: "monospace",
+  detailText: {
+    marginLeft: 6,
+    opacity: 0.8,
   },
-  quickActions: {
+  actions: {
     flexDirection: "row",
-    gap: 12,
+    gap: 6,
   },
-  detailButton: {
+  actionButton: {
     flex: 1,
-  },
-  serviceButton: {
-    flex: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
   },
 });

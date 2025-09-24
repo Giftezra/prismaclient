@@ -29,8 +29,7 @@ interface BookingSummaryProps {
   addonPrice?: number;
   addonDuration?: number;
   formatPrice: (price: number) => string;
-  user?: UserProfileProps; // Add user to get loyalty benefits
-  // Add these new props for loyalty pricing
+  user?: UserProfileProps;
   originalPrice?: number;
   finalPrice?: number;
   loyaltyDiscount?: number;

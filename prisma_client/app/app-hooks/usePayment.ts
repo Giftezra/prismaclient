@@ -4,6 +4,7 @@ import { useFetchPaymentSheetDetailsMutation } from "@/app/store/api/bookingApi"
 import { useAlertContext } from "@/app/contexts/AlertContext";
 import { PaymentSheetResponse } from "@/app/interfaces/BookingInterfaces";
 import { RootState, useAppSelector } from "../store/main_store";
+import { useAddresses } from "./useAddresses";
 
 /**
  * Custom hook for managing payment functionality using Stripe
@@ -25,9 +26,7 @@ const usePayment = () => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [fetchPaymentSheetDetails] = useFetchPaymentSheetDetailsMutation();
   const { setAlertConfig, setIsVisible } = useAlertContext();
-
-  const user = useAppSelector((state: RootState) => state.auth.user);
-  const userAddress = user?.address;
+  const { addresses } = useAddresses();
 
   /**
    * Fetches payment sheet details from the server
@@ -36,10 +35,16 @@ const usePayment = () => {
    * @returns Promise that resolves to payment sheet details
    */
   const fetchPaymentSheetDetailsFromServer = useCallback(
-    async (finalPrice: number): Promise<PaymentSheetResponse> => {
+    async (
+      finalPrice: number,
+      bookingReference: string
+    ): Promise<PaymentSheetResponse> => {
       try {
         const amountInCents = Math.round(finalPrice * 100);
-        const response = await fetchPaymentSheetDetails(amountInCents).unwrap();
+        const response = await fetchPaymentSheetDetails({
+          amount: amountInCents,
+          booking_reference: bookingReference,
+        }).unwrap();
         return response;
       } catch (error) {
         console.error("Error fetching payment sheet details:", error);
@@ -61,6 +66,7 @@ const usePayment = () => {
   const initializePaymentSheet = useCallback(
     async (
       finalPrice: number,
+      bookingReference: string,
       merchantDisplayName: string = "Prisma Valet"
     ) => {
       /* Get the user and address from the state since this is stored in the state when the user is logged in.
@@ -68,7 +74,7 @@ const usePayment = () => {
        * Set the country code to GBP if the user is in the United Kingdom.
        * Set the country code to EUR if the user is in not in the United Kingdom.
        */
-      const address = userAddress;
+      const address = addresses[0];
       let countryCode = "";
 
       if (address?.country === "United Kingdom") {
@@ -79,13 +85,17 @@ const usePayment = () => {
 
       try {
         const { paymentIntent, ephemeralKey, customer } =
-          await fetchPaymentSheetDetailsFromServer(finalPrice);
+          await fetchPaymentSheetDetailsFromServer(
+            finalPrice,
+            bookingReference
+          );
 
         const { error } = await initPaymentSheet({
           paymentIntentClientSecret: paymentIntent,
           merchantDisplayName: merchantDisplayName,
           customerEphemeralKeySecret: ephemeralKey,
           customerId: customer,
+          returnURL: "prismaclient://payment-success",
           applePay: {
             merchantCountryCode: countryCode,
           },
@@ -120,33 +130,43 @@ const usePayment = () => {
   const openPaymentSheet = useCallback(
     async (
       finalPrice: number,
-      merchantDisplayName: string = "Prisma Valet"
+      merchantDisplayName: string = "Prisma Valet",
+      bookingReference: string
     ): Promise<boolean> => {
       try {
+        // Initialize payment sheet first
         await initializePaymentSheet(
           finalPrice,
+          bookingReference,
           merchantDisplayName
         );
+
+        // Present payment sheet
         const { error } = await presentPaymentSheet();
 
         if (error) {
-          // Handle specific Stripe payment errors
-          let errorMessage = "An error occurred during payment";
+          // Handle specific error cases
+          if (error.code === "Canceled") {
+            console.log("Payment was canceled by user");
+            return false;
+          }
+
+          // Handle other errors
+          let errorMessage = "Payment failed. Please try again.";
           let errorTitle = "Payment Error";
 
-          // Handle specific Stripe payment errors based on error type
-          if (error.code === "Canceled") {
-            // User cancelled the payment
-            errorMessage = "Payment was cancelled";
-            errorTitle = "Payment Cancelled";
-          } else if (error.code === "Failed") {
-            // Payment failed (insufficient funds, card declined, etc.)
+          if (error.message?.includes("card_declined")) {
             errorMessage =
-              "Payment failed. Please check your payment method and try again.";
-            errorTitle = "Payment Failed";
-          } else {
-            // Use the error message from Stripe if available
-            errorMessage = error.message || errorMessage;
+              "Your card was declined. Please try a different payment method.";
+            errorTitle = "Card Declined";
+          } else if (error.message?.includes("insufficient_funds")) {
+            errorMessage =
+              "Insufficient funds. Please try a different payment method.";
+            errorTitle = "Insufficient Funds";
+          } else if (error.message?.includes("expired_card")) {
+            errorMessage =
+              "Your card has expired. Please use a different payment method.";
+            errorTitle = "Expired Card";
           }
 
           setAlertConfig({
@@ -158,11 +178,6 @@ const usePayment = () => {
               setIsVisible(false);
             },
           });
-
-          // Don't throw the error for user cancellations, just return false
-          if (error.code === "Canceled") {
-            return false;
-          }
 
           throw error;
         }
@@ -207,14 +222,15 @@ const usePayment = () => {
    * @returns Promise that resolves to true if payment successful, false if cancelled, throws error if failed
    */
   const processTipPayment = useCallback(
-    async (
-      tipAmount: number,
-    ): Promise<boolean> => {
-      return openPaymentSheet(tipAmount, "Prisma Valet - Tip");
+    async (tipAmount: number, bookingReference: string): Promise<boolean> => {
+      return openPaymentSheet(
+        tipAmount,
+        "Prisma Valet - Tip",
+        bookingReference
+      );
     },
     [openPaymentSheet]
   );
-
 
   return {
     // Core payment methods

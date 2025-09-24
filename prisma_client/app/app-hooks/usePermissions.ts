@@ -107,22 +107,17 @@ export const usePermissions = () => {
       const currentStatus = await Notifications.getPermissionsAsync();
 
       if (!currentStatus.canAskAgain) {
-        Alert.alert(
-          "Notification Permission Required",
-          "Please enable notifications in your device settings to receive important updates about your bookings and services.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Open Settings",
-              onPress: () => {
-                // For notifications, we can use Linking to open app settings
-                import("expo-linking").then(({ openSettings }) =>
-                  openSettings()
-                );
-              },
-            },
-          ]
-        );
+        // Permission was permanently denied - don't show alert, just return false
+        const permissionInfo = {
+          granted: false,
+          canAskAgain: false,
+          status: "denied" as const,
+        };
+
+        setPermissionStatus((prev) => ({
+          ...prev,
+          notifications: permissionInfo,
+        }));
         return false;
       }
 
@@ -153,15 +148,43 @@ export const usePermissions = () => {
 
         return true;
       } else {
-        Alert.alert(
-          "Permission Denied",
-          "You can enable notifications later in the app settings.",
-          [{ text: "OK" }]
-        );
         return false;
       }
     } catch (error) {
       console.error("Error requesting notification permission:", error);
+      return false;
+    }
+  };
+
+  /**
+   * Toggle notification permission - for use in settings
+   * This handles both enabling and disabling notifications
+   */
+  const toggleNotificationPermission = async (
+    enable: boolean
+  ): Promise<boolean> => {
+    try {
+      if (enable) {
+        // User wants to enable notifications
+        return await requestNotificationPermission();
+      } else {
+        // User wants to disable notifications
+        // We can't actually disable system permissions, but we can update our state
+        const permissionInfo = {
+          granted: false,
+          canAskAgain: true,
+          status: "denied" as const,
+        };
+
+        setPermissionStatus((prev) => ({
+          ...prev,
+          notifications: permissionInfo,
+        }));
+
+        return true; // Return true because we successfully updated our state
+      }
+    } catch (error) {
+      console.error("Error toggling notification permission:", error);
       return false;
     }
   };
@@ -265,7 +288,6 @@ export const usePermissions = () => {
     }
   };
 
-
   // Initialize permissions on mount
   useEffect(() => {
     initializePermissions();
@@ -277,6 +299,7 @@ export const usePermissions = () => {
     checkNotificationPermission,
     checkLocationPermission,
     requestNotificationPermission,
+    toggleNotificationPermission,
     requestLocationPermission,
     requestAllPermissions,
   };

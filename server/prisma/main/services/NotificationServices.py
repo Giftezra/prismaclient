@@ -63,7 +63,6 @@ class NotificationService:
         """Send service reminder via push notification and email"""
         results = {
             'push_notification': None,
-            'email_notification': None,
             'errors': []
         }
         
@@ -83,25 +82,10 @@ class NotificationService:
                 results['push_notification'] = push_result
             except Exception as e:
                 results['errors'].append(f"Push notification failed: {str(e)}")
-        
-        # Send email notification if enabled
-        if user.allow_email_notifications:
-            try:
-                email_result = self._send_email_notification(
-                    user=user,
-                    subject="Service Reminder - PRISMA VALET",
-                    template="service_reminder.html",
-                    context={
-                        'user': user,
-                        'booking': booking,
-                        'booking_reference': booking.booking_reference
-                    }
-                )
-                results['email_notification'] = email_result
-            except Exception as e:
-                results['errors'].append(f"Email notification failed: {str(e)}")
-        
         return results
+
+
+
     
     def send_service_completed(self, user, booking):
         """Send service completed notification via push notification and email"""
@@ -191,6 +175,8 @@ class NotificationService:
         
         return results
     
+
+
     def send_marketing_notification(self, users, subject, message, data=None):
         """Send marketing notification to multiple users"""
         results = {
@@ -259,6 +245,8 @@ class NotificationService:
         response = self.push_client.publish(message)
         response.validate_response()
         return response
+
+
     
     def _send_email_notification(self, user, subject, template, context=None):
         """Internal method to send email notification"""

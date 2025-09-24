@@ -13,11 +13,9 @@ services:
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=prisma.settings
       - DJANGO_ALLOWED_HOSTS=*
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000 
     networks:
       - prisma_shared_net
-    depends_on:
-      - prisma_database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -42,7 +40,6 @@ services:
     depends_on:
       - prisma_redis
       - client_server
-      - prisma_database
     networks:
       - prisma_shared_net
     healthcheck:
@@ -51,20 +48,10 @@ services:
       timeout: 10s
       retries: 3
 
-  prisma_database:
-    image: postgres:15
-    restart: always
-    env_file:
-      - .env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    networks:
-      - prisma_shared_net
-
   prisma_redis:
     image: redis:7-alpine
+    env_file:
+      - .env
     ports:
       - "6380:6379"
     volumes:
@@ -84,7 +71,6 @@ services:
       - ./nginx/html/static:/usr/share/nginx/html/static:ro
     depends_on:
       - client_server
-      - prisma_database
       - prisma_redis
       - client_celery_worker
     networks:
@@ -104,8 +90,25 @@ services:
       - REDIS_HOST=prisma_redis
     depends_on:
       - prisma_redis
-      - prisma_database
     restart: always
+    networks:
+      - prisma_shared_net
+
+  chat_subscriber:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: python manage.py chat_subscriber
+    volumes:
+      - ./server/prisma:/app
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=prisma.settings
+      - REDIS_HOST=prisma_redis
+    depends_on:
+      - client_server
+      - prisma_redis
     networks:
       - prisma_shared_net
 

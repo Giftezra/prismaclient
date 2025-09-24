@@ -1,0 +1,97 @@
+{% extends "base_email.html" %} {% block title %}Refund Issues. Action Required{% endblock %}
+<div class="greeting">Hello {{ customer_name }},</div>
+
+<div class="intro-text">
+  We hope this email finds you well. We wanted to update you on your recent
+  booking cancellation and refund request.
+</div>
+
+<div
+  class="details-banner"
+  style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%)"
+>
+  <div class="details-title">⚠️ Refund Processing Issue</div>
+</div>
+
+<div class="details-grid">
+  <div class="detail-item">
+    <span class="detail-label">Booking Reference:</span>
+    <span class="detail-value">#{{ booking_reference }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Original Service Date:</span>
+    <span class="detail-value">{{ original_date }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Vehicle:</span>
+    <span class="detail-value">{{ vehicle_make }} {{ vehicle_model }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Service Type:</span>
+    <span class="detail-value">{{ service_type_name }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Refund Amount:</span>
+    <span class="detail-value">€{{ refund_amount }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Issue Date:</span>
+    <span class="detail-value">{{ issue_date }}</span>
+  </div>
+</div>
+
+<div class="contact-info" style="border-left: 4px solid #dc2626">
+  <div class="contact-text">
+    <strong>⚠️ We encountered an issue processing your refund</strong
+    ><br /><br />
+
+    Unfortunately, we were unable to process your refund of
+    <strong>€{{ refund_amount }}</strong>
+    automatically. This can happen for various reasons, such as expired cards or
+    bank processing issues.
+
+    <br /><br />
+
+    <strong>What happens next?</strong><br />
+    • Our support team has been notified of this issue<br />
+    • We will investigate and resolve this within 24-48 hours<br />
+    • You may receive a refund through an alternative method<br />
+    • We will contact you if we need any additional information<br />
+
+    <br /><br />
+
+    <strong>No action required from you at this time.</strong><br />
+    Our team is working to resolve this issue and will update you as soon as
+    possible.
+
+    <br /><br />
+
+    If you have any questions or concerns, please don't hesitate to contact our
+    support team at
+    <a href="mailto:support@prismavalet.com" class="contact-link"
+      >support@prismavalet.com</a
+    >
+    or call us directly.
+  </div>
+</div>
+
+<div class="closing">
+  <div class="closing-text">
+    We sincerely apologize for this inconvenience and appreciate your patience
+    as we resolve this matter.
+  </div>
+
+  <div class="closing-text">Thank you for choosing Prisma Valet.</div>
+</div>
+
+<div class="signature">
+  Best regards,<br />
+  <span class="signature-name">The Prisma Valet Support Team</span><br />
+  <div class="name">Prisma Valet</div>
+</div>
+{% endblock %}

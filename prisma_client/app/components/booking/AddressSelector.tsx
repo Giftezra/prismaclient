@@ -20,7 +20,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
 }) => {
   const cardColor = useThemeColor({}, "cards");
   const textColor = useThemeColor({}, "text");
-  const primaryPurpleColor = useThemeColor({}, "primaryPurple");
+  const primaryPurpleColor = useThemeColor({}, "primary");
 
   return (
     <View style={styles.container}>

@@ -41,7 +41,7 @@ const DashboardScreen = () => {
   const borderColor = useThemeColor({}, "borders");
 
   /* Get the currency symbol by getting the user's country */
-  const user = useAppSelector((state: RootState) => state.auth.user);
+  const user = useAppSelector((state: RootState) => state.auth?.user);
   let currencySymbol = "$";
   if (user?.address?.country === "United Kingdom") {
     currencySymbol = "£";
@@ -69,11 +69,13 @@ const DashboardScreen = () => {
 
   // Show notification modal when dashboard loads, but only if notifications are not already granted
   // and we haven't asked for permissions yet in this session
+  // Also check if the user hasn't disabled notifications in settings
   useEffect(() => {
     if (
       !permissionsLoading &&
       !permissionStatus.notifications.granted &&
-      !hasAskedForPermissions
+      !hasAskedForPermissions &&
+      user?.push_notification_token !== false // Don't show if user has explicitly disabled in settings
     ) {
       const timer = setTimeout(() => {
         setShowNotificationModal(true);
@@ -86,10 +88,11 @@ const DashboardScreen = () => {
     permissionsLoading,
     permissionStatus.notifications.granted,
     hasAskedForPermissions,
+    user?.push_notification_token,
   ]);
 
   /**
-   * Handle the display for the modar review 
+   * Handle the display for the modar review
    */
   useEffect(() => {
     if (isUnratedServices && recentService) {
@@ -114,7 +117,7 @@ const DashboardScreen = () => {
         onPress={() => {
           router.push({
             pathname: "/main/(tabs)/dashboard/UpcomingBookingScreen",
-            params: { appointmentId: appointment.appointment_id },
+            params: { appointmentId: appointment.booking_reference },
           });
         }}
       >
@@ -150,7 +153,7 @@ const DashboardScreen = () => {
           <View style={{ paddingHorizontal: 10, gap: 5 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {appointments.map((appointment) => (
-                <View key={appointment.appointment_id}>
+                <View key={appointment.booking_reference}>
                   {renderUpcomingAppointmentDate(appointment)}
                 </View>
               ))}
@@ -160,17 +163,17 @@ const DashboardScreen = () => {
 
         {/* Vehicle section */}
         <View style={styles.vehicleSection}>
-          <StyledText children="My Vehicles" variant="labelLarge" />
           <FlatList
             data={vehicles}
             renderItem={({ item }) => (
               <VehicleCard
                 vehicle={item}
                 onPress={() => {
-                  router.push({
-                    pathname: "/main/(tabs)/garage/GarageScreen",
-                    params: { vehicleId: item.id },
-                  });
+                  try {
+                    router.push("/main/(tabs)/garage/GarageScreen");
+                  } catch (error) {
+                    console.error("Navigation error:", error);
+                  }
                 }}
               />
             )}
@@ -194,7 +197,6 @@ const DashboardScreen = () => {
         onClose={() => setShowNotificationModal(false)}
         component={
           <AllowNotificationModal
-            visible={showNotificationModal}
             onClose={() => setShowNotificationModal(false)}
             onPermissionGranted={() => {
               setShowNotificationModal(false);
@@ -202,9 +204,8 @@ const DashboardScreen = () => {
             }}
           />
         }
-        showCloseButton={true}
-        animationType="slide"
-        title="Allow Notifications"
+        showCloseButton={false}
+        animationType="fade"
         modalType="fullscreen"
       />
 
@@ -216,7 +217,7 @@ const DashboardScreen = () => {
         showCloseButton={true}
         animationType="slide"
         title="Review"
-        modalType='fullscreen'
+        modalType="fullscreen"
       />
     </>
   );

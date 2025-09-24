@@ -20,9 +20,16 @@ export function useThemeColor(
     if (colorFromProps) {
       return colorFromProps;
     } else {
-      return Colors[theme][colorName];
+      // Ensure theme is valid and colorName exists in the theme
+      if (theme && Colors[theme] && Colors[theme][colorName]) {
+        return Colors[theme][colorName];
+      } else {
+        // Fallback to light theme if current theme is invalid
+        return Colors.light[colorName] || "#000000";
+      }
     }
   } catch (error) {
+    console.warn("useThemeColor error:", error);
     // Fallback to system color scheme if context is not available
     const theme = useColorScheme() ?? "light";
     const colorFromProps = props[theme];
@@ -30,7 +37,13 @@ export function useThemeColor(
     if (colorFromProps) {
       return colorFromProps;
     } else {
-      return Colors[theme][colorName];
+      // Ensure theme is valid and colorName exists in the theme
+      if (theme && Colors[theme] && Colors[theme][colorName]) {
+        return Colors[theme][colorName];
+      } else {
+        // Fallback to light theme if current theme is invalid
+        return Colors.light[colorName] || "#000000";
+      }
     }
   }
 }

@@ -19,9 +19,11 @@ import {
   useBookAppointmentMutation,
   useCancelBookingMutation,
   useRescheduleBookingMutation,
+  useFetchPromotionsQuery,
 } from "@/app/store/api/bookingApi";
 import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "@/app/contexts/AlertContext";
+import { useSnackbar } from "@/app/contexts/SnackbarContext";
 import dayjs from "dayjs";
 import { TimeSlot, CalendarDay } from "@/app/interfaces/BookingInterfaces";
 import { formatCurrency } from "@/app/utils/methods";
@@ -57,6 +59,12 @@ const useBooking = () => {
   /* Api hooks */
 
   const { data: addOns, isLoading: isLoadingAddOns } = useFetchAddOnsQuery();
+  const {
+    data: promotions,
+    isLoading: isLoadingPromotions,
+    error: promotionsError,
+  } = useFetchPromotionsQuery();
+
   const { data: serviceTypes, isLoading: isLoadingServiceTypes } =
     useFetchServiceTypeQuery();
   const { data: valetTypes, isLoading: isLoadingValetTypes } =
@@ -70,6 +78,7 @@ const useBooking = () => {
     useRescheduleBookingMutation();
 
   const { setAlertConfig, setIsVisible } = useAlertContext();
+  const { showSnackbarWithConfig, showSnackbar } = useSnackbar();
   const [selectedVehicle, setSelectedVehicle] =
     useState<MyVehiclesProps | null>(null);
   const [selectedServiceType, setSelectedServiceType] =
@@ -115,10 +124,6 @@ const useBooking = () => {
         0
       );
       const totalServiceDuration = baseServiceDuration + addonExtraDuration;
-
-      console.log("Calculated total service duration:", totalServiceDuration);
-      console.log("Base service duration:", baseServiceDuration);
-      console.log("Addon extra duration:", addonExtraDuration);
 
       return totalServiceDuration;
     },
@@ -170,23 +175,18 @@ const useBooking = () => {
       // Check if we have the required address information
       if (!selectedAddress?.country || !selectedAddress?.city) {
         const errorMessage =
-          "Address information (country/city) is required to fetch timeslots";
-        setAlertConfig({
-          title: "Error",
+          "Please select an address first to view available time slots";
+        showSnackbarWithConfig({
           message: errorMessage,
-          type: "error",
-          isVisible: true,
-          onConfirm: () => {
-            setIsVisible(false);
-          },
+          type: "warning",
+          duration: 4000,
         });
-        throw new Error(errorMessage);
+        return;
       }
 
       setIsLoadingSlots(true);
 
       try {
-        // Create URL with query parameters for GET request
         const url = new URL(
           `${API_CONFIG.detailerAppUrl}/api/v1/availability/get_timeslots/`
         );
@@ -208,11 +208,23 @@ const useBooking = () => {
           },
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
         const data = await response.json();
+
+        // Check for error messages from the server first
+        if (data.error) {
+          setAlertConfig({
+            title: "Availability Error",
+            message: data.error,
+            type: "warning",
+            isVisible: true,
+            onConfirm: () => {
+              setIsVisible(false);
+              resetBooking();
+            },
+          });
+          setAvailableTimeSlots([]);
+          return data;
+        }
 
         // Transform the detailer server response format to our TimeSlot interface
         const transformedSlots: TimeSlot[] = [];
@@ -247,15 +259,11 @@ const useBooking = () => {
 
         // If no slots were transformed, show a message to the user
         if (transformedSlots.length === 0) {
-          setAlertConfig({
-            title: "No Available Times",
+          showSnackbarWithConfig({
             message:
               "No available time slots found for the selected date. Please try a different date.",
-            type: "success",
-            isVisible: true,
-            onConfirm: () => {
-              setIsVisible(false);
-            },
+            type: "warning",
+            duration: 4000,
           });
         }
 
@@ -276,6 +284,7 @@ const useBooking = () => {
       selectedAddress,
       setAlertConfig,
       setIsVisible,
+      showSnackbarWithConfig,
     ]
   );
 
@@ -684,10 +693,25 @@ const useBooking = () => {
           });
 
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            return;
           }
 
           const data = await response.json();
+
+          // Check for error messages from the server first
+          if (data.error) {
+            setAlertConfig({
+              title: "Availability Error",
+              message: data.error,
+              type: "warning",
+              isVisible: true,
+              onConfirm: () => {
+                setIsVisible(false);
+              },
+            });
+            setAvailableTimeSlots([]);
+            return;
+          }
 
           // Transform the detailer server response format to our TimeSlot interface
           const transformedSlots: TimeSlot[] = [];
@@ -726,7 +750,7 @@ const useBooking = () => {
               title: "No Available Times",
               message:
                 "No available time slots found for the selected date. Please try a different date.",
-              type: "success",
+              type: "warning",
               isVisible: true,
               onConfirm: () => {
                 setIsVisible(false);
@@ -900,10 +924,6 @@ const useBooking = () => {
     }
   }, []);
 
-  // ============================================================================
-  // VALIDATION METHODS
-  // ============================================================================
-
   /**
    * Validates if a specific step is complete and valid
    *
@@ -1072,7 +1092,6 @@ const useBooking = () => {
    */
   const getLoyaltyDiscount = useCallback((): number => {
     if (!user?.loyalty_benefits?.discount) return 0;
-
     const basePrice = selectedServiceType?.price || 0;
     const addonCosts = selectedAddons.reduce(
       (total, addon) => total + addon.price,
@@ -1082,7 +1101,6 @@ const useBooking = () => {
     const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
     const totalBeforeDiscount = totalBeforeSurcharge + suvSurcharge;
 
-    // Apply loyalty discount as percentage
     return totalBeforeDiscount * (user.loyalty_benefits.discount / 100);
   }, [
     user?.loyalty_benefits?.discount,
@@ -1094,9 +1112,9 @@ const useBooking = () => {
    * Gets the SUV surcharge amount
    *
    * This method returns the SUV surcharge amount if the vehicle is marked as an SUV.
-   * The surcharge is a 10 percent increase on the total price (base price + addon costs).
+   * The surcharge is a 15 percent increase on the total price (base price + addon costs).
    *
-   * @returns The SUV surcharge amount (10% of total price if SUV, 0 otherwise)
+   * @returns The SUV surcharge amount (15% of total price if SUV, 0 otherwise)
    * @type {number}
    *
    * @example
@@ -1109,7 +1127,7 @@ const useBooking = () => {
       0
     );
     const totalBeforeSurcharge = basePrice + addonCosts;
-    return isSUV ? totalBeforeSurcharge * 0.1 : 0;
+    return isSUV ? totalBeforeSurcharge * 0.15 : 0;
   }, [isSUV, selectedServiceType, selectedAddons]);
 
   /**
@@ -1289,7 +1307,7 @@ const useBooking = () => {
    *   console.error('Booking failed:', error.message);
    * }
    */
-  const createBooking = async () => {
+  const createBooking = async (bookingReference: string) => {
     if (!canProceedToSummary()) {
       setAlertConfig({
         title: "Error",
@@ -1330,7 +1348,7 @@ const useBooking = () => {
         special_instructions: specialInstructions || "",
         total_amount: getOriginalPrice(), // Send original price to detailer (no discount info)
         status: "pending",
-        booking_reference: `APT${Date.now()}-${user?.id}`,
+        booking_reference: bookingReference,
         service_type: selectedServiceType?.name || "",
         booking_date: selectedDate?.toISOString().split("T")[0] || "",
         start_time: startTime.toISOString().split("T")[1].replace("Z", ""),
@@ -1429,17 +1447,23 @@ const useBooking = () => {
   const handleBookingConfirmation = useCallback(async () => {
     try {
       setIsLoading(true);
+      // Generate a booking reference
+      const bookingReference = `APT${Date.now()}`;
 
       // First, handle payment
       const finalPrice = getFinalPrice();
-      const paymentResult = await openPaymentSheet(finalPrice);
+      const paymentResult = await openPaymentSheet(
+        finalPrice,
+        "Prisma Valet",
+        bookingReference
+      );
 
       // If payment was cancelled, don't proceed with booking
       if (paymentResult === false) {
         return;
       }
       /* if payment is successful, create the booking */
-      const booking: ReturnBookingProps = await createBooking();
+      const booking: ReturnBookingProps = await createBooking(bookingReference);
       /* When the data is returned trigger the create appointment api call */
       if (booking.detailer && booking.job) {
         const response = await bookAppointment({
@@ -1500,45 +1524,30 @@ const useBooking = () => {
     refetchAppointments,
   ]);
 
+  /* Handle booking cancellation */
   const handleCancelBooking = useCallback(
     async (bookingReference: string) => {
-      /* Confirm the cancellation */
+      /* Process the cancellation directly - confirmation already handled in UI */
       try {
-        setAlertConfig({
-          title: "Booking Cancellation",
-          message:
-            "You are about to cancel your booking. Is there there something you would like to change?",
-          type: "warning",
-          isVisible: true,
-          onConfirm: async () => {
-            const response = await cancelBooking(bookingReference).unwrap();
-            if (response) {
-              setAlertConfig({
-                title: "Booking Cancelled",
-                message: response,
-                type: "success",
-                isVisible: true,
-                onConfirm: () => {
-                  setIsVisible(false);
-                  refetchAppointments();
-                },
-              });
-            } else {
-              setAlertConfig({
-                title: "Booking Cancellation Failed",
-                message: "Failed to cancel booking",
-                type: "error",
-                isVisible: true,
-                onConfirm: () => {
-                  setIsVisible(false);
-                },
-              });
-            }
-          },
-          onClose: () => {
-            setIsVisible(false);
-          },
-        });
+        const response = await cancelBooking(bookingReference).unwrap();
+        if (response) {
+          setAlertConfig({
+            title: "Booking Cancelled",
+            message: response,
+            type: "success",
+            isVisible: true,
+            onConfirm: () => {
+              setIsVisible(false);
+              refetchAppointments();
+            },
+          });
+        } else {
+          showSnackbarWithConfig({
+            message: "Booking Cancellation Failed",
+            type: "error",
+            duration: 3000,
+          });
+        }
       } catch (error: any) {
         let message = "Failed to cancel booking";
         if (error?.data?.error) {
@@ -1555,7 +1564,7 @@ const useBooking = () => {
         });
       }
     },
-    [cancelBooking, setAlertConfig, setIsVisible]
+    [cancelBooking, setAlertConfig, setIsVisible, refetchAppointments]
   );
 
   const handleRescheduleBooking = useCallback(
@@ -1635,6 +1644,7 @@ const useBooking = () => {
     handleNextStep,
     handlePreviousStep,
     handleGoToStep,
+    promotions,
 
     // Addon management handlers
     handleAddonSelection,

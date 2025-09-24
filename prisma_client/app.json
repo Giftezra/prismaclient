@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "Prisma Valet",
+    "slug": "prisma_client",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/logo.png",
+    "scheme": "prismaclient",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.giftezraifeanyi.prisma.client",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "googleServicesFile": "./google-services.json",
+      "edgeToEdgeEnabled": true,
+      "package": "com.giftezra.ifeanyi.prisma_client"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to find nearby services and provide location-based features."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notificationIcon.png",
+          "color": "#ffffff"
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "detailer_app_url": "https://24a7c8282fed.ngrok-free.app/detailer",
+      "customer_app_url": "https://24a7c8282fed.ngrok-free.app/client",
+      "websocket_url": "wss://24a7c8282fed.ngrok-free.app/ws/client/",
+      "stripe": {
+        "publishableKey": "pk_test_51S0pCyFO4bA8gRHV8aalwThKMBfWVy3jwM7xZ5cxNfM2QH0AygnOn4WPtEk7kPC3J1BJHLPQ508FpPjYtitk0Qfp00bYRMgL4p"
+      },
+      "router": {},
+      "eas": {
+        "projectId": "12a19ebe-4dc8-457b-99e9-ccc269808a5c"
+      }
+    }
+  }
+}

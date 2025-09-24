@@ -13,6 +13,7 @@ import { AddOnsProps } from "@/app/interfaces/BookingInterfaces";
 import StyledText from "@/app/components/helpers/StyledText";
 import StyledButton from "@/app/components/helpers/StyledButton";
 import AddonCard from "./AddonCard";
+import { formatDuration, formatCurrency } from "@/app/utils/methods";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -62,8 +63,8 @@ const AddonSelection: React.FC<AddonSelectionModalProps> = ({
           variant="bodySmall"
           style={[styles.subtitle, { color: textColor }]}
         >
-          Enhance your service with these additional options.
-          if you select three addons, the cheapest addon will be free.
+          Enhance your service with these additional options. if you select
+          three addons, the cheapest addon will be free.
         </StyledText>
 
         {/* Add-ons List */}
@@ -77,6 +78,7 @@ const AddonSelection: React.FC<AddonSelectionModalProps> = ({
               addon={addon}
               isSelected={isAddonSelected(addon)}
               onSelect={onAddonSelect}
+              formatPrice={formatPrice}
             />
           ))}
         </ScrollView>
@@ -119,7 +121,7 @@ const AddonSelection: React.FC<AddonSelectionModalProps> = ({
               variant="titleMedium"
               style={[styles.summaryValue, { color: primaryPurpleColor }]}
             >
-              {formatPrice(totalAddonPrice)}
+              {formatCurrency(totalAddonPrice)}
             </StyledText>
           </View>
           <View style={styles.summaryRow}>
@@ -133,7 +135,7 @@ const AddonSelection: React.FC<AddonSelectionModalProps> = ({
               variant="bodyMedium"
               style={[styles.summaryValue, { color: textColor }]}
             >
-              +{totalAddonDuration} minutes
+              +{formatDuration(totalAddonDuration)}
             </StyledText>
           </View>
         </View>

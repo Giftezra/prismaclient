@@ -66,7 +66,7 @@ class DashboardView(APIView):
                     })
 
                 upcoming_appointments_data.append({
-                    "appointment_id": str(appointment.booking_reference),
+                    "booking_reference": str(appointment.booking_reference),
                     "detailer": {
                         "id": str(appointment.detailer.id),
                         "name": appointment.detailer.name,
@@ -138,12 +138,13 @@ class DashboardView(APIView):
     def _get_recent_services(self, request):
         try:
             # Get the most recent completed appointment with related objects
+            # Order by appointment_date descending to get the most recent completed service
             recent_service = BookedAppointment.objects.filter(
                 user=request.user, 
                 status='completed'
             ).select_related(
                 'detailer', 'vehicle', 'service_type', 'valet_type'
-            ).first()
+            ).order_by('-appointment_date', '-created_at').first()
             
             if not recent_service:
                 return Response({'error': 'No completed services found'}, status=status.HTTP_404_NOT_FOUND)

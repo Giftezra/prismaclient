@@ -15,10 +15,7 @@ const baseURL = API_CONFIG.customerAppUrl;
 console.log("baseURL", baseURL);
 const axiosInstance = axios.create({
   baseURL,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  timeout: 30000, // Increase timeout for large file uploads
 });
 
 // Request interceptor
@@ -42,6 +39,18 @@ axiosInstance.interceptors.request.use(
       !publicEndpoints.includes(config.url || "")
     ) {
       config.headers.Authorization = `Bearer ${access}`;
+    }
+
+    // Set Content-Type header based on data type
+    if (config.data instanceof FormData) {
+      // Don't set Content-Type for FormData, let axios handle it
+      delete config.headers?.["Content-Type"];
+    } else if (
+      config.data &&
+      typeof config.data === "object" &&
+      !config.headers?.["Content-Type"]
+    ) {
+      config.headers["Content-Type"] = "application/json";
     }
 
     return config;

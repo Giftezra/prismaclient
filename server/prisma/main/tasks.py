@@ -7,7 +7,6 @@ import os
 import redis
 from main.models import BookedAppointment
 import json
-from main.services.NotificationServices import NotificationService
 from datetime import timedelta
 from django.utils import timezone
 from exponent_server_sdk import PushClient, PushMessage
@@ -99,21 +98,36 @@ def publish_booking_rescheduled(booking_reference, new_date, new_time, total_cos
 @shared_task
 def send_service_reminders():
     from main.models import BookedAppointment
-    notification_service = NotificationService()
 
-    # Get appointments starting in 30 minutes
-    reminder_time = timezone.now() + timedelta(minutes=30)
+    # Get appointments starting in the next 30 minutes
+    now = timezone.now()
+    reminder_start = now + timedelta(minutes=25)  # 25 minutes from now
+    reminder_end = now + timedelta(minutes=35)    # 35 minutes from now
+    
     try:
+        # Get appointments that start between 25-35 minutes from now
+        # This ensures we catch all appointments in the 30-minute window
         appointments = BookedAppointment.objects.filter(
-            appointment_date=reminder_time.date(),
-            start_time=reminder_time.hour,
-            start_time__minute=reminder_time.minute,
+            appointment_date=now.date(),
+            start_time__gte=reminder_start.time(),
+            start_time__lte=reminder_end.time(),
             status='confirmed'
         )
+        
+        print(f"Found {appointments.count()} appointments for reminder")
+        
         for appointment in appointments:
-            notification_results = notification_service.send_service_reminder(appointment.user, appointment)
-            if notification_results['errors']:
-                print(f"Error sending service reminder: {notification_results['errors']}")
+            # Send push notification directly using the task
+            send_push_notification.delay(
+                appointment.user.id,
+                "Service Reminder ⏰",
+                f"Your {appointment.service_type.name} service is starting in 30 minutes at {appointment.start_time}",
+                "service_reminder"
+            )
+            print(f"Service reminder sent successfully for appointment {appointment.booking_reference}")
+        
+        return f"Processed {appointments.count()} appointments for reminders"
+        
     except Exception as e:
         print(f"Error sending service reminder: {str(e)}")
         return f"Failed to send service reminder: {str(e)}"
@@ -136,7 +150,7 @@ def send_push_notification(user_id, title, message, type):
         
         # Send the notification
         push_client = PushClient()
-        push_client.publish(
+        response = push_client.publish(
             PushMessage(
                 to=user.notification_token, 
                 title=title, 
@@ -148,7 +162,12 @@ def send_push_notification(user_id, title, message, type):
                 }
             )
         )
-        return f"Push notification sent successfully to user {user_id}"
+        
+        # Check if the response indicates success
+        if response and hasattr(response, 'data') and response.data:
+            return f"Push notification sent successfully to user {user_id}"
+        else:
+            return f"Push notification failed for user {user_id}: Invalid response"
         
     except Exception as e:
         error_msg = f"Failed to send push notification to user {user_id}: {str(e)}"
@@ -176,5 +195,136 @@ def publish_review_to_detailer(booking_reference, rating, tip_amount):
         return f"Failed to publish review to detailer: {e}"
         
         
-        
 
+@shared_task
+def cleanup_job_chat(chat_room_id):
+    """Clean up chat messages after job completion"""
+    try:
+        from main.models import JobChatRoom, JobChatMessage
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Wait 24 hours before cleanup to allow for reviews
+        cleanup_time = timezone.now() + timedelta(hours=24)
+        
+        # Schedule the actual cleanup
+        cleanup_job_chat_messages.apply_async(
+            args=[chat_room_id],
+            eta=cleanup_time
+        )
+        
+        return f"Chat cleanup scheduled for room {chat_room_id}"
+    except Exception as e:
+        return f"Failed to schedule chat cleanup: {e}"
+
+
+@shared_task
+def cleanup_job_chat_messages(chat_room_id):
+    """Actually delete chat messages"""
+    try:
+        from main.models import JobChatRoom, JobChatMessage
+        
+        chat_room = JobChatRoom.objects.get(id=chat_room_id)
+        
+        # Delete all messages
+        message_count = JobChatMessage.objects.filter(room=chat_room).count()
+        JobChatMessage.objects.filter(room=chat_room).delete()
+        
+        # Delete the chat room
+        chat_room.delete()
+        
+        return f"Cleaned up {message_count} messages from room {chat_room_id}"
+    except Exception as e:
+        return f"Failed to cleanup chat room {chat_room_id}: {e}"      
+
+
+
+@shared_task
+def create_job_chat_room(booking_id):
+    """Create a chat room for a specific booking"""
+    try:
+        from .models import BookedAppointment, JobChatRoom
+        from django.utils import timezone
+        
+        # Get the booking
+        booking = BookedAppointment.objects.get(id=booking_id)
+        
+        # Check if booking is still confirmed and not completed/cancelled
+        if booking.status not in ['confirmed', 'scheduled', 'in_progress']:
+            print(f"Booking {booking.booking_reference} is no longer active, skipping chat room creation")
+            return f"Booking {booking.booking_reference} is no longer active"
+        
+        # Check if chat room already exists
+        if JobChatRoom.objects.filter(booking=booking).exists():
+            print(f"Chat room already exists for booking {booking.booking_reference}")
+            return f"Chat room already exists for booking {booking.booking_reference}"
+        
+        # Create the chat room
+        chat_room = JobChatRoom.objects.create(
+            booking=booking,
+            client=booking.user,
+            detailer=booking.detailer,
+            is_active=True
+        )
+        
+        print(f"Chat room created for booking {booking.booking_reference}")
+        
+        # Send notification to both client and detailer
+        send_push_notification.delay(
+            booking.user.id,
+            "Chat Available 💬",
+            f"Chat is now available for your upcoming {booking.service_type.name} service",
+            "chat_available"
+        )
+        
+        # You could also send a notification to the detailer here
+        # if they have a user account and notification preferences
+        
+        return f"Chat room created successfully for booking {booking.booking_reference}"
+        
+    except BookedAppointment.DoesNotExist:
+        return f"Booking with ID {booking_id} not found"
+    except Exception as e:
+        return f"Failed to create chat room: {str(e)}"
+
+
+@shared_task
+def send_refund_success_email(user_email, customer_name, booking_reference, original_date, vehicle_make, vehicle_model, service_type_name, refund_amount, refund_date):
+    """Send refund success email to user when refund is processed"""
+    subject = f'Refund Processed Successfully - #{booking_reference}'
+    html_message = render_to_string('refund_success_email.html', {
+        'customer_name': customer_name,
+        'booking_reference': booking_reference,
+        'original_date': original_date.strftime('%B %d, %Y') if original_date else '',
+        'vehicle_make': vehicle_make,
+        'vehicle_model': vehicle_model,
+        'service_type_name': service_type_name,
+        'refund_amount': refund_amount,
+        'refund_date': refund_date.strftime('%B %d, %Y at %I:%M %p') if refund_date else timezone.now().strftime('%B %d, %Y at %I:%M %p')
+    })
+    try:
+        graph_send_mail(subject, html_message, user_email)
+        return f"Refund success email sent successfully to {user_email}"
+    except Exception as e:
+        return f"Failed to send refund success email: {str(e)}"
+
+
+@shared_task
+def send_refund_failed_email(user_email, customer_name, booking_reference, original_date, vehicle_make, vehicle_model, service_type_name, refund_amount, failure_reason):
+    """Send refund failed email to user when refund processing fails"""
+    subject = f'Refund Issue - Action Required - #{booking_reference}'
+    html_message = render_to_string('refund_failed_email.html', {
+        'customer_name': customer_name,
+        'booking_reference': booking_reference,
+        'original_date': original_date.strftime('%B %d, %Y') if original_date else '',
+        'vehicle_make': vehicle_make,
+        'vehicle_model': vehicle_model,
+        'service_type_name': service_type_name,
+        'refund_amount': refund_amount,
+        'issue_date': timezone.now().strftime('%B %d, %Y at %I:%M %p')
+    })
+    try:
+        graph_send_mail(subject, html_message, user_email)
+        return f"Refund failed email sent successfully to {user_email}"
+    except Exception as e:
+        return f"Failed to send refund failed email: {str(e)}"

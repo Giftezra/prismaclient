@@ -9,6 +9,7 @@ import {
   CreateBookingProps,
   BookedAppointmentProps,
 } from "@/app/interfaces/BookingInterfaces";
+import { PromotionsProps } from "@/app/interfaces/GarageInterface";
 
 const createBookingApi = createApi({
   reducerPath: "bookingApi",
@@ -142,12 +143,27 @@ const createBookingApi = createApi({
      *  customer: string
      * }
      */
-    fetchPaymentSheetDetails: builder.mutation<PaymentSheetResponse, number>({
-      query: (amount) => ({
-        url: "/api/v1/booking/get_payment_sheet_details/",
+    fetchPaymentSheetDetails: builder.mutation<
+      PaymentSheetResponse,
+      { amount: number; booking_reference: string }
+    >({
+      query: (data) => ({
+        url: "/api/v1/booking/create_payment_sheet/",
         method: "POST",
-        data: { amount },
+        data: {
+          amount: data.amount,
+          booking_reference: data.booking_reference,
+        },
       }),
+    }),
+
+    /* Get the promotions for the user */
+    fetchPromotions: builder.query<PromotionsProps | null, void>({
+      query: () => ({
+        url: "/api/v1/booking/get_promotions/",
+        method: "GET",
+      }),
+      transformResponse: (response: PromotionsProps | null) => response,
     }),
   }),
 });
@@ -159,5 +175,6 @@ export const {
   useRescheduleBookingMutation,
   useFetchAddOnsQuery,
   useFetchPaymentSheetDetailsMutation,
+  useFetchPromotionsQuery,
 } = createBookingApi;
 export default createBookingApi;

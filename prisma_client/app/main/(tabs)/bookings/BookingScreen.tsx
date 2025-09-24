@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   StyleSheet,
   ScrollView,
@@ -36,6 +36,9 @@ import StyledTextInput from "@/app/components/helpers/StyledTextInput";
 import { useAddresses } from "@/app/app-hooks/useAddresses";
 import useVehicles from "@/app/app-hooks/useVehicles";
 import ModalServices from "@/app/utils/ModalServices";
+import PromotionsCardComponent from "@/app/components/booking/PromotionsCard";
+import { PromotionsProps } from "@/app/interfaces/GarageInterface";
+import useProfile from "@/app/app-hooks/useProfile";
 
 // Define step interface
 interface BookingStep {
@@ -52,6 +55,13 @@ const BookingScreen = () => {
   const iconColor = useThemeColor({}, "icons");
   const borderColor = useThemeColor({}, "borders");
 
+  /* Get the save new address hook and handle save address function to close the modal and save the address */
+  const { saveNewAddress } = useProfile();
+  const handleSaveAddress = useCallback(async () => {
+    setIsAddressModalVisible(false);
+    await saveNewAddress();
+  }, [saveNewAddress]);
+
   const {
     // State
     selectedVehicle,
@@ -63,6 +73,7 @@ const BookingScreen = () => {
     currentStep,
     isLoading,
     isSUV,
+    promotions,
 
     // Addon management state
     selectedAddons,
@@ -349,7 +360,7 @@ const BookingScreen = () => {
                   addonPrice={getAddonPrice()}
                   addonDuration={getAddonDuration()}
                   formatPrice={formatPrice}
-                  user={user}
+                  user={user || undefined}
                   originalPrice={getOriginalPrice()}
                   finalPrice={getFinalPrice()}
                   loyaltyDiscount={getLoyaltyDiscount()}
@@ -405,6 +416,11 @@ const BookingScreen = () => {
   }
   return (
     <View style={[styles.container, { backgroundColor }]}>
+      {promotions && (
+        <View>
+          <PromotionsCardComponent {...promotions} />
+        </View>
+      )}
       {renderStepIndicator()}
       <ScrollView
         style={styles.scrollContainer}
@@ -416,7 +432,6 @@ const BookingScreen = () => {
       {renderNavigationButtons()}
 
       {/* Addon Selection Modal */}
-
       <ModalServices
         visible={isAddonModalVisible}
         onClose={handleCloseAddonModal}
@@ -436,6 +451,23 @@ const BookingScreen = () => {
         modalType="fullscreen"
         animationType="slide"
         showCloseButton={true}
+      />
+
+      {/* Address Modal */}
+      <ModalServices
+        visible={isAddressModalVisible}
+        onClose={() => setIsAddressModalVisible(false)}
+        modalType="sheet"
+        animationType="slide"
+        showCloseButton={true}
+        component={
+          <AddAddressModal
+            isVisible={isAddressModalVisible}
+            onClose={() => setIsAddressModalVisible(false)}
+            onSave={handleSaveAddress}
+            title="Add New Address"
+          />
+        }
       />
     </View>
   );

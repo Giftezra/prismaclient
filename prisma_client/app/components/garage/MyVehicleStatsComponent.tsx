@@ -24,7 +24,7 @@ const MyVehicleStatsComponent = ({
   const textColor = useThemeColor({}, "text");
 
   // Add safety checks for vehicleStats
-  if (!vehicleStats) {
+  if (!vehicleStats || !vehicleStats.vehicle) {
     return (
       <View style={styles.container}>
         <StyledText
@@ -38,106 +38,124 @@ const MyVehicleStatsComponent = ({
   }
 
   return (
-    <View style={styles.container}> 
-        {/* Vehicle Header */}
-        <View style={styles.vehicleHeader}>
-          <View style={styles.vehicleInfo}>
-            <StyledText variant="labelLarge" style={styles.vehicleTitle} color={textColor}>
-              {vehicleStats.vehicle?.year || "N/A"}{" "}
-              {vehicleStats.vehicle?.make || "N/A"}{" "}
-              {vehicleStats.vehicle?.model || "N/A"}
+    <View style={styles.container}>
+      {/* Vehicle Header */}
+      <View style={styles.vehicleHeader}>
+        <View style={styles.vehicleInfo}>
+          <StyledText
+            variant="labelLarge"
+            style={styles.vehicleTitle}
+            color={textColor}
+          >
+            {vehicleStats.vehicle?.year || "N/A"}{" "}
+            {vehicleStats.vehicle?.make || "N/A"}{" "}
+            {vehicleStats.vehicle?.model || "N/A"}
+          </StyledText>
+          <View style={styles.vehicleDetails}>
+            <View style={styles.detailItem}>
+              <Ionicons
+                name="color-palette-outline"
+                size={16}
+                color={vehicleStats.vehicle?.color?.toLowerCase() || "#6c757d"}
+              />
+              <StyledText variant="labelMedium" style={styles.detailText}>
+                {vehicleStats.vehicle?.color || "N/A"}
+              </StyledText>
+            </View>
+            <View style={styles.detailItem}>
+              <Ionicons name="card-outline" size={16} color="#6c757d" />
+              <StyledText variant="labelMedium" style={styles.detailText}>
+                {vehicleStats.vehicle?.licence || "N/A"}
+              </StyledText>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Stats Grid */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statRow}>
+          <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="calendar-outline" size={20} color="#007bff" />
+            </View>
+            <StyledText
+              variant="labelLarge"
+              style={styles.statValue}
+              color={textColor}
+            >
+              {vehicleStats?.total_bookings || 0}
             </StyledText>
-            <View style={styles.vehicleDetails}>
-              <View style={styles.detailItem}>
-                <Ionicons
-                  name="color-palette-outline"
-                  size={16}
-                  color={
-                    vehicleStats.vehicle?.color?.toLowerCase() || "#6c757d"
-                  }
-                />
-                <StyledText variant="labelMedium" style={styles.detailText}>
-                  {vehicleStats.vehicle?.color || "N/A"}
-                </StyledText>
-              </View>
-              <View style={styles.detailItem}>
-                <Ionicons name="card-outline" size={16} color="#6c757d" />
-                <StyledText variant="labelMedium" style={styles.detailText}>
-                  {vehicleStats.vehicle?.licence || "N/A"}
-                </StyledText>
-              </View>
+            <StyledText variant="bodySmall" style={styles.statLabel}>
+              Total Bookings
+            </StyledText>
+          </View>
+
+          <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="cash-outline" size={20} color="#28a745" />
             </View>
+            <StyledText
+              variant="labelLarge"
+              style={styles.statValue}
+              color={textColor}
+            >
+              {formatCurrency(vehicleStats?.total_amount || 0)}
+            </StyledText>
+            <StyledText variant="bodySmall" style={styles.statLabel}>
+              Total Spent
+            </StyledText>
           </View>
         </View>
 
-        {/* Stats Grid */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statRow}>
-            <View style={styles.statItem}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="calendar-outline" size={20} color="#007bff" />
-              </View>
-              <StyledText variant="labelLarge" style={styles.statValue} color={textColor}>
-                {vehicleStats.total_bookings || 0}
-              </StyledText>
-              <StyledText variant="bodySmall" style={styles.statLabel}>
-                Total Bookings
-              </StyledText>
+        <View style={styles.statRow}>
+          <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="time-outline" size={20} color="#ffc107" />
             </View>
-
-            <View style={styles.statItem}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="cash-outline" size={20} color="#28a745" />
-              </View>
-              <StyledText variant="labelLarge" style={styles.statValue} color={textColor}>
-                {formatCurrency(vehicleStats.total_amount || 0)}
-              </StyledText>
-              <StyledText variant="bodySmall" style={styles.statLabel}>
-                Total Spent
-              </StyledText>
-            </View>
+            <StyledText
+              variant="labelMedium"
+              style={styles.statValue}
+              color={textColor}
+            >
+              {formatDate(vehicleStats?.last_cleaned)}
+            </StyledText>
+            <StyledText variant="bodySmall" style={styles.statLabel}>
+              Last Cleaned
+            </StyledText>
           </View>
 
-          <View style={styles.statRow}>
-            <View style={styles.statItem}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="time-outline" size={20} color="#ffc107" />
-              </View>
-              <StyledText variant="labelMedium" style={styles.statValue} color={textColor}>
-                {formatDate(vehicleStats.last_cleaned)}
-              </StyledText>
-              <StyledText variant="bodySmall" style={styles.statLabel}>
-                Last Cleaned
-              </StyledText>
+          <View style={styles.statItem}>
+            <View style={styles.statIconContainer}>
+              <Ionicons
+                name="notifications-outline"
+                size={20}
+                color="#dc3545"
+              />
             </View>
-
-            <View style={styles.statItem}>
-              <View style={styles.statIconContainer}>
-                <Ionicons
-                  name="notifications-outline"
-                  size={20}
-                  color="#dc3545"
-                />
-              </View>
-              <StyledText variant="labelMedium" style={styles.statValue} color={textColor}>
-                {formatDate(vehicleStats.next_recommended_service)}
-              </StyledText>
-              <StyledText variant="bodySmall" style={styles.statLabel}>
-                Next Service
-              </StyledText>
-            </View>
+            <StyledText
+              variant="labelMedium"
+              style={styles.statValue}
+              color={textColor}
+            >
+              {formatDate(vehicleStats?.next_recommended_service)}
+            </StyledText>
+            <StyledText variant="bodySmall" style={styles.statLabel}>
+              Next Service
+            </StyledText>
           </View>
         </View>
+      </View>
 
-        {/* Action Button */}
-        <View style={styles.actionContainer}>
-          <StyledButton
-            title="Book Wash"
-            variant="tonal"
-            onPress={onBookWash}
-            style={styles.button}
-          />
-        </View>
+      {/* Action Button */}
+      <View style={styles.actionContainer}>
+        <StyledButton
+          title="Book Wash"
+          variant="tonal"
+          onPress={onBookWash}
+          style={styles.button}
+        />
+      </View>
     </View>
   );
 };

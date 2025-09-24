@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -16,12 +16,17 @@ const OngoingServiceCard: React.FC<{
   const tintColor = useThemeColor({}, "tint");
   const backgroundColor = useThemeColor({}, "background");
 
+  // Make the appointmet status user friendly
+  const userFriendlyStatus = useMemo(() => {
+    return appointment?.status?.replace("_", " ");
+  }, [appointment?.status]);
+  
+
   if (!appointment) {
     return (
       <View
         style={[
           styles.ongoingCard,
-          { backgroundColor: cardColor, borderColor, shadowColor: tintColor },
         ]}
       >
         <View style={styles.ongoingHeader}>
@@ -52,20 +57,13 @@ const OngoingServiceCard: React.FC<{
         <StyledText style={styles.ongoingTitle} children="Ongoing Service" />
         <StyledButton
           variant="small"
-          title={appointment?.status || ""}
+          title={userFriendlyStatus || ""}
           onPress={() => {}}
         />
       </View>
 
       <View style={styles.ongoingContent}>
         <View style={styles.detailerInfo}>
-          <Image
-            source={
-              appointment.detailer.image ||
-              require("@/assets/images/user_image.jpg")
-            }
-            style={styles.detailerImage}
-          />
           <View>
             <StyledText
               variant="titleMedium"
@@ -100,13 +98,8 @@ export default OngoingServiceCard;
 
 const styles = StyleSheet.create({
   ongoingCard: {
-    borderRadius: 8,
     padding: 8,
     marginBottom: 10,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 3,
   },
   ongoingHeader: {
     flexDirection: "row",

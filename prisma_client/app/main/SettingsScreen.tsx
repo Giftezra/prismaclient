@@ -22,6 +22,8 @@ import SettingSection from "../components/settings/SettingSection";
 import SettingItem from "../components/settings/SettingItem";
 import StyledText from "../components/helpers/StyledText";
 import useProfile from "../app-hooks/useProfile";
+import { usePermissions } from "../app-hooks/usePermissions";
+import { Snackbar } from "react-native-paper";
 
 /**
  * Main Settings Screen Component
@@ -45,6 +47,8 @@ const SettingScreen = () => {
     isLoadingUpdateMarketingEmailToken,
   } = useProfile();
 
+  const { toggleNotificationPermission, permissionStatus } = usePermissions();
+
   // State for managing which sections are expanded
   const [expandedSections, setExpandedSections] = useState<{
     notifications: boolean;
@@ -61,7 +65,8 @@ const SettingScreen = () => {
     userProfile.email_notification_token
   );
   const [pushNotifications, setPushNotifications] = useState(
-    userProfile.push_notification_token
+    userProfile.push_notification_token &&
+      permissionStatus.notifications.granted
   );
   const [marketingNotifications, setMarketingNotifications] = useState(
     userProfile.marketing_email_token
@@ -72,14 +77,21 @@ const SettingScreen = () => {
   const [locationServices, setLocationServices] = useState(true);
   const [analytics, setAnalytics] = useState(false);
 
+  // Snackbar state for user feedback
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+
   // Sync notification settings with server data when userProfile changes
   useEffect(() => {
     if (userProfile) {
       setEmailNotifications(userProfile.email_notification_token);
-      setPushNotifications(userProfile.push_notification_token);
+      setPushNotifications(
+        userProfile.push_notification_token &&
+          permissionStatus.notifications.granted
+      );
       setMarketingNotifications(userProfile.marketing_email_token);
     }
-  }, [userProfile]);
+  }, [userProfile, permissionStatus.notifications.granted]);
 
   /**
    * Toggle the expanded state of a section
@@ -99,8 +111,6 @@ const SettingScreen = () => {
    * @param value - The new boolean value
    */
   const handleNotificationToggle = async (type: string, value: boolean) => {
-    console.log(`${type} notifications: ${value}`);
-
     // Update local state immediately for better UX
     switch (type) {
       case "email":
@@ -121,7 +131,30 @@ const SettingScreen = () => {
         success = await updateEmailNotificationSetting(value);
         break;
       case "push":
-        success = await updatePushNotificationSetting(value);
+        // For push notifications, handle both permission and server setting
+        if (value) {
+          // User wants to enable - request permission first
+          const permissionGranted = await toggleNotificationPermission(true);
+          if (permissionGranted) {
+            success = await updatePushNotificationSetting(true);
+            setSnackbarMessage("Push notifications enabled successfully!");
+          } else {
+            success = false;
+            if (permissionStatus.notifications.canAskAgain) {
+              setSnackbarMessage(
+                "Permission denied. Please try again or enable in device settings."
+              );
+            } else {
+              setSnackbarMessage(
+                "Permission was permanently denied. Please enable notifications in device settings."
+              );
+            }
+          }
+        } else {
+          // User wants to disable - just update server setting
+          success = await updatePushNotificationSetting(false);
+          setSnackbarMessage("Push notifications disabled");
+        }
         break;
       case "marketing":
         success = await updateMarketingEmailSetting(value);
@@ -133,15 +166,33 @@ const SettingScreen = () => {
       switch (type) {
         case "email":
           setEmailNotifications(!value);
+          setSnackbarMessage("Failed to update email notification setting");
           break;
         case "push":
           setPushNotifications(!value);
           break;
         case "marketing":
           setMarketingNotifications(!value);
+          setSnackbarMessage("Failed to update marketing notification setting");
           break;
       }
+    } else {
+      // Show success message for other notification types
+      if (type === "email") {
+        setSnackbarMessage(
+          value ? "Email notifications enabled" : "Email notifications disabled"
+        );
+      } else if (type === "marketing") {
+        setSnackbarMessage(
+          value
+            ? "Marketing notifications enabled"
+            : "Marketing notifications disabled"
+        );
+      }
     }
+
+    // Show the snackbar
+    setSnackbarVisible(true);
   };
 
   /**
@@ -152,7 +203,6 @@ const SettingScreen = () => {
    * @param value - The new boolean value
    */
   const handleThemeToggle = (type: string, value: boolean) => {
-    console.log(`${type} theme: ${value}`);
     if (value) {
       setTheme(type as "light" | "dark" | "system");
     }
@@ -165,7 +215,6 @@ const SettingScreen = () => {
    * @param value - The new boolean value
    */
   const handleGeneralToggle = (type: string, value: boolean) => {
-    console.log(`${type}: ${value}`);
     switch (type) {
       case "autoSave":
         setAutoSave(value);
@@ -300,6 +349,15 @@ const SettingScreen = () => {
           </SettingSection>
         </View>
       </ScrollView>
+
+      {/* Snackbar for user feedback */}
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={3000}
+      >
+        {snackbarMessage}
+      </Snackbar>
     </View>
   );
 };

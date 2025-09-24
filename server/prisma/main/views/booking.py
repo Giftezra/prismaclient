@@ -2,12 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from main.models import BookedAppointment,ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicles
+from main.models import BookedAppointment,ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicles, Promotions, PaymentTransaction, RefundRecord, User
 import stripe
 from django.conf import settings
 from datetime import datetime
-from main.tasks import publish_booking_cancelled, publish_booking_rescheduled
-from main.services.NotificationServices import NotificationService
+from django.utils import timezone
+from main.tasks import publish_booking_cancelled, publish_booking_rescheduled, send_push_notification
 
 # Initialize Stripe with your secret key
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -23,7 +23,8 @@ class BookingView(APIView):
         'cancel_booking' : 'cancel_booking',
         'reschedule_booking' : 'reschedule_booking',
         'get_add_ons' : 'get_add_ons',
-        'get_payment_sheet_details' : 'get_payment_sheet_details',
+        'get_promotions' : 'get_promotions',
+        'create_payment_sheet' : 'create_payment_sheet',
     }
     
     """ Here we will override the crud methods and define the methods that would route the url to the appropriate function """
@@ -53,20 +54,35 @@ class BookingView(APIView):
         client api
     """
 
-    def get_service_type(self, request):
-        """ Get the service type predefined by the admin in the system.
+
+    def get_promotions(self, request):
+        """ Get the promotions for the user.
             ARGS : void
-            RESPONSE : ServiceTypeProps[]
-            {
-                id : string
-                name : string
-                description : string[]
-                price : number
-                duration : number
-            }
+            RESPONSE : PromotionsProps or null
         """
         try:
-            service_type = ServiceType.objects.all()
+            promotions = Promotions.objects.filter(user=request.user, is_active=True).first()
+            if promotions:
+                promotions_data = {
+                    "id" : str(promotions.id),
+                    "title" : promotions.title,
+                    "discount_percentage" : promotions.discount_percentage,
+                    "valid_until" : promotions.valid_until.strftime('%Y-%m-%d'),
+                    "is_active" : promotions.is_active,
+                    "terms_conditions" : promotions.terms_conditions,
+                }
+                return Response(promotions_data, status=status.HTTP_200_OK)
+            else:
+                return Response(None, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error fetching promotions: {str(e)}")
+            return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            
+
+    def get_service_type(self, request):
+        try:
+            service_type = ServiceType.objects.all().order_by('price')
             service_type_data = []
             # Here we could use the serializer to get the data in the proper format,
             # but i always prefer to destructure it manually
@@ -111,31 +127,157 @@ class BookingView(APIView):
 
 
     def cancel_booking(self, request):
-        """ Cancel a booking for the user.
-            ARGS : void
-            RESPONSE : void
-            QUERY_PARAMS : booking_id : string
-        """
         booking_reference = request.data.get('booking_reference')
         try:
             booking = BookedAppointment.objects.get(booking_reference=booking_reference)
+            
+            # Check if booking can be cancelled - only allow if not completed, cancelled, or in progress
+            if booking.status in ['completed', 'cancelled', 'in_progress']:
+                if booking.status == 'in_progress':
+                    return Response({'error': 'Cannot cancel - service is already in progress'}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    return Response({'error': 'Booking cannot be cancelled'}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+            
+            # Calculate time until appointment
+            now = timezone.now()
+            appointment_datetime = timezone.make_aware(
+                timezone.datetime.combine(booking.appointment_date, booking.start_time or timezone.datetime.min.time())
+            )
+            hours_until_appointment = (appointment_datetime - now).total_seconds() / 3600
+            
+            # New refund rule: Only refund if cancelled MORE than 12 hours before appointment
+            # Allow cancellation within 12 hours but no refund
+            refund_eligible = hours_until_appointment > 12
+            
+            # Update booking status
             booking.status = 'cancelled'
             booking.save()
+            
+            refund_data = {'eligible': refund_eligible, 'amount': 0, 'processed': False}
+            
+            # Process refund if eligible (only outside 12-hour window)
+            if refund_eligible:
+                refund_result = self._process_refund(booking)
+                refund_data.update(refund_result)
+            
+            # Send notifications
             publish_booking_cancelled.delay(booking_reference)
-
-            # Send booking cancelled notification
-            self.send_push_notification(request.user, "Booking Cancelled!", f"Your valet service has been cancelled for {booking.appointment_date} at {booking.start_time}", {
-                "type": "booking_cancelled",
-                "booking_reference": booking.booking_reference,
-                "booking_reference": booking.booking_reference,
-                "screen": "booking_details"
-            })
-
-
+            
+            # Prepare response message based on refund eligibility
             vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}"
-            return Response(f'You have cancelled your booking for {vehicle_name} on {booking.appointment_date}', status=status.HTTP_200_OK)
+            message = f'You have cancelled your booking for {vehicle_name} on {booking.appointment_date}'
+            
+            if refund_eligible and refund_data['processed']:
+                message += f"\n\nRefund of £{refund_data['amount']} has been processed and will appear in your account within 3-5 business days."
+                
+                # Send push notification for refunded cancellation
+                send_push_notification.delay(
+                    request.user.id,
+                    "Booking Cancelled - Refund Processed!",
+                    f"Your valet service has been cancelled for {booking.appointment_date} at {booking.start_time}. You will be refunded within 3-5 business days.",
+                    "booking_cancelled_refunded"
+                )
+            else:
+                message += f"\n\nNo refund available - cancellation was within 12 hours of appointment start time."
+                
+                # Send push notification for non-refunded cancellation
+                send_push_notification.delay(
+                    request.user.id,
+                    "Booking Cancelled",
+                    f"Your valet service has been cancelled for {booking.appointment_date} at {booking.start_time}. No refund available due to late cancellation.",
+                    "booking_cancelled_no_refund"
+                )
+            
+            return Response({
+                'message': message,
+                'booking_status': 'cancelled',
+                'refund': refund_data
+            }, status=status.HTTP_200_OK)
+            
+        except BookedAppointment.DoesNotExist:
+            return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+    def _process_refund(self, booking):
+        """Process refund through Stripe with proper status tracking"""
+        try:
+            # Get the original payment transaction
+            original_transaction = PaymentTransaction.objects.filter(
+                booking=booking,
+                transaction_type='payment',
+                status='succeeded'
+            ).first()
+            
+            if not original_transaction:
+                return {'processed': False, 'error': 'No payment found'}
+            
+            # Create refund record first
+            refund_record = RefundRecord.objects.create(
+                booking=booking,
+                user=booking.user,
+                original_transaction=original_transaction,
+                requested_amount=original_transaction.amount,
+                status='pending'
+            )
+            
+            try:
+                # Create refund with Stripe
+                refund = stripe.Refund.create(
+                    payment_intent=original_transaction.stripe_payment_intent_id,
+                    amount=int(original_transaction.amount * 100),  # Convert to cents
+                    reason='requested_by_customer',
+                    metadata={
+                        'booking_reference': booking.booking_reference,
+                        'refund_reason': 'Booking cancelled within 12 hours',
+                        'refund_record_id': str(refund_record.id)
+                    }
+                )
+                
+                # Update refund record with success
+                refund_record.stripe_refund_id = refund.id
+                refund_record.status = 'succeeded'
+                refund_record.processed_at = timezone.now()
+                refund_record.save()
+                
+                # Create refund transaction record
+                PaymentTransaction.objects.create(
+                    booking=booking,
+                    user=booking.user,
+                    stripe_payment_intent_id=original_transaction.stripe_payment_intent_id,
+                    stripe_refund_id=refund.id,
+                    transaction_type='refund',
+                    amount=original_transaction.amount,
+                    currency=original_transaction.currency,
+                    status='succeeded'
+                )
+                
+                return {
+                    'processed': True,
+                    'amount': float(original_transaction.amount),
+                    'refund_id': refund.id,
+                    'refund_record_id': refund_record.id
+                }
+                
+            except stripe.error.StripeError as e:
+                # Update refund record with failure
+                refund_record.status = 'failed'
+                refund_record.failure_reason = str(e)
+                refund_record.processed_at = timezone.now()
+                refund_record.save()
+                
+                return {
+                    'processed': False, 
+                    'error': str(e),
+                    'refund_record_id': refund_record.id
+                }
+                
+        except Exception as e:
+            print(f"Refund processing error: {str(e)}")
+            return {'processed': False, 'error': str(e)}
 
 
 
@@ -157,12 +299,12 @@ class BookingView(APIView):
             publish_booking_rescheduled.delay(booking.booking_reference, booking.appointment_date, booking.start_time, booking.total_amount)
 
             # Send booking rescheduled notification
-            self.send_push_notification(request.user, "Booking Rescheduled! 📅", f"Your valet service has been rescheduled for {booking.appointment_date} at {booking.start_time}", {
-                "type": "booking_rescheduled",
-                "booking_reference": booking.booking_reference,
-                "booking_reference": booking.booking_reference,
-                "screen": "booking_details"
-            })
+            send_push_notification.delay(
+                request.user.id,
+                "Booking Rescheduled! 📅",
+                f"Your valet service has been rescheduled for {booking.appointment_date} at {booking.start_time}",
+                "booking_rescheduled"
+            )
 
             vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}"
             return Response({'message': f'You have rescheduled your booking for {vehicle_name} on {booking.appointment_date}'}, status=status.HTTP_200_OK)
@@ -227,12 +369,12 @@ class BookingView(APIView):
             appointment.save()
 
             # Send booking confirmation notification
-            self.send_push_notification(request.user, "Booking Confirmed! 🎉", f"Your valet service is confirmed for {appointment.appointment_date} at {appointment.start_time}", {
-                "type": "booking_confirmed",
-                "booking_reference": appointment.booking_reference,
-                "booking_reference": appointment.booking_reference,
-                "screen": "booking_details"
-            })
+            send_push_notification.delay(
+                request.user.id,
+                "Booking Assigned! 🎉",
+                f"Your valet service has been assigned to one of our detailers for {appointment.appointment_date} at {appointment.start_time}. Please wait for confirmation.",
+                "booking_assigned"
+            )
 
             return Response({'appointment_id': str(appointment.id)}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -244,19 +386,8 @@ class BookingView(APIView):
 
 
     def get_add_ons(self, request):
-        """ Get the add ons for the user to choose from
-            ARGS : void
-            RESPONSE : AddOnsProps[]
-            {
-                id : string
-                name : string
-                price : number
-                description : string
-                extra_duration : number 
-            }
-        """
         try:
-            add_ons = AddOns.objects.all()
+            add_ons = AddOns.objects.all().order_by('price')
             add_ons_data = []
             for add_on in add_ons:
                 add_on_items = {
@@ -272,20 +403,18 @@ class BookingView(APIView):
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-    def get_payment_sheet_details(self, request):
-        print(f"Stripe Secret Key: {settings.STRIPE_SECRET_KEY}")
-        print(f"Request data: {request.data}")
-        print(f"User: {request.user}")
-        
-        """ Get payment sheet details for Stripe payment processing.
-            ARGS : { amount: number } (amount in cents)
-            RESPONSE : {
-                paymentIntent: string,
-                ephemeralKey: string,
-                customer: string
-            }
-        """
 
+
+
+
+
+    def create_payment_sheet(self, request):
+        """
+        Create a payment sheet for Stripe payment processing.
+        
+        Creates a Stripe payment intent and ephemeral key for client-side payment processing.
+        """
+        print(f"Creating payment sheet for request: {request.data}")
         try:
             # Get the country from the users addresses 
             try:
@@ -297,31 +426,40 @@ class BookingView(APIView):
             except Exception as e:
                 print(f"Error getting address: {e}")
                 country = 'United Kingdom'
-            
+
+            # set the currency and merchant country code based on the country
             if country == 'United Kingdom':
                 currency = 'gbp'
+                print(f"Merchant country code: {merchant_country_code}")
             else:
                 currency = 'eur'
-            
-            # Get amount from request
+                merchant_country_code = 'EUR'
+
+            # Get amount and metadata from request
             amount = request.data.get('amount', 0)
-            print(f"Amount: {amount}")
+            metadata = request.data.get('metadata', {})
+            booking_reference = request.data.get('booking_reference')
+            
+            if not booking_reference:
+                return Response({'error': 'Booking reference required'}, status=400)
             
             # Create Stripe customer
             customer = stripe.Customer.create()
+            user = User.objects.get(id=request.user.id)
             
             # Create payment intent with calculated amount
             payment_intent = stripe.PaymentIntent.create(
-                amount=amount,  # Amount in cents from the frontend
+                amount=amount, 
                 currency=currency,
                 customer=customer.id,
                 automatic_payment_methods={
                     'enabled': True,
                 },
                 metadata={
-                    'user_id': request.user.id,
+                    'user_id': user.id,
+                    'booking_reference': booking_reference,
                 }
-            )
+            ) 
             
             # Create ephemeral key for client-side access
             ephemeral_key = stripe.EphemeralKey.create(
@@ -336,43 +474,8 @@ class BookingView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            print(f"Error in payment sheet details: {str(e)}")
-            print(f"Error type: {type(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
             return Response(
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
-
-
-    
-    def send_push_notification(self, user, title, body, data=None):
-        """Send push notification using NotificationService"""
-        try:
-            # Check if user has push notifications enabled and has a token
-            if not user.allow_push_notifications:
-                print(f"Push notifications disabled for user {user.id}")
-                return False
-                
-            if not user.notification_token:
-                print(f"No notification token for user {user.id}")
-                return False
-            
-            # Send push notification
-            result = self.notification_service._send_push_notification(
-                user=user,
-                title=title,
-                body=body,
-                data=data or {}
-            )
-            
-            print(f"Push notification sent to user {user.id}: {title}")
-            return True
-            
-        except Exception as e:
-            print(f"Failed to send push notification to user {user.id}: {e}")
-            logger.error(f"Push notification error for user {user.id}: {str(e)}")
-            return False

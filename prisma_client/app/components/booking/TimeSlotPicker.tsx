@@ -87,6 +87,40 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   const backgroundColor = useThemeColor({}, "background");
 
   /**
+   * Check if a time slot is in the past
+   */
+  const isTimeSlotInPast = useCallback(
+    (slot: { startTime: string; endTime: string }) => {
+      const now = dayjs();
+      const selectedDateDayjs = dayjs(selectedDay);
+
+      // Create a datetime object for the slot start time on the selected date
+      const [hours, minutes] = slot.startTime.split(":").map(Number);
+      const slotDateTime = selectedDateDayjs
+        .hour(hours)
+        .minute(minutes)
+        .second(0);
+
+      // Check if the slot time is before the current time
+      return slotDateTime.isBefore(now);
+    },
+    [selectedDay]
+  );
+
+  /**
+   * Get the status text for a time slot
+   */
+  const getTimeSlotStatusText = useCallback(
+    (slot: { startTime: string; endTime: string; isAvailable: boolean }) => {
+      if (isTimeSlotInPast(slot)) {
+        return "Too Late";
+      }
+      return slot.isAvailable ? "Available" : "Too Late";
+    },
+    [isTimeSlotInPast]
+  );
+
+  /**
    * Generates calendar days for the current month
    * @returns Array of calendar day objects
    */
@@ -215,83 +249,88 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
             nestedScrollEnabled={true}
           >
             <View style={styles.timeSlotsGrid}>
-              {availableTimeSlots.map((slot, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.timeSlotCard,
-                    { backgroundColor: cardColor },
-                    slot.isSelected && {
-                      borderColor: primaryPurpleColor,
-                      borderWidth: 2,
-                    },
-                    !slot.isAvailable && { opacity: 0.5 },
-                  ]}
-                  onPress={() => onTimeSlotSelect(slot)}
-                  disabled={!slot.isAvailable}
-                >
-                  <View style={styles.timeSlotContent}>
-                    <StyledText
-                      variant="bodyMedium"
-                      style={[
-                        styles.timeSlotTime,
-                        {
-                          color: slot.isAvailable
-                            ? textColor
-                            : textColor + "60",
-                          fontWeight: slot.isSelected ? "600" : "400",
-                        },
-                      ]}
-                    >
-                      {slot.startTime} - {slot.endTime}
-                    </StyledText>
+              {availableTimeSlots.map((slot, index) => {
+                const statusText = getTimeSlotStatusText(slot);
+                const isPast = isTimeSlotInPast(slot);
 
-                    <View style={styles.timeSlotStatus}>
-                      {slot.isAvailable ? (
-                        <>
-                          <Ionicons
-                            name="checkmark-circle"
-                            size={16}
-                            color={
-                              slot.isSelected ? primaryPurpleColor : "#4CAF50"
-                            }
-                          />
-                          <StyledText
-                            variant="bodySmall"
-                            style={[
-                              styles.timeSlotStatusText,
-                              {
-                                color: slot.isSelected
-                                  ? primaryPurpleColor
-                                  : "#4CAF50",
-                              },
-                            ]}
-                          >
-                            Available
-                          </StyledText>
-                        </>
-                      ) : (
-                        <>
-                          <Ionicons
-                            name="close-circle"
-                            size={16}
-                            color="#F44336"
-                          />
-                          <StyledText
-                            variant="bodySmall"
-                            style={[
-                              styles.timeSlotStatusText,
-                              { color: "#F44336" },
-                            ]}
-                          >
-                            Booked
-                          </StyledText>
-                        </>
-                      )}
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.timeSlotCard,
+                      { backgroundColor: cardColor },
+                      slot.isSelected && {
+                        borderColor: primaryPurpleColor,
+                        borderWidth: 2,
+                      },
+                      !slot.isAvailable && { opacity: 0.5 },
+                    ]}
+                    onPress={() => onTimeSlotSelect(slot)}
+                    disabled={!slot.isAvailable}
+                  >
+                    <View style={styles.timeSlotContent}>
+                      <StyledText
+                        variant="bodyMedium"
+                        style={[
+                          styles.timeSlotTime,
+                          {
+                            color: slot.isAvailable
+                              ? textColor
+                              : textColor + "60",
+                            fontWeight: slot.isSelected ? "600" : "400",
+                          },
+                        ]}
+                      >
+                        {slot.startTime} - {slot.endTime}
+                      </StyledText>
+
+                      <View style={styles.timeSlotStatus}>
+                        {slot.isAvailable ? (
+                          <>
+                            <Ionicons
+                              name="checkmark-circle"
+                              size={16}
+                              color={
+                                slot.isSelected ? primaryPurpleColor : "#4CAF50"
+                              }
+                            />
+                            <StyledText
+                              variant="bodySmall"
+                              style={[
+                                styles.timeSlotStatusText,
+                                {
+                                  color: slot.isSelected
+                                    ? primaryPurpleColor
+                                    : "#4CAF50",
+                                },
+                              ]}
+                            >
+                              {statusText}
+                            </StyledText>
+                          </>
+                        ) : (
+                          <>
+                            <Ionicons
+                              name="close-circle"
+                              size={16}
+                              color="#F44336"
+                            />
+                            <StyledText
+                              variant="bodySmall"
+                              style={[
+                                styles.timeSlotStatusText,
+                                { color: "#F44336" },
+                              ]}
+                            >
+                              {statusText}
+                            </StyledText>
+                          </>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </ScrollView>
         )}

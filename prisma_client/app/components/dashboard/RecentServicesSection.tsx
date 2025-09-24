@@ -23,7 +23,7 @@ const ServiceCard: React.FC<{
     currencySymbol = "€";
   }
 
-  const cardsColor = useThemeColor({}, "cards");
+  const backgroundColor = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
 
   if (!booking) {
@@ -47,7 +47,7 @@ const ServiceCard: React.FC<{
     <View
       style={[
         styles.serviceCard,
-        { backgroundColor: cardsColor },
+        { backgroundColor: backgroundColor },
         !booking.is_reviewed && styles.unratedBorder,
       ]}
     >
@@ -125,19 +125,18 @@ const RecentServicesSection: React.FC<RecentServicesSectionProps> = ({
   bookings,
 }) => {
   const textColor = useThemeColor({}, "text");
-  const cardsColor = useThemeColor({}, "cards");
-  const primaryPurpleColor = useThemeColor({}, "primary");
+  const backgroundColor = useThemeColor({}, "background");
 
   const handleBookAppointment = () => {
     router.push("/main/(tabs)/bookings/BookingScreen");
   };
 
   const renderEmptyState = () => (
-    <View style={[styles.emptyStateContainer, { backgroundColor: cardsColor }]}>
+    <View style={[styles.emptyStateContainer, { backgroundColor:backgroundColor}]}>
       <Ionicons
         name="car-outline"
         size={45}
-        color={textColor + "60"}
+        color={textColor}
         style={styles.emptyStateIcon}
       />
       <StyledText
@@ -147,15 +146,15 @@ const RecentServicesSection: React.FC<RecentServicesSectionProps> = ({
         No Recent Services
       </StyledText>
       <StyledText
-        style={[styles.emptyStateMessage, { color: textColor + "80" }]}
-        variant="bodyMedium"
+        style={[styles.emptyStateMessage, { color: textColor }]}
+        variant="bodySmall"
       >
         You currently have no recent services. Book an appointment to get
         started with our professional detailing services.
       </StyledText>
       <StyledButton
         title="Book Appointment"
-        variant="medium"
+        variant="tonal"
         onPress={handleBookAppointment}
         style={styles.bookButton}
       />
@@ -273,7 +272,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   emptyStateMessage: {
-    fontSize: 14,
+    fontSize: 12,
     textAlign: "center",
     marginBottom: 20,
     lineHeight: 20,

@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { ServiceTypeProps } from "@/app/interfaces/BookingInterfaces";
 import StyledText from "@/app/components/helpers/StyledText";
+import { formatDuration, formatCurrency } from "@/app/utils/methods";
 
 interface ServiceTypeCardProps {
   service: ServiceTypeProps;
@@ -49,7 +50,7 @@ const ServiceTypeCard: React.FC<ServiceTypeCardProps> = ({
               { color: isSelected ? "white" : buttonColor },
             ]}
           >
-            £{service.price}
+            {formatCurrency(service.price)}
           </StyledText>
         </View>
 
@@ -78,7 +79,7 @@ const ServiceTypeCard: React.FC<ServiceTypeCardProps> = ({
           variant="bodyMedium"
           style={[styles.duration, { color: isSelected ? "white" : textColor }]}
         >
-          {service.duration} minutes
+          {formatDuration(service.duration)}
         </StyledText>
       </View>
 

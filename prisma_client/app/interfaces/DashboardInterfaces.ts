@@ -8,7 +8,7 @@ import { MyVehiclesProps } from "./GarageInterface";
 import { MyAddressProps } from "./ProfileInterfaces";
 
 export default interface UpcomingAppointmentProps {
-  appointment_id: string;
+  booking_reference: string;
   detailer: DetailerProfileProps;
   vehicle: MyVehiclesProps;
   address: MyAddressProps;

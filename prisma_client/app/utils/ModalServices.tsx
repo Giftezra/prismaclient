@@ -50,7 +50,7 @@ const ModalServices = ({
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   const bgColor = backgroundColor || themeBackground;
-  const cardBgColor = modalType === "fullscreen" ? bgColor : themeCard;
+  const cardBgColor = modalType === "fullscreen" ? themeBackground : themeCard;
 
   useEffect(() => {
     if (visible) {
@@ -106,10 +106,18 @@ const ModalServices = ({
       case "fullscreen":
         return (
           <View
-            style={[styles.fullscreenContainer, { backgroundColor: bgColor }]}
+            style={[
+              styles.fullscreenContainer,
+              { backgroundColor: themeBackground },
+            ]}
           >
             {title && (
-              <View style={[styles.fullscreenHeader, { borderBottomColor: themeBorder }]}>
+              <View
+                style={[
+                  styles.fullscreenHeader,
+                  { borderBottomColor: themeBorder },
+                ]}
+              >
                 <StyledText
                   variant="titleMedium"
                   style={[styles.fullscreenTitle, { color: themeText }]}
@@ -132,13 +140,7 @@ const ModalServices = ({
                 )}
               </View>
             )}
-            <ScrollView
-              style={styles.fullscreenContent}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.fullscreenContentContainer}
-            >
-              {component}
-            </ScrollView>
+            <View style={styles.fullscreenContent}>{component}</View>
           </View>
         );
 
@@ -157,7 +159,9 @@ const ModalServices = ({
           >
             <View style={[styles.sheetHandle, { borderColor: themeBorder }]} />
             {title && (
-              <View style={[styles.sheetHeader, { borderBottomColor: themeBorder }]}>
+              <View
+                style={[styles.sheetHeader, { borderBottomColor: themeBorder }]}
+              >
                 <StyledText
                   variant="titleMedium"
                   style={[styles.sheetTitle, { color: themeText }]}
@@ -307,9 +311,6 @@ const styles = StyleSheet.create({
   fullscreenContent: {
     flex: 1,
   },
-  fullscreenContentContainer: {
-    padding: 10,
-  },
 
   // Sheet styles
   sheetContainer: {
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height:2,
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 8,

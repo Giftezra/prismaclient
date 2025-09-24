@@ -1,6 +1,6 @@
 import { useLoadedFonts } from "@/hooks/useLoadedFonts";
 import { createContext, useContext, useState, useEffect } from "react";
-import { ActivityIndicator, Dimensions, useColorScheme } from "react-native"; 
+import { ActivityIndicator, Dimensions, useColorScheme } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 type ThemeMode = "light" | "dark" | "system";
@@ -56,8 +56,13 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Calculate the current theme based on the selected mode
-  const currentTheme =
-    theme === "system" ? systemColorScheme ?? "light" : theme;
+  const currentTheme = (() => {
+    if (theme === "system") {
+      return systemColorScheme ?? "light";
+    }
+    // Ensure theme is either "light" or "dark"
+    return theme === "dark" ? "dark" : "light";
+  })();
 
   return (
     <ThemeContext.Provider

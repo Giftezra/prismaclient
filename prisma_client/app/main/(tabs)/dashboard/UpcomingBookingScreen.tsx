@@ -24,6 +24,7 @@ import { useAlertContext } from "@/app/contexts/AlertContext";
 const UpcomingBookingScreen = () => {
   const [isRescheduleModalVisible, setIsRescheduleModalVisible] =
     useState(false);
+  const [isJobChatModalVisible, setIsJobChatModalVisible] = useState(false);
 
   const backgroundColor = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
@@ -34,7 +35,7 @@ const UpcomingBookingScreen = () => {
 
   const params = useLocalSearchParams();
   const { appointments, callDetailer } = useDashboard();
-  const { setAlertConfig } = useAlertContext();
+  const { setAlertConfig, setIsVisible } = useAlertContext();
 
   const {
     handleCancelBooking,
@@ -42,18 +43,6 @@ const UpcomingBookingScreen = () => {
     handleRescheduleBooking,
     isLoadingRescheduleBooking,
   } = useBooking();
-
-  // Handle reschedule confirmation
-  const handleRescheduleConfirm = async (newDate: string, newTime: string) => {
-    if (appointment) {
-      await handleRescheduleBooking(
-        appointment.appointment_id,
-        newDate,
-        newTime
-      );
-      setIsRescheduleModalVisible(false);
-    }
-  };
 
   // Get user data for currency formatting
   const user = useAppSelector((state: RootState) => state.auth.user);
@@ -64,7 +53,7 @@ const UpcomingBookingScreen = () => {
   useEffect(() => {
     if (params.appointmentId) {
       const foundAppointment = appointments.find(
-        (apt) => apt.appointment_id === params.appointmentId
+        (apt) => apt.booking_reference === params.appointmentId
       );
       if (foundAppointment) {
         setAppointment(foundAppointment);
@@ -75,9 +64,7 @@ const UpcomingBookingScreen = () => {
   // Helper function to check if appointment is in progress
   const isAppointmentInProgress = useCallback(
     (appointment: UpcomingAppointmentProps) => {
-      return (
-        appointment.status === "in_progress"
-      );
+      return appointment.status === "in_progress";
     },
     []
   );
@@ -99,16 +86,76 @@ const UpcomingBookingScreen = () => {
     []
   );
 
-  // Helper function to show refund warning alert
-  const showRefundWarningAlert = useCallback(
-    (onConfirm: () => void) => {
+  // Helper function to show cancellation restriction alert
+  const showCancellationRestrictionAlert = useCallback(() => {
+    setAlertConfig({
+      isVisible: true,
+      title: "Cannot Cancel",
+      message:
+        "We are sorry but this appointment can no longer be cancelled at this time. Sorry for the inconveniences.",
+      type: "error",
+      onClose: () =>
+        setAlertConfig({
+          isVisible: false,
+          title: "",
+          message: "",
+          type: "error",
+        }),
+    });
+  }, [setAlertConfig]);
+
+  // Helper function to show late cancellation warning (within 12 hours)
+  const showLateCancellationWarning = useCallback(() => {
+    setAlertConfig({
+      isVisible: true,
+      title: "Late Cancellation Warning",
+      message:
+        "You are cancelling within 12 hours of your appointment. You will not receive a refund for this cancellation.",
+      type: "warning",
+      onConfirm: () => {
+        setIsVisible(false);
+        handleCancelBooking(appointment?.booking_reference || "");
+      },
+      onClose: () =>
+        setAlertConfig({
+          isVisible: false,
+          title: "",
+          message: "",
+          type: "warning",
+        }),
+    });
+  }, [setAlertConfig, setIsVisible, handleCancelBooking, appointment]);
+
+  // Helper function to show reschedule restriction alert
+  const showRescheduleRestrictionAlert = useCallback(() => {
+    setAlertConfig({
+      isVisible: true,
+      title: "Cannot Reschedule",
+      message:
+        "We are sorry but this appointment can no longer be rescheduled at this time. Sorry for the inconveniences.",
+      type: "error",
+      onClose: () =>
+        setAlertConfig({
+          isVisible: false,
+          title: "",
+          message: "",
+          type: "error",
+        }),
+    });
+  }, [setAlertConfig]);
+
+  // Handle reschedule button press
+  const handleReschedulePress = useCallback(() => {
+    if (!appointment) return;
+
+    // Check if appointment is in progress
+    if (isAppointmentInProgress(appointment)) {
       setAlertConfig({
         isVisible: true,
-        title: "Cancellation Notice",
+        title: "Cannot Reschedule",
         message:
-          "This appointment is starting within 12 hours. You will not receive a refund for this cancellation. Do you want to continue?",
-        type: "warning",
-        onConfirm: onConfirm,
+          "This appointment is currently in progress and cannot be rescheduled.",
+        type: "error",
         onClose: () =>
           setAlertConfig({
             isVisible: false,
@@ -117,9 +164,36 @@ const UpcomingBookingScreen = () => {
             type: "error",
           }),
       });
-    },
-    [setAlertConfig]
-  );
+      return;
+    }
+
+    // Check if appointment is within 12 hours
+    if (isWithin12Hours(appointment)) {
+      showRescheduleRestrictionAlert();
+      return;
+    }
+
+    // If not within 12 hours, show the reschedule modal
+    setIsRescheduleModalVisible(true);
+  }, [
+    appointment,
+    isAppointmentInProgress,
+    isWithin12Hours,
+    showRescheduleRestrictionAlert,
+    setAlertConfig,
+  ]);
+
+  // Handle reschedule confirmation
+  const handleRescheduleConfirm = async (newDate: string, newTime: string) => {
+    if (appointment) {
+      await handleRescheduleBooking(
+        appointment.booking_reference,
+        newDate,
+        newTime
+      );
+      setIsRescheduleModalVisible(false);
+    }
+  };
 
   const handleCencellationConfirm = useCallback(
     async (appointmentId: string) => {
@@ -144,21 +218,17 @@ const UpcomingBookingScreen = () => {
         return;
       }
 
-      // Check if appointment is within 12 hours
+      // Check if appointment is within 12 hours - show warning but allow cancellation
       if (isWithin12Hours(appointment)) {
-        showRefundWarningAlert(async () => {
-          try {
-            await handleCancelBooking(appointmentId);
-          } catch (error) {
-            console.error("Error cancelling appointment:", error);
-          }
-        });
+        showLateCancellationWarning();
+        return;
       } else {
-        // Regular cancellation with confirmation
+        // Regular cancellation with confirmation (outside 12 hours - with refund)
         setAlertConfig({
           isVisible: true,
           title: "Cancel Appointment",
-          message: "Are you sure you want to cancel this appointment?",
+          message:
+            "Are you sure you want to cancel this appointment? You will receive a full refund.",
           type: "warning",
           onConfirm: async () => {
             try {
@@ -172,7 +242,7 @@ const UpcomingBookingScreen = () => {
               isVisible: false,
               title: "",
               message: "",
-              type: "error",
+              type: "warning",
             }),
         });
       }
@@ -181,7 +251,8 @@ const UpcomingBookingScreen = () => {
       appointment,
       isAppointmentInProgress,
       isWithin12Hours,
-      showRefundWarningAlert,
+      showCancellationRestrictionAlert,
+      showLateCancellationWarning,
       handleCancelBooking,
       setAlertConfig,
     ]
@@ -230,7 +301,7 @@ const UpcomingBookingScreen = () => {
             variant="titleMedium"
             style={[styles.appointmentId, { color: textColor }]}
           >
-            #{appointment.appointment_id}
+            #{appointment.booking_reference}
           </StyledText>
         </View>
 
@@ -308,10 +379,13 @@ const UpcomingBookingScreen = () => {
             Vehicle Details
           </StyledText>
         </View>
-
         <View style={styles.vehicleInfo}>
           <Image
-            source={require("@/assets/images/car.jpg")}
+            source={
+              appointment.vehicle.image
+                ? { uri: appointment.vehicle.image }
+                : require("@/assets/images/car.jpg")
+            }
             style={styles.vehicleImage}
           />
           <View style={styles.vehicleDetails}>
@@ -493,15 +567,17 @@ const UpcomingBookingScreen = () => {
               </StyledText>
             </View>
           </View>
-          <TouchableOpacity
-            style={[styles.contactButton, { backgroundColor: buttonColor }]}
-            onPress={() => callDetailer(appointment?.detailer.phone || "")}
-          >
-            <Ionicons name="call" size={16} color="white" />
-            <StyledText variant="bodyMedium" style={styles.contactButtonText}>
-              Call
-            </StyledText>
-          </TouchableOpacity>
+          {appointment.detailer.phone && (
+            <TouchableOpacity
+              style={[styles.contactButton, { backgroundColor: primaryColor }]}
+              onPress={() => callDetailer(appointment.detailer.phone!)}
+            >
+              <Ionicons name="call" size={16} color="white" />
+              <StyledText variant="bodyMedium" style={styles.contactButtonText}>
+                Call
+              </StyledText>
+            </TouchableOpacity>
+          )}
         </View>
       </LinearGradientComponent>
 
@@ -582,7 +658,9 @@ const UpcomingBookingScreen = () => {
             (isAppointmentInProgress(appointment) || isLoadingCancelBooking) &&
               styles.disabledButton,
           ]}
-          onPress={() => handleCencellationConfirm(appointment.appointment_id)}
+          onPress={() =>
+            handleCencellationConfirm(appointment.booking_reference)
+          }
           disabled={
             isAppointmentInProgress(appointment) || isLoadingCancelBooking
           }
@@ -608,14 +686,46 @@ const UpcomingBookingScreen = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, styles.rescheduleButton]}
-          onPress={() => setIsRescheduleModalVisible(true)}
-          disabled={isLoadingRescheduleBooking}
+          style={[
+            styles.actionButton,
+            styles.rescheduleButton,
+            (isAppointmentInProgress(appointment) ||
+              isWithin12Hours(appointment) ||
+              isLoadingRescheduleBooking) &&
+              styles.disabledButton,
+          ]}
+          onPress={handleReschedulePress}
+          disabled={
+            isAppointmentInProgress(appointment) ||
+            isWithin12Hours(appointment) ||
+            isLoadingRescheduleBooking
+          }
         >
-          <Ionicons name="time" size={20} color="green" />
-          <StyledText variant="bodyMedium" style={styles.rescheduleButtonText}>
+          <Ionicons
+            name="time"
+            size={20}
+            color={
+              isAppointmentInProgress(appointment) ||
+              isWithin12Hours(appointment)
+                ? "#999"
+                : "green"
+            }
+          />
+          <StyledText
+            variant="bodyMedium"
+            style={[
+              styles.rescheduleButtonText,
+              (isAppointmentInProgress(appointment) ||
+                isWithin12Hours(appointment)) &&
+                styles.disabledButtonText,
+            ]}
+          >
             {isLoadingRescheduleBooking
               ? "Please wait..."
+              : isAppointmentInProgress(appointment)
+              ? "Cannot Reschedule (In Progress)"
+              : isWithin12Hours(appointment)
+              ? "Cannot Reschedule (Within 12 Hours)"
               : "Reschedule Appointment"}
           </StyledText>
         </TouchableOpacity>
@@ -633,7 +743,7 @@ const UpcomingBookingScreen = () => {
               onConfirm={handleRescheduleConfirm}
               currentDate={appointment.booking_date || ""}
               currentTime={appointment.start_time || ""}
-              appointmentId={appointment.appointment_id}
+              appointmentId={appointment.booking_reference}
               userCountry={appointment.address.country}
               userCity={appointment.address.city}
               serviceDuration={appointment.service_type.duration}

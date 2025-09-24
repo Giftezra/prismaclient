@@ -23,12 +23,13 @@ export default function ExpoStripeProvider(
     "publishableKey" | "merchantIdentifier"
   >
 ) {
+  const returnurl = Linking.createURL("/");
   // For native platforms
   return (
     <StripeProvider
       publishableKey={publishableKey}
       merchantIdentifier="merchant.com.time-tracker"
-      urlScheme={Linking.createURL("/")?.split("://")?.[0]}
+      urlScheme={returnurl?.split("://")?.[0]}
       {...props}
     />
   );

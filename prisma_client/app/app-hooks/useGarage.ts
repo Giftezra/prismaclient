@@ -16,7 +16,7 @@ import {
 } from "../store/api/garageApi";
 import { router } from "expo-router";
 import { formatCurrency, formatDate } from "@/app/utils/methods";
-
+import { useSnackbar } from "../contexts/SnackbarContext";
 /**
  * Custom hook for managing garage-related functionality including vehicle management.
  *
@@ -33,6 +33,7 @@ import { formatCurrency, formatDate } from "@/app/utils/methods";
 const useGarage = () => {
   const dispatch = useAppDispatch();
   const garage = useAppSelector((state: RootState) => state.garage);
+  const { showSnackbarWithConfig } = useSnackbar();
 
   const [vehicleId, setVehicleId] = useState<string>("");
 
@@ -89,39 +90,6 @@ const useGarage = () => {
   const { setAlertConfig, setIsVisible } = useAlertContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // Mock promotions data for now (will be replaced with API call later)
-  const [promotions] = useState<PromotionsProps[]>([
-    {
-      id: "1",
-      title: "First Wash Discount",
-      description: "Get 20% off your first car wash service with us!",
-      discount_percentage: 20,
-      valid_until: "2024-12-31",
-      is_active: true,
-      terms_conditions:
-        "Valid for new customers only. Cannot be combined with other offers.",
-    },
-    {
-      id: "2",
-      title: "Weekend Special",
-      description: "Book your car wash on weekends and save 15%",
-      discount_percentage: 15,
-      valid_until: "2024-11-30",
-      is_active: true,
-      terms_conditions: "Valid only for weekend bookings (Saturday-Sunday).",
-    },
-    {
-      id: "3",
-      title: "Loyalty Reward",
-      description: "Earn 10% back on your 5th wash",
-      discount_percentage: 10,
-      valid_until: "2024-12-15",
-      is_active: false,
-      terms_conditions:
-        "Must complete 4 washes before this offer becomes active.",
-    },
-  ]);
-
   const handleVehicleStatsSelection = useCallback(
     (vehicleId: string) => {
       setVehicleId(vehicleId);
@@ -134,14 +102,15 @@ const useGarage = () => {
    * This method is used to handle form input changes for vehicle information.
    * Creates a new vehicle object with the updated field value while preserving existing data.
    *
-   * @param {string} field - The field name to update (e.g., 'make', 'model', 'year', 'color', 'licence')
-   * @param {string} value - The new value to set for the specified field
+   * @param {string} field - The field name to update (e.g., 'make', 'model', 'year', 'color', 'licence', 'image')
+   * @param {string | any} value - The new value to set for the specified field
    *
    * @example
    * handleAddNewVehicle('make', 'Toyota');
    * handleAddNewVehicle('year', '2020');
+   * handleAddNewVehicle('image', imageAsset);
    */
-  const collectNewVehicleData = (field: string, value: string) => {
+  const collectNewVehicleData = (field: string, value: string | any) => {
     const updatedVehicle = {
       ...(newVehicle || {}),
       [field]: value,
@@ -162,8 +131,6 @@ const useGarage = () => {
   const prepareVehicleFormData = async (): Promise<FormData | null> => {
     if (!newVehicle) return null;
     const formData = new FormData();
-
-    // Add basic vehicle fields
     if (newVehicle.make) formData.append("make", newVehicle.make);
     if (newVehicle.model) formData.append("model", newVehicle.model);
     if (newVehicle.year) formData.append("year", newVehicle.year.toString());
@@ -226,11 +193,10 @@ const useGarage = () => {
        * if the formData is valid, call the addNewVehicle mutation
        */
       const formData = await prepareVehicleFormData();
+
       if (formData) {
-        /* If the response is validated, call the alert and the dispatch {setMyVehicles}.
-         * Then reset the newVehicle in Redux store and the myVehicles in the Redux store
-         */
         const response = await addNewVehicle(formData).unwrap();
+        console.log("Vehicle submission response:", response);
         if (response && response.message) {
           setAlertConfig({
             title: "Success",
@@ -240,8 +206,6 @@ const useGarage = () => {
             onConfirm() {
               setIsVisible(false);
               dispatch(resetNewVehicle());
-              refetchVehicles();
-              router.back();
             },
           });
         }
@@ -249,17 +213,22 @@ const useGarage = () => {
         throw new Error("Failed to prepare vehicle data for submission");
       }
     } catch (error: any) {
+      console.log("Vehicle submission error:", error);
+
       /* If the error is thrown, call the alert and the dispatch {setIsLoading} */
       let errorMessage = "Failed to add vehicle. Please try again.";
       if (error?.data?.error) {
         errorMessage = error.data.error;
       } else if (error?.status === 400) {
-        errorMessage = "Invalid address data. Please check your input.";
+        errorMessage = "Invalid vehicle data. Please check your input.";
       } else if (error?.status === 401) {
-        errorMessage = "You must be logged in to edit an address.";
+        errorMessage = "You must be logged in to add a vehicle.";
       } else if (error?.status === 500) {
         errorMessage = "Server error. Please try again later.";
+      } else if (error?.message) {
+        errorMessage = error.message;
       }
+
       setAlertConfig({
         title: "Error",
         message: errorMessage,
@@ -298,16 +267,13 @@ const useGarage = () => {
           onConfirm: async () => {
             const response = await deleteVehicle(vehicleId).unwrap();
             if (response.message && response) {
-              setAlertConfig({
-                title: "Success",
+              // show snackbar
+              showSnackbarWithConfig({
                 message: response.message,
                 type: "success",
-                isVisible: true,
-                onConfirm: () => {
-                  refetchVehicles();
-                  setIsVisible(false);
-                },
+                duration: 3000,
               });
+              refetchVehicles();
             }
           },
           onClose: () => {
@@ -319,14 +285,10 @@ const useGarage = () => {
         if (error?.data?.error) {
           errorMessage = error.data.error;
         }
-        setAlertConfig({
-          title: "Error",
+        showSnackbarWithConfig({
           message: errorMessage,
           type: "error",
-          isVisible: true,
-          onConfirm: () => {
-            setIsVisible(false);
-          },
+          duration: 3000,
         });
       }
     },
@@ -376,7 +338,6 @@ const useGarage = () => {
   return {
     vehicles,
     vehicleStats,
-    promotions,
     isModalVisible,
     newVehicle,
     isLoadingVehicles,

@@ -4,17 +4,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { AddOnsProps } from "@/app/interfaces/BookingInterfaces";
 import StyledText from "@/app/components/helpers/StyledText";
+import { formatDuration } from "@/app/utils/methods";
 
 interface AddonCardProps {
   addon: AddOnsProps;
   isSelected: boolean;
   onSelect: (addon: AddOnsProps) => void;
+  formatPrice: (price: number) => string;
 }
 
 const AddonCard: React.FC<AddonCardProps> = ({
   addon,
   isSelected,
   onSelect,
+  formatPrice,
 }) => {
   const cardColor = useThemeColor({}, "cards");
   const textColor = useThemeColor({}, "text");
@@ -48,7 +51,7 @@ const AddonCard: React.FC<AddonCardProps> = ({
               { color: isSelected ? "white" : buttonColor },
             ]}
           >
-            £{addon.price}
+            {formatPrice(addon.price)}
           </StyledText>
         </View>
 
@@ -77,7 +80,7 @@ const AddonCard: React.FC<AddonCardProps> = ({
           variant="bodyMedium"
           style={[styles.duration, { color: isSelected ? "white" : textColor }]}
         >
-          +{addon.extra_duration} minutes
+          +{formatDuration(addon.extra_duration)}
         </StyledText>
       </View>
 

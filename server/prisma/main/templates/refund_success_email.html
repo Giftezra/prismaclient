@@ -1,0 +1,87 @@
+{% extends "base_email.html" %} {% block title %}Refund Success{% endblock %}
+<div class="greeting">Hello {{ customer_name }},</div>
+
+<div class="intro-text">
+  We hope this email finds you well. We wanted to update you on your recent
+  booking cancellation and refund request.
+</div>
+
+<div class="details-banner">
+  <div class="details-title">💰 Refund Processed Successfully</div>
+</div>
+
+<div class="details-grid">
+  <div class="detail-item">
+    <span class="detail-label">Booking Reference:</span>
+    <span class="detail-value">#{{ booking_reference }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Original Service Date:</span>
+    <span class="detail-value">{{ original_date }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Vehicle:</span>
+    <span class="detail-value">{{ vehicle_make }} {{ vehicle_model }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Service Type:</span>
+    <span class="detail-value">{{ service_type_name }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Refund Amount:</span>
+    <span class="detail-value">€{{ refund_amount }}</span>
+  </div>
+
+  <div class="detail-item">
+    <span class="detail-label">Refund Processed:</span>
+    <span class="detail-value">{{ refund_date }}</span>
+  </div>
+</div>
+
+<div class="contact-info">
+  <div class="contact-text">
+    <strong>✅ Your refund has been successfully processed!</strong><br /><br />
+
+    The refund amount of <strong>€{{ refund_amount }}</strong> has been issued
+    to your original payment method. Please allow
+    <strong>3-5 business days</strong> for the refund to appear in your account,
+    depending on your bank's processing time.
+
+    <br /><br />
+
+    <strong>What happens next?</strong><br />
+    • You'll receive the refund on the same card you used for payment<br />
+    • Your bank statement will show the refund within 3-5 business days<br />
+    • You'll receive a confirmation email from your payment provider<br />
+
+    <br /><br />
+
+    If you have any questions about this refund or need assistance with future
+    bookings, please don't hesitate to contact our support team at
+    <a href="mailto:support@prismavalet.com" class="contact-link"
+      >support@prismavalet.com</a
+    >.
+  </div>
+</div>
+
+<div class="closing">
+  <div class="closing-text">
+    We're sorry that your service had to be cancelled, but we're glad we could
+    process your refund quickly and efficiently.
+  </div>
+
+  <div class="closing-text">
+    We look forward to serving you again in the future!
+  </div>
+</div>
+
+<div class="signature">
+  Best regards,<br />
+  <span class="signature-name">The Prisma Valet Team</span><br />
+  <div class="name">Prisma Valet</div>
+</div>
+{% endblock %}

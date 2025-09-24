@@ -28,11 +28,11 @@ const StyledButton: React.FC<StyledButtonProps> = ({
   disabled = false,
   isLoading = false,
 }) => {
-  const buttonColor = useThemeColor({}, "button");
+  const buttonColor = useThemeColor({}, "primary");
   const secondaryButtonColor = useThemeColor({}, "secondaryButton");
   const buttonTextColor = useThemeColor({}, "buttonText");
   const borderColor = useThemeColor({}, "borders");
-
+  const textColor = useThemeColor({}, "text");
   /**
    * Get button styling based on variant
    * @param variant - The button variant (small, medium, large, icon, tonal)
@@ -54,8 +54,8 @@ const StyledButton: React.FC<StyledButtonProps> = ({
             backgroundColor: buttonColor,
             paddingHorizontal: 10,
             paddingVertical: 10,
-            borderRadius: 10,
-            minHeight: 25,
+            borderRadius: 20,
+            minHeight: 20,
             gap: 8,
           },
           textVariant: "labelMedium" as const,
@@ -69,7 +69,7 @@ const StyledButton: React.FC<StyledButtonProps> = ({
             backgroundColor: buttonColor,
             paddingHorizontal: 16,
             paddingVertical: 12,
-            borderRadius: 16,
+            borderRadius: 20,
             minHeight: 30,
             gap: 10,
           },
@@ -84,7 +84,7 @@ const StyledButton: React.FC<StyledButtonProps> = ({
             backgroundColor: buttonColor,
             paddingHorizontal: 24,
             paddingVertical: 16,
-            borderRadius: 20,
+            borderRadius: 40,
             minHeight: 35,
             gap: 12,
           },
@@ -99,7 +99,7 @@ const StyledButton: React.FC<StyledButtonProps> = ({
             backgroundColor: buttonColor,
             paddingHorizontal: 16,
             paddingVertical: 10,
-            borderRadius: 10,
+            borderRadius: 40,
             minHeight: 40,
             gap: 10,
           },
@@ -114,7 +114,7 @@ const StyledButton: React.FC<StyledButtonProps> = ({
             backgroundColor: "transparent",
             paddingHorizontal: 16,
             paddingVertical: 12,
-            borderRadius: 16,
+            borderRadius: 30,
             minHeight: 44,
             borderWidth: 2,
             borderColor: borderColor,
@@ -131,7 +131,7 @@ const StyledButton: React.FC<StyledButtonProps> = ({
             backgroundColor: buttonColor,
             paddingHorizontal: 16,
             paddingVertical: 12,
-            borderRadius: 16,
+            borderRadius: 30,
             minHeight: 44,
             gap: 10,
           },
@@ -151,7 +151,7 @@ const StyledButton: React.FC<StyledButtonProps> = ({
     >
       {icon && icon}
       {isLoading && <ActivityIndicator size="small" color={buttonTextColor} />}
-      <StyledText variant={textVariant} style={{ color: buttonTextColor }}>
+      <StyledText variant={textVariant} style={{ color: textColor }}>
         {title}
       </StyledText>
     </TouchableOpacity>
