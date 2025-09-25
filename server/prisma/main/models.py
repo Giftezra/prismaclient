@@ -37,8 +37,7 @@ class User(AbstractUser):
     allow_marketing_emails = models.BooleanField(default=False)
     allow_push_notifications = models.BooleanField(default=True)
     allow_email_notifications = models.BooleanField(default=True)
-
-    # Add promotions fields
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     has_signup_promotions = models.BooleanField(default=True)
     has_booking_promotions = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

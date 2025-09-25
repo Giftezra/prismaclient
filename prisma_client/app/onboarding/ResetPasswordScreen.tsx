@@ -1,10 +1,11 @@
-  import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
   ScrollView,
   Alert,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import StyledText from "../components/helpers/StyledText";
@@ -13,7 +14,10 @@ import StyledButton from "../components/helpers/StyledButton";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { Ionicons } from "@expo/vector-icons";
 import LinearGradientComponent from "../components/helpers/LinearGradientComponent";
-import { useResetPasswordMutation } from "@/app/store/api/authApi";
+import {
+  useResetPasswordMutation,
+  useValidateResetTokenMutation,
+} from "@/app/store/api/authApi";
 
 const ResetPasswordScreen = () => {
   const { token } = useLocalSearchParams();
@@ -21,6 +25,9 @@ const ResetPasswordScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isValidatingToken, setIsValidatingToken] = useState(true);
+  const [tokenValid, setTokenValid] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
 
   // Theme colors
   const backgroundColor = useThemeColor({}, "background");
@@ -29,19 +36,54 @@ const ResetPasswordScreen = () => {
   const primaryColor = useThemeColor({}, "primary");
   const cardColor = useThemeColor({}, "cards");
 
-  // API mutation
+  // API mutations
+  const [validateResetToken] = useValidateResetTokenMutation();
   const [resetPassword, { isLoading }] = useResetPasswordMutation();
 
   useEffect(() => {
-    if (!token) {
-      Alert.alert("Invalid Link", "This password reset link is invalid.", [
-        {
-          text: "OK",
-          onPress: () => router.replace("/onboarding/SigninScreen"),
-        },
-      ]);
-    }
-  }, [token]);
+    const validateToken = async () => {
+      if (!token) {
+        Alert.alert("Invalid Link", "This password reset link is invalid.", [
+          {
+            text: "OK",
+            onPress: () => router.replace("/onboarding/SigninScreen"),
+          },
+        ]);
+        return;
+      }
+
+      try {
+        const response = await validateResetToken({
+          token: token as string,
+        }).unwrap();
+
+        if (response.valid) {
+          setTokenValid(true);
+          setUserEmail(response.user_email);
+        } else {
+          throw new Error("Invalid token");
+        }
+      } catch (error: any) {
+        console.error("Token validation error:", error);
+
+        let errorMessage = "This password reset link is invalid or expired.";
+        if (error.data?.error) {
+          errorMessage = error.data.error;
+        }
+
+        Alert.alert("Invalid Link", errorMessage, [
+          {
+            text: "OK",
+            onPress: () => router.replace("/onboarding/SigninScreen"),
+          },
+        ]);
+      } finally {
+        setIsValidatingToken(false);
+      }
+    };
+
+    validateToken();
+  }, [token, validateResetToken]);
 
   const validatePassword = (password: string): string | null => {
     if (password.length < 8) {
@@ -106,6 +148,34 @@ const ResetPasswordScreen = () => {
     }
   };
 
+  // Show loading screen while validating token
+  if (isValidatingToken) {
+    return (
+      <LinearGradientComponent
+        color1={backgroundColor}
+        color2={primaryColor}
+        style={styles.container}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 4, y: 1 }}
+      >
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={primaryColor} />
+          <StyledText
+            variant="bodyMedium"
+            style={[styles.loadingText, { color: textColor }]}
+          >
+            Validating reset link...
+          </StyledText>
+        </View>
+      </LinearGradientComponent>
+    );
+  }
+
+  // Don't render the form if token is invalid
+  if (!tokenValid) {
+    return null;
+  }
+
   return (
     <LinearGradientComponent
       color1={backgroundColor}
@@ -126,7 +196,7 @@ const ResetPasswordScreen = () => {
             variant="bodyMedium"
             style={[styles.subtitle, { color: textColor }]}
           >
-            Enter your new password below
+            Enter your new password for {userEmail}
           </StyledText>
         </View>
 
@@ -236,6 +306,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    textAlign: "center",
   },
   header: {
     alignItems: "center",

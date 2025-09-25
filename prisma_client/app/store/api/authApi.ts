@@ -72,6 +72,25 @@ const authApi = createApi({
     }),
 
     /**
+     * Validate password reset token.
+     */
+    validateResetToken: builder.mutation<
+      {
+        valid: boolean;
+        message: string;
+        expires_at: string;
+        user_email: string;
+      },
+      { token: string }
+    >({
+      query: ({ token }) => ({
+        url: "/api/v1/auth/validate-reset-token/",
+        method: "POST",
+        data: { token },
+      }),
+    }),
+
+    /**
      * Reset password with token.
      */
     resetPassword: builder.mutation<
@@ -98,6 +117,7 @@ export const {
   useRefreshTokenMutation,
   useGetTermsAndConditionsQuery,
   useRequestPasswordResetMutation,
+  useValidateResetTokenMutation,
   useResetPasswordMutation,
 } = authApi;
 export default authApi;

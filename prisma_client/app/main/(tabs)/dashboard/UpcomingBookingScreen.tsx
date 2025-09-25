@@ -110,7 +110,7 @@ const UpcomingBookingScreen = () => {
       isVisible: true,
       title: "Late Cancellation Warning",
       message:
-        "You are cancelling within 12 hours of your appointment. You will not receive a refund for this cancellation.",
+        "You are cancelling within 12 hours of your appointment. You will NOT receive a refund for this cancellation.\n\nAre you sure you want to proceed?",
       type: "warning",
       onConfirm: () => {
         setIsVisible(false);

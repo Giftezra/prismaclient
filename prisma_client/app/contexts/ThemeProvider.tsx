@@ -45,7 +45,6 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await SecureStore.setItemAsync("userTheme", newTheme);
     } catch (error) {
-      console.log("Error saving theme:", error);
     }
   };
 

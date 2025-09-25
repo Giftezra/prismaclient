@@ -23,7 +23,9 @@ export default function ExpoStripeProvider(
     "publishableKey" | "merchantIdentifier"
   >
 ) {
-  const returnurl = Linking.createURL("/");
+  // For mobile payments, redirect to dashboard after payment completion
+  const returnurl = Linking.createURL("/main/(tabs)/dashboard/DashboardScreen");
+
   // For native platforms
   return (
     <StripeProvider

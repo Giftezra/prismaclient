@@ -11,6 +11,18 @@ import {
 } from "@/app/interfaces/BookingInterfaces";
 import { PromotionsProps } from "@/app/interfaces/GarageInterface";
 
+// PaymentMethod interface for saved payment methods
+export interface PaymentMethod {
+  id: string;
+  type: string;
+  card: {
+    brand: string;
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+  };
+}
+
 const createBookingApi = createApi({
   reducerPath: "bookingApi",
   baseQuery: axiosBaseQuery(),
@@ -165,6 +177,47 @@ const createBookingApi = createApi({
       }),
       transformResponse: (response: PromotionsProps | null) => response,
     }),
+
+    /**
+     * Get saved payment methods for the user
+     * ARGS : void
+     * RESPONSE : PaymentMethod[]
+     * {
+     *  id: string
+     *  type: string
+     *  card: {
+     *    brand: string
+     *    last4: string
+     *    exp_month: number
+     *    exp_year: number
+     *  }
+     * }
+     */
+    getPaymentMethods: builder.query<PaymentMethod[], void>({
+      query: () => ({
+        url: "/api/v1/booking/get_payment_methods/",
+        method: "GET",
+      }),
+      transformResponse: (response: { payment_methods: PaymentMethod[] }) => {
+        return response.payment_methods || [];
+      },
+    }),
+
+    /**
+     * Delete a saved payment method
+     * ARGS : { payment_method_id: string }
+     * RESPONSE : { message: string }
+     */
+    deletePaymentMethod: builder.mutation<
+      { message: string },
+      { payment_method_id: string }
+    >({
+      query: (data) => ({
+        url: "/api/v1/booking/delete_payment_method/",
+        method: "DELETE",
+        data: { payment_method_id: data.payment_method_id },
+      }),
+    }),
   }),
 });
 export const {
@@ -176,5 +229,7 @@ export const {
   useFetchAddOnsQuery,
   useFetchPaymentSheetDetailsMutation,
   useFetchPromotionsQuery,
+  useGetPaymentMethodsQuery,
+  useDeletePaymentMethodMutation,
 } = createBookingApi;
 export default createBookingApi;

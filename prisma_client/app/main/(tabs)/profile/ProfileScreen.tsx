@@ -19,6 +19,7 @@ import useProfile from "@/app/app-hooks/useProfile";
 import ServiceHistoryComponent from "@/app/components/profile/ServiceHistoryComponent";
 import StyledButton from "@/app/components/helpers/StyledButton";
 import AddAddressModal from "@/app/components/profile/AddAddressModal";
+import PaymentMethodsComponent from "@/app/components/profile/PaymentMethodsComponent";
 import { MyAddressProps } from "@/app/interfaces/ProfileInterfaces";
 import { useAuthContext } from "@/app/contexts/AuthContextProvider";
 import ModalServices from "@/app/utils/ModalServices";
@@ -42,6 +43,8 @@ const ProfileScreen = () => {
   /* State management */
   const [isServiceHistoryVisible, setIsServiceHistoryVisible] = useState(false);
   const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
+  const [isPaymentMethodsModalVisible, setIsPaymentMethodsModalVisible] =
+    useState(false);
 
   /* Animation refs */
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -237,6 +240,13 @@ const ProfileScreen = () => {
     setIsAddressModalVisible(true);
   };
 
+  /**
+   * Handles payment methods modal
+   */
+  const handlePaymentMethodsPress = () => {
+    setIsPaymentMethodsModalVisible(true);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <ScrollView
@@ -251,7 +261,12 @@ const ProfileScreen = () => {
         alwaysBounceVertical={false}
       >
         {/* Profile Card - Always in normal flow */}
-        <ProfileCard profile={userProfile} address={addresses?.[0]} />
+        <ProfileCard
+          profile={userProfile}
+          address={addresses?.[0]}
+          onPaymentMethodsPress={handlePaymentMethodsPress}
+          onLogoutPress={handleLogout}
+        />
 
         {/* Display the list of addresses that the user has added or requested from */}
         <View>
@@ -282,20 +297,17 @@ const ProfileScreen = () => {
 
         {/* Display the toggle for the service history */}
         <View style={styles.dropdownContainer}>
-          <View style={styles.serviceHistoryHeaderContainer}>
-            <StyledText children="Service History" variant="titleMedium" />
             <Pressable
               style={[styles.downdownbutton, { borderColor: borderColor }]}
               onPress={handleServiceHistoryToggle}
             >
-              <StyledText children="View All" variant="labelLarge" />
+              <StyledText children="Service History" variant="labelLarge" />
               <Ionicons
                 name={isServiceHistoryVisible ? "chevron-up" : "chevron-down"}
                 size={15}
                 color={iconColor}
               />
             </Pressable>
-          </View>
 
           <Animated.View
             style={[
@@ -303,7 +315,7 @@ const ProfileScreen = () => {
               {
                 maxHeight: slideAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0, 1000], // Increased max height to accommodate more content
+                  outputRange: [0, 2000], // Increased height to accommodate more content
                 }),
                 opacity: opacityAnim,
                 transform: [
@@ -363,35 +375,13 @@ const ProfileScreen = () => {
             },
           ]}
         >
-          <ProfileCard profile={userProfile} address={addresses?.[0]} />
-        </Animated.View>
-      )}
-
-      {hasScrolled ? (
-        <Animated.View
-          style={[
-            styles.settingsContainer,
-            styles.animatedSettingsContainer,
-            {
-              transform: [{ translateY: logoutButtonTranslateY }],
-              opacity: logoutButtonOpacity,
-            },
-          ]}
-        >
-          <StyledButton
-            title="Logout"
-            onPress={handleLogout}
-            variant="medium"
+          <ProfileCard
+            profile={userProfile}
+            address={addresses?.[0]}
+            onPaymentMethodsPress={handlePaymentMethodsPress}
+            onLogoutPress={handleLogout}
           />
         </Animated.View>
-      ) : (
-        <View style={styles.settingsContainer}>
-          <StyledButton
-            title="Logout"
-            onPress={handleLogout}
-            variant="medium"
-          />
-        </View>
       )}
 
       {/* Add Address Modal */}
@@ -409,6 +399,17 @@ const ProfileScreen = () => {
             title="Add New Address"
           />
         }
+      />
+
+      {/* Payment Methods Modal */}
+      <ModalServices
+        visible={isPaymentMethodsModalVisible}
+        onClose={() => setIsPaymentMethodsModalVisible(false)}
+        modalType="sheet"
+        animationType="slide"
+        showCloseButton={true}
+        component={<PaymentMethodsComponent />}
+        title="Payment Methods"
       />
     </View>
   );
@@ -433,7 +434,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 120, // Increased padding to account for logout button height + padding
+    paddingBottom: 50,
+    minHeight: "100%", 
   },
 
   settingsButtonText: {
@@ -448,8 +450,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 8,
     borderWidth: 1,
     borderRadius: 5,
   },
@@ -471,11 +473,13 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     paddingBottom: 10,
     marginTop: 5,
+    flex: 1,
+    minHeight: 0,
   },
   settingsContainer: {
     padding: 10,
     paddingHorizontal: 10,
-    backgroundColor: "transparent", // Ensure proper background handling
+    backgroundColor: "transparent", 
   },
   animatedSettingsContainer: {
     position: "absolute",
@@ -484,6 +488,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1000,
     elevation: 1000, // For Android
-    backgroundColor: "transparent", // Ensure proper background handling
+    backgroundColor: "transparent", 
   },
 });

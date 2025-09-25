@@ -1,4 +1,4 @@
-From python:3.11-slim
+FROM python:3.11-slim
 
 # Set the environment variable
 ENV PYTHONUNBUFFERED=1

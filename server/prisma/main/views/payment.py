@@ -39,6 +39,86 @@ class PaymentView(APIView):
         handler = getattr(self, self.action_handlers[action])
         return handler(request)
 
+
+    def create_payment_sheet(self, request):
+        """
+        Create a payment sheet for Stripe payment processing.
+        
+        Creates a Stripe payment intent and ephemeral key for client-side payment processing.
+        """
+        try:
+            # Get the country from the users addresses 
+            try:
+                address = Address.objects.filter(user=request.user).first()
+                if address:
+                    country = address.country
+                else:
+                    country = 'United Kingdom'
+            except Exception as e:
+                print(f"Error getting address: {e}")
+                country = 'United Kingdom'
+
+            # set the currency and merchant country code based on the country
+            if country == 'United Kingdom':
+                currency = 'gbp'
+                merchant_country_code = 'GB'
+            else:
+                currency = 'eur'
+                merchant_country_code = 'EUR'
+
+            # Get amount and metadata from request
+            amount = request.data.get('amount', 0)
+            metadata = request.data.get('metadata', {})
+            booking_reference = request.data.get('booking_reference')
+            
+            if not booking_reference:
+                return Response({'error': 'Booking reference required'}, status=400)
+
+            # Get the company object associated with the user
+            user = User.objects.get(id=request.user.id)
+            
+            # Create Stripe customer
+            customer = stripe.Customer.create()
+            
+            # Create payment intent with calculated amount
+            payment_intent = stripe.PaymentIntent.create(
+                amount=amount,  # Amount in cents from the frontend
+                currency=currency,
+                customer=customer.id,
+                automatic_payment_methods={
+                    'enabled': True,
+                },
+                googlePay={
+                    'merchantCountryCode': merchant_country_code,
+                    'currencyCode': currency,
+                },
+                applePay={
+                    'merchantCountryCode': merchant_country_code,
+                    'currencyCode': currency,
+                },
+                metadata={
+                    'user_id': user.id,
+                    'booking_reference': booking_reference,
+                }
+            )
+            
+            # Create ephemeral key for client-side access
+            ephemeral_key = stripe.EphemeralKey.create(
+                customer=customer.id,
+                stripe_version='2022-11-15',
+            )
+            
+            return Response({
+                'paymentIntent': payment_intent.client_secret,
+                'ephemeralKey': ephemeral_key.secret,
+                'customer': customer.id,
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
     def get_refund_status(self, request):
         """Get refund status for a booking - useful for dispute resolution"""

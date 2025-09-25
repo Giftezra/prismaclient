@@ -12,6 +12,7 @@ import dayjs from "dayjs";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import StyledText from "@/app/components/helpers/StyledText";
+import { useThemeColor } from "@/hooks/useThemeColor";
 
 interface AvailabilityCalendarProps {
   currentMonth: dayjs.Dayjs;
@@ -36,8 +37,13 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   onNextMonth,
   disabledDates = [],
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? "light"];
+  const backgroundColor = useThemeColor({}, "background");
+  const textColor = useThemeColor({}, "text");
+  const cardColor = useThemeColor({}, "cards");
+  const borderColor = useThemeColor({}, "borders");
+  const primaryColor = useThemeColor({}, "primary");
+  const buttonTextColor = useThemeColor({}, "buttonText");
+  const iconsColor = useThemeColor({}, "icons");
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -59,14 +65,14 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.cards }]}>
+    <View style={[styles.container, { backgroundColor }]}>
       {/* Header with month navigation */}
       <View style={styles.header}>
         <TouchableOpacity
-          style={[styles.navButton, { backgroundColor: colors.button }]}
+          style={[styles.navButton, { backgroundColor: primaryColor }]}
           onPress={onPreviousMonth}
         >
-          <Ionicons name="chevron-back" size={20} color={colors.buttonText} />
+          <Ionicons name="chevron-back" size={20} color={buttonTextColor} />
         </TouchableOpacity>
 
         <StyledText variant="titleMedium">
@@ -74,13 +80,13 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
         </StyledText>
 
         <TouchableOpacity
-          style={[styles.navButton, { backgroundColor: colors.button }]}
+          style={[styles.navButton, { backgroundColor: primaryColor }]}
           onPress={onNextMonth}
         >
           <Ionicons
             name="chevron-forward"
             size={20}
-            color={colors.buttonText}
+            color={buttonTextColor}
           />
         </TouchableOpacity>
       </View>
@@ -113,8 +119,8 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                 style={[
                   styles.dateCell,
                   {
-                    backgroundColor: selected ? colors.primary : "transparent",
-                    borderColor: today ? colors.primary : colors.borders,
+                    backgroundColor: selected ? primaryColor : "transparent",
+                    borderColor: today ? primaryColor : borderColor,
                     borderWidth: today ? 2 : 1,
                     opacity: currentMonthDate ? (disabled ? 0.3 : 1) : 0.3,
                   },
@@ -127,10 +133,10 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                     styles.dateText,
                     {
                       color: selected
-                        ? colors.buttonText
+                        ? buttonTextColor
                         : currentMonthDate
-                        ? colors.text
-                        : colors.icons,
+                        ? textColor
+                        : iconsColor,   
                       fontWeight: today ? "bold" : "normal",
                       opacity: currentMonthDate ? (disabled ? 0.5 : 1) : 0.5,
                     },
@@ -142,7 +148,7 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                   <View
                     style={[
                       styles.selectedIndicator,
-                      { backgroundColor: colors.buttonText },
+                      { backgroundColor: buttonTextColor },
                     ]}
                   />
                 )}

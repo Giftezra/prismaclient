@@ -10,6 +10,7 @@ from main.views.terms import TermsView
 from django.conf import settings
 from django.conf.urls.static import static
 from main.views.notifications import NotificationsView
+from main.views.password_reset import RequestPasswordResetView, ResetPasswordView, ValidateResetTokenView, WebResetPasswordView
 
 
 app_name = 'main'
@@ -29,6 +30,12 @@ urlpatterns = [
     # Payment and webhook endpoints
     path('payment/<action>/', PaymentView.as_view(), name='payment'),
     path('payment/stripe-webhook/', StripeWebhookView.as_view(), name='stripe_webhook'),
+    
+    # Password reset endpoints
+    path('auth/password-reset/', RequestPasswordResetView.as_view(), name='request_password_reset'),
+    path('auth/validate-reset-token/', ValidateResetTokenView.as_view(), name='validate_reset_token'),
+    path('auth/reset-password/', ResetPasswordView.as_view(), name='reset_password'),
+    path('auth/web-reset-password/', WebResetPasswordView.as_view(), name='web_reset_password'),
 ]
 
 

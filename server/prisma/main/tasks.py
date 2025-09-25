@@ -328,3 +328,31 @@ def send_refund_failed_email(user_email, customer_name, booking_reference, origi
         return f"Refund failed email sent successfully to {user_email}"
     except Exception as e:
         return f"Failed to send refund failed email: {str(e)}"
+
+
+@shared_task
+def send_password_reset_email(user_email, user_name, reset_token):
+    subject = "Reset Your Prisma Password"
+    
+    # Get base URL from settings
+    from django.conf import settings
+    base_url = getattr(settings, 'BASE_URL', 'https://yourdomain.com')
+    
+    # Web URL that works for everyone - note the /api/v1/ prefix
+    web_reset_url = f"{base_url}/api/v1/auth/web-reset-password/?token={reset_token}"
+    
+    # Mobile deep link for app users
+    mobile_deep_link = f"prismaclient://onboarding/ResetPasswordScreen?token={reset_token}"
+    
+    html_message = render_to_string('password_reset_email.html', {
+        'user_name': user_name,
+        'web_reset_url': web_reset_url,
+        'mobile_deep_link': mobile_deep_link,
+        'expires_in': '1 hour'
+    })
+    
+    try:
+        graph_send_mail(subject, html_message, user_email)
+        return f"Password reset email sent successfully to {user_email}"
+    except Exception as e:
+        return f"Failed to send password reset email: {str(e)}"

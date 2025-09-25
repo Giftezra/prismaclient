@@ -25,6 +25,8 @@ class BookingView(APIView):
         'get_add_ons' : 'get_add_ons',
         'get_promotions' : 'get_promotions',
         'create_payment_sheet' : 'create_payment_sheet',
+        'get_payment_methods' : 'get_payment_methods',
+        'delete_payment_method' : 'delete_payment_method',
     }
     
     """ Here we will override the crud methods and define the methods that would route the url to the appropriate function """
@@ -48,11 +50,14 @@ class BookingView(APIView):
             return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
         handler = getattr(self, self.action_handlers[action])
         return handler(request)
-    
-    """ These are the methods which will serve the user their request using the action handlers
-        to get the methods and route then through the get, post, patch given the method passed in the 
-        client api
-    """
+
+    def delete(self, request, *args, **kwargs):
+        action = kwargs.get('action')
+        if action not in self.action_handlers:
+            return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
+        handler = getattr(self, self.action_handlers[action])
+        return handler(request)
+
 
 
     def get_promotions(self, request):
@@ -155,15 +160,15 @@ class BookingView(APIView):
             booking.status = 'cancelled'
             booking.save()
             
+            # Publish to Redis for detailer app updates (only once)
+            publish_booking_cancelled.delay(booking_reference)
+            
             refund_data = {'eligible': refund_eligible, 'amount': 0, 'processed': False}
             
             # Process refund if eligible (only outside 12-hour window)
             if refund_eligible:
                 refund_result = self._process_refund(booking)
                 refund_data.update(refund_result)
-            
-            # Send notifications
-            publish_booking_cancelled.delay(booking_reference)
             
             # Prepare response message based on refund eligibility
             vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}"
@@ -193,13 +198,16 @@ class BookingView(APIView):
             return Response({
                 'message': message,
                 'booking_status': 'cancelled',
-                'refund': refund_data
+                'refund': refund_data,
+                'hours_until_appointment': hours_until_appointment
             }, status=status.HTTP_200_OK)
             
         except BookedAppointment.DoesNotExist:
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 
     def _process_refund(self, booking):
@@ -430,7 +438,7 @@ class BookingView(APIView):
             # set the currency and merchant country code based on the country
             if country == 'United Kingdom':
                 currency = 'gbp'
-                print(f"Merchant country code: {merchant_country_code}")
+                merchant_country_code = 'GB'
             else:
                 currency = 'eur'
                 merchant_country_code = 'EUR'
@@ -443,9 +451,25 @@ class BookingView(APIView):
             if not booking_reference:
                 return Response({'error': 'Booking reference required'}, status=400)
             
-            # Create Stripe customer
-            customer = stripe.Customer.create()
             user = User.objects.get(id=request.user.id)
+            
+            # Get or create Stripe customer
+            if hasattr(user, 'stripe_customer_id') and user.stripe_customer_id:
+                # Use existing customer
+                customer = stripe.Customer.retrieve(user.stripe_customer_id)
+            else:
+                # Create new customer and save the ID
+                customer = stripe.Customer.create(
+                    email=user.email,
+                    name=user.name,
+                    metadata={
+                        'user_id': user.id,
+                    }
+                )
+                # Only save if the field exists (migration has been run)
+                if hasattr(user, 'stripe_customer_id'):
+                    user.stripe_customer_id = customer.id
+                    user.save()
             
             # Create payment intent with calculated amount
             payment_intent = stripe.PaymentIntent.create(
@@ -455,6 +479,8 @@ class BookingView(APIView):
                 automatic_payment_methods={
                     'enabled': True,
                 },
+                # Enable setup for future payments
+                setup_future_usage='off_session',
                 metadata={
                     'user_id': user.id,
                     'booking_reference': booking_reference,
@@ -479,3 +505,64 @@ class BookingView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+
+    def get_payment_methods(self, request):
+        """
+        Get saved payment methods for the user
+        """
+        try:
+            user = User.objects.get(id=request.user.id)
+            
+            if not hasattr(user, 'stripe_customer_id') or not user.stripe_customer_id:
+                return Response({'payment_methods': []}, status=status.HTTP_200_OK)
+            
+            # Retrieve payment methods from Stripe
+            payment_methods = stripe.PaymentMethod.list(
+                customer=user.stripe_customer_id,
+                type='card',
+            )
+            
+            # Format payment methods for frontend
+            formatted_methods = []
+            for pm in payment_methods.data:
+                formatted_methods.append({
+                    'id': pm.id,
+                    'type': pm.type,
+                    'card': {
+                        'brand': pm.card.brand,
+                        'last4': pm.card.last4,
+                        'exp_month': pm.card.exp_month,
+                        'exp_year': pm.card.exp_year,
+                    }
+                })
+            return Response({
+                'payment_methods': formatted_methods
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def delete_payment_method(self, request):
+        try:
+            print(f"Deleting payment method: {request.data}")
+            payment_method_id = request.data.get('payment_method_id')
+            
+            if not payment_method_id:
+                return Response({'error': 'Payment method ID required'}, status=400)
+            
+            # Detach payment method from customer
+            stripe.PaymentMethod.detach(payment_method_id)
+            
+            return Response({
+                'message': 'Payment method deleted successfully'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

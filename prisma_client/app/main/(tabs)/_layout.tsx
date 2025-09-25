@@ -1,6 +1,7 @@
 import {
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -11,13 +12,20 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { useThemeContext } from "@/app/contexts/ThemeProvider";
 
 const TabsLayout = () => {
   const backgroundColor = useThemeColor({}, "background");
+  const { currentTheme } = useThemeContext();
+
+  // Set status bar style based on theme
+  // Light theme -> dark content, Dark theme -> light content
+  const statusBarStyle =
+    currentTheme === "dark" ? "light-content" : "dark-content";
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }}>
+      <StatusBar barStyle={statusBarStyle} />
       <Tabs
         screenOptions={{
           tabBarStyle: {

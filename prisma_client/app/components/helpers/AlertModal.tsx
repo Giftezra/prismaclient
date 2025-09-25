@@ -67,7 +67,7 @@ const AlertModal = ({
             styles.modalContainer,
             {
               backgroundColor: cardColor,
-              borderColor: borderColor,
+              borderColor: borderColor + "30",
               shadowColor: 'gray',
             },
           ]}
@@ -89,7 +89,6 @@ const AlertModal = ({
                 onPress={onClose}
                 style={[
                   styles.button,
-                  styles.cancelButton,
                   { borderColor: borderColor },
                 ]}
                 activeOpacity={0.7}
@@ -110,7 +109,6 @@ const AlertModal = ({
                 }}
                 style={[
                   styles.button,
-                  styles.confirmButton,
                   { backgroundColor: getTitleColor() },
                 ]}
                 activeOpacity={0.8}
@@ -138,7 +136,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   modalContainer: {
-    borderRadius: 5,
+    borderRadius: 40,
     borderWidth: 1,
     padding: 15,
     width: Math.min(screenWidth - 40, 350),
@@ -175,17 +173,10 @@ const styles = StyleSheet.create({
   button: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 6,
+    borderRadius: 20,
     minWidth: 80,
     alignItems: "center",
     justifyContent: "center",
-  },
-  cancelButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-  },
-  confirmButton: {
-    backgroundColor: "#007AFF",
   },
   cancelButtonText: {
     fontWeight: "500",

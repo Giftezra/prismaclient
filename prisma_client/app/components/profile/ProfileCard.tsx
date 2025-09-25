@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import {
@@ -12,6 +12,8 @@ import LinearGradientComponent from "../helpers/LinearGradientComponent";
 interface ProfileCardProps {
   profile: UserProfileProps;
   address?: MyAddressProps;
+  onPaymentMethodsPress?: () => void;
+  onLogoutPress?: () => void;
 }
 
 // Helper function to get loyalty tier colors and icons
@@ -30,7 +32,12 @@ const getLoyaltyTierInfo = (tier: string) => {
   }
 };
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile, address }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({
+  profile,
+  address,
+  onPaymentMethodsPress,
+  onLogoutPress,
+}) => {
   const backgroundColor = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
   const cardBackground = useThemeColor({}, "cards");
@@ -60,7 +67,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, address }) => {
         <View style={styles.userInfo}>
           <StyledText children={profile.name} />
           <StyledText children={profile.email} />
+          <StyledText children={profile.phone} />
         </View>
+
+        {/* Logout overlay icon */}
+        <Pressable style={styles.logoutOverlay} onPress={onLogoutPress}>
+          <Ionicons name="log-out-outline" size={20} color={'#000'} />
+          <StyledText children="Logout" variant="bodySmall" />
+        </Pressable>
       </View>
 
       {/* Loyalty Tier Section */}
@@ -69,7 +83,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, address }) => {
           <View style={styles.loyaltyHeader}>
             <Ionicons
               name={loyaltyInfo.icon as any}
-              size={20}
+              size={18}
               color={loyaltyInfo.color}
             />
             <StyledText
@@ -127,29 +141,52 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, address }) => {
           </View>
         </View>
       </View>
+
+      {/* Payment Methods Section */}
+      {onPaymentMethodsPress && (
+        <View style={styles.paymentSection}>
+          <View style={styles.paymentHeader}>
+            <Ionicons name="card" size={18} color={textColor} />
+            <StyledText
+              style={[styles.paymentLabel, { color: textColor }]}
+              children="Payment Methods"
+            />
+          </View>
+          <Pressable
+            style={[styles.paymentButton, { borderColor: textColor }]}
+            onPress={onPaymentMethodsPress}
+          >
+            <StyledText
+              style={[styles.paymentButtonText, { color: textColor }]}
+              children="Manage Cards"
+            />
+            <Ionicons name="chevron-down" size={16} color={textColor} />
+          </Pressable>
+        </View>
+      )}
     </LinearGradientComponent>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 10,
-    padding: 8,
+    borderRadius: 8,
+    padding: 6,
     marginHorizontal: 1,
     marginVertical: 1,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 12,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
+    marginRight: 12,
   },
   avatarText: {
     fontSize: 24,
@@ -167,15 +204,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loyaltySection: {
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
+    marginBottom: 10,
+    padding: 8,
+    borderRadius: 6,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   loyaltyHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   loyaltyTier: {
     fontSize: 16,
@@ -183,21 +220,21 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   benefitsContainer: {
-    marginTop: 4,
+    marginTop: 2,
   },
   benefitsLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
-    marginBottom: 4,
+    marginBottom: 2,
     opacity: 0.8,
   },
   benefitItem: {
-    fontSize: 12,
-    marginBottom: 2,
+    fontSize: 11,
+    marginBottom: 1,
     opacity: 0.9,
   },
   detailsContainer: {
-    gap: 12,
+    gap: 8,
   },
   detailRow: {
     flexDirection: "row",
@@ -214,16 +251,55 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   addressSection: {
-    marginTop: 8,
+    marginTop: 4,
   },
   sectionLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    marginBottom: 6,
+    marginBottom: 3,
   },
   addressContainer: {
-    gap: 2,
-    paddingLeft: 8,
+    gap: 1,
+    paddingLeft: 6,
+  },
+  paymentSection: {
+    marginTop: 10,
+    borderTopWidth: 1,
+    gap:5,
+    borderTopColor: "rgba(255, 255, 255, 0.1)",
+  },
+  paymentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  paymentLabel: {
+    marginLeft: 6,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  paymentButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderRadius: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+  },
+  paymentButtonText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  logoutOverlay: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    position: "absolute",
+    right: 0,
+    top: 0,
+    zIndex: 1000,
   },
 });
 

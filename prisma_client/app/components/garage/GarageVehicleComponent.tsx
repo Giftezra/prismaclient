@@ -60,7 +60,7 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
             <Ionicons
               name="color-palette-outline"
               size={14}
-              color={iconColor}
+              color={vehicle.color.toLowerCase()}
             />
             <StyledText
               variant="bodySmall"
@@ -70,12 +70,12 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
             </StyledText>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="card-outline" size={14} color={iconColor} />
+            <Ionicons name="car-sport-outline" size={14} color={iconColor} />
             <StyledText
               variant="bodySmall"
               style={[styles.detailText, { color: textColor }]}
             >
-              {vehicle.licence}
+              {vehicle.licence.toUpperCase()}
             </StyledText>
           </View>
         </View>

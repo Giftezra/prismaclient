@@ -69,19 +69,24 @@ const usePayment = () => {
       bookingReference: string,
       merchantDisplayName: string = "Prisma Valet"
     ) => {
-      /* Get the user and address from the state since this is stored in the state when the user is logged in.
-       * Use the address to get the country code and currency code.
-       * Set the country code to GBP if the user is in the United Kingdom.
-       * Set the country code to EUR if the user is in not in the United Kingdom.
-       */
       const address = addresses[0];
       let countryCode = "";
+      let currencyCode = "";
 
-      if (address?.country === "United Kingdom") {
-        countryCode = "GB";
+      if (address?.country === "Ireland") {
+        countryCode = "IE";
+        currencyCode = "EUR";
       } else {
-        countryCode = "EUR";
+        countryCode = "GB";
+        currencyCode = "GBP";
       }
+
+      console.log("Google Pay Config:", {
+        countryCode,
+        currencyCode,
+        testEnv: __DEV__,
+        merchantDisplayName,
+      });
 
       try {
         const { paymentIntent, ephemeralKey, customer } =
@@ -101,14 +106,19 @@ const usePayment = () => {
           },
           googlePay: {
             merchantCountryCode: countryCode,
-            testEnv: true,
-            currencyCode: countryCode,
+            testEnv: __DEV__,
+            currencyCode: currencyCode,
           },
+          // Enable saving payment methods for future use
+          allowsDelayedPaymentMethods: true,
         });
 
         if (error) {
+          console.error("Payment sheet initialization error:", error);
           throw error;
         }
+
+        console.log("Payment sheet initialized successfully");
       } catch (error: any) {
         console.error("Error initializing payment sheet:", error);
         throw error;
