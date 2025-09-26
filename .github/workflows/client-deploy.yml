@@ -2,7 +2,7 @@ name: Deploy Client App
 
 on:
   push:
-    branches: [master, develop]
+    branches: [master, develop, staging]
     paths:
       - "client/**"
       - "prismahome/**"
@@ -18,7 +18,7 @@ env:
 jobs:
   # Job 1: Deploy Client Mobile App (OTA Updates)
   deploy-mobile-app:
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -45,13 +45,36 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build and publish OTA update
+      - name: Determine update type and branch
+        id: update-info
         run: |
           if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            eas update --branch production --message "Production update: ${{ github.event.head_commit.message }}"
+            echo "branch=production" >> $GITHUB_OUTPUT
+            echo "message=🚀 Production update: ${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
+            echo "channel=production" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            echo "branch=development" >> $GITHUB_OUTPUT
+            echo "message=🔧 Development update: ${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
+            echo "channel=development" >> $GITHUB_OUTPUT
+            echo "environment=development" >> $GITHUB_OUTPUT
           else
-            eas update --branch development --message "Development update: ${{ github.event.head_commit.message }}"
+            echo "branch=staging" >> $GITHUB_OUTPUT
+            echo "message=🧪 Staging update: ${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
+            echo "channel=staging" >> $GITHUB_OUTPUT
+            echo "environment=staging" >> $GITHUB_OUTPUT
           fi
+
+      - name: Publish OTA update
+        run: |
+          eas update --branch ${{ steps.update-info.outputs.branch }} --message "${{ steps.update-info.outputs.message }}"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          echo "✅ Update published to ${{ steps.update-info.outputs.branch }} branch"
+          echo "📱 Channel: ${{ steps.update-info.outputs.channel }}"
+          echo "🌍 Environment: ${{ steps.update-info.outputs.environment }}"
 
   # Job 2: Deploy Client Backend Server
   deploy-backend-server:

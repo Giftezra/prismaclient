@@ -356,3 +356,53 @@ def send_password_reset_email(user_email, user_name, reset_token):
         return f"Password reset email sent successfully to {user_email}"
     except Exception as e:
         return f"Failed to send password reset email: {str(e)}"
+
+
+@shared_task
+def send_promotion_expiration():
+    """Send a notification to all users with promotions expiring in the next 24 hours"""
+    from main.models import Promotions
+    from django.utils import timezone
+    from datetime import timedelta
+
+    
+    now = timezone.now()
+    tomorrow = now + timedelta(days=1)
+    
+    try:
+        # Get all active promotions that expire in the next 24 hours
+        expiring_promotions = Promotions.objects.filter(
+            is_active=True,
+            is_used=False,
+            valid_until__gte=now.date(),
+            valid_until__lte=tomorrow.date()
+        ).select_related('user')
+        notifications_sent = 0
+        
+        for promotion in expiring_promotions:
+            user = promotion.user
+            
+            # Send push notification if user allows it and has a token
+            if user.allow_push_notifications and user.notification_token:
+                send_push_notification.delay(
+                    user.id,
+                    "Promotion Expiring Soon ⏰",
+                    f"Your {promotion.title} ({promotion.discount_percentage}% off) expires tomorrow! Don't miss out on this great deal.",
+                    "promotion_expiring"
+                )
+                notifications_sent += 1
+            
+            # Create in-app notification record
+            from main.models import Notification
+            Notification.objects.create(
+                user=user,
+                title="Promotion Expiring Soon ⏰",
+                message=f"Your {promotion.title} ({promotion.discount_percentage}% off) expires tomorrow! Book now to take advantage of this offer.",
+                type='warning',
+                status='active'
+            )
+        
+        return f"Promotion expiration notifications processed: {notifications_sent} push notifications sent for {expiring_promotions.count()} expiring promotions"
+        
+    except Exception as e:
+        return f"Failed to send promotion expiration notifications: {str(e)}"

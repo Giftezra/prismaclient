@@ -20,6 +20,7 @@ import {
   useCancelBookingMutation,
   useRescheduleBookingMutation,
   useFetchPromotionsQuery,
+  useMarkPromotionAsUsedMutation,
 } from "@/app/store/api/bookingApi";
 import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "@/app/contexts/AlertContext";
@@ -76,6 +77,7 @@ const useBooking = () => {
     useCancelBookingMutation();
   const [rescheduleBooking, { isLoading: isLoadingRescheduleBooking }] =
     useRescheduleBookingMutation();
+  const [markPromotionAsUsed] = useMarkPromotionAsUsedMutation();
 
   const { setAlertConfig, setIsVisible } = useAlertContext();
   const { showSnackbarWithConfig, showSnackbar } = useSnackbar();
@@ -1108,6 +1110,39 @@ const useBooking = () => {
     selectedAddons,
     isSUV,
   ]);
+
+  /**
+   * Gets the promotion discount amount
+   *
+   * This method calculates the promotion discount amount based on the user's active promotion.
+   * The promotion discount is applied to the total price (base + addons + SUV surcharge).
+   *
+   * @returns The promotion discount amount in euros
+   * @type {number}
+   *
+   * @example
+   * const promotionDiscount = getPromotionDiscount(); // Returns 10 if user has 10% promotion and total price is 100
+   */
+  const getPromotionDiscount = useCallback((): number => {
+    if (!promotions?.is_active || !promotions?.discount_percentage) return 0;
+
+    const basePrice = selectedServiceType?.price || 0;
+    const addonCosts = selectedAddons.reduce(
+      (total, addon) => total + addon.price,
+      0
+    );
+    const totalBeforeSurcharge = basePrice + addonCosts;
+    const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
+    const totalBeforeDiscount = totalBeforeSurcharge + suvSurcharge;
+
+    return totalBeforeDiscount * (promotions.discount_percentage / 100);
+  }, [
+    promotions?.is_active,
+    promotions?.discount_percentage,
+    selectedServiceType,
+    selectedAddons,
+    isSUV,
+  ]);
   /**
    * Gets the SUV surcharge amount
    *
@@ -1148,16 +1183,17 @@ const useBooking = () => {
   }, [selectedServiceType, isSUV, selectedAddons]);
 
   /**
-   * Gets the final price after loyalty discount (for payment)
+   * Gets the final price after all discounts (loyalty + promotion)
    *
-   * @returns The final price after loyalty discount
+   * @returns The final price after all applicable discounts
    */
   const getFinalPrice = useCallback((): number => {
     const originalPrice = getOriginalPrice();
     const loyaltyDiscount = getLoyaltyDiscount();
+    const promotionDiscount = getPromotionDiscount();
 
-    return originalPrice - loyaltyDiscount;
-  }, [getOriginalPrice, getLoyaltyDiscount]);
+    return originalPrice - loyaltyDiscount - promotionDiscount;
+  }, [getOriginalPrice, getLoyaltyDiscount, getPromotionDiscount]);
 
   /**
    * Gets the total cost of selected addons
@@ -1487,6 +1523,19 @@ const useBooking = () => {
 
         /* If the appointment is created successfully, show the success message */
         if (response) {
+          // Mark promotion as used if there's an active promotion
+          if (promotions?.is_active && promotions?.id) {
+            try {
+              await markPromotionAsUsed({
+                promotion_id: promotions.id,
+                booking_reference: booking.job.booking_reference,
+              }).unwrap();
+            } catch (error) {
+              console.error("Failed to mark promotion as used:", error);
+              // Don't fail the booking if promotion marking fails
+            }
+          }
+
           let message = `Your booking has been assigned to one of our detailers.\n\nYour booking reference is ${booking.job.booking_reference}.\n\nKeep an eye on your email for the booking confirmation.\n\nThank you for choosing PrismaValet!`;
           setAlertConfig({
             title: "Booking Confirmed!",
@@ -1539,6 +1588,7 @@ const useBooking = () => {
             onConfirm: () => {
               setIsVisible(false);
               refetchAppointments();
+              router.push("/main/(tabs)/dashboard/DashboardScreen");
             },
           });
         } else {
@@ -1688,6 +1738,7 @@ const useBooking = () => {
     getOriginalPrice,
     getFinalPrice,
     getLoyaltyDiscount,
+    getPromotionDiscount,
   };
 };
 

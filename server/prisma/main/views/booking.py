@@ -24,6 +24,7 @@ class BookingView(APIView):
         'reschedule_booking' : 'reschedule_booking',
         'get_add_ons' : 'get_add_ons',
         'get_promotions' : 'get_promotions',
+        'mark_promotion_used' : 'mark_promotion_used',
         'create_payment_sheet' : 'create_payment_sheet',
         'get_payment_methods' : 'get_payment_methods',
         'delete_payment_method' : 'delete_payment_method',
@@ -81,6 +82,43 @@ class BookingView(APIView):
                 return Response(None, status=status.HTTP_200_OK)
         except Exception as e:
             print(f"Error fetching promotions: {str(e)}")
+            return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def mark_promotion_used(self, request):
+        """ Mark a promotion as used when booking is confirmed.
+            ARGS : { promotion_id: string, booking_reference: string }
+            RESPONSE : { message: string }
+        """
+        try:
+            promotion_id = request.data.get('promotion_id')
+            booking_reference = request.data.get('booking_reference')
+            
+            if not promotion_id or not booking_reference:
+                return Response({'error': 'promotion_id and booking_reference are required'}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get the promotion
+            try:
+                promotion = Promotions.objects.get(id=promotion_id, user=request.user, is_active=True)
+            except Promotions.DoesNotExist:
+                return Response({'error': 'Promotion not found or already used'}, 
+                              status=status.HTTP_404_NOT_FOUND)
+            
+            # Get the booking
+            try:
+                booking = BookedAppointment.objects.get(booking_reference=booking_reference, user=request.user)
+            except BookedAppointment.DoesNotExist:
+                return Response({'error': 'Booking not found'}, 
+                              status=status.HTTP_404_NOT_FOUND)
+            
+            # Mark promotion as used
+            promotion.mark_as_used(booking)
+            
+            return Response({'message': 'Promotion marked as used successfully'}, 
+                          status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"Error marking promotion as used: {str(e)}")
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             

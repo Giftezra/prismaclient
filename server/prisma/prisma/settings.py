@@ -4,6 +4,12 @@ from datetime import timedelta
 import os
 from pickle import APPEND
 import dj_database_url
+from celery.schedules import crontab
+
+
+
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
@@ -12,6 +18,10 @@ CSRF_TRUSTED_ORIGINS = [BASE_URL]
 CORS_ALLOWED_ORIGINS = [BASE_URL]   
 CORS_ALLOW_CREDENTIALS = True
 ALLOWED_HOSTS=[os.getenv('ALLOWED_HOSTS'), 'localhost', '127.0.0.1']
+
+# If behind a reverse proxy like NPM
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 DEBUG=os.getenv('DEBUG') == 'True'
 
@@ -174,6 +184,10 @@ CELERY_BEAT_SCHEDULE = {
     'send-service-reminders': {
         'task': 'main.tasks.send_service_reminders',
         'schedule': 300.0,  # Run every 5 minutes (300 seconds)
+    },
+    'send-promotion-expiration': {
+        'task': 'main.tasks.send_promotion_expiration',
+        'schedule': crontab(hour=6, minute=0) # Run at 6:00 AM every day
     },
 }
 

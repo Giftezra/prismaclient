@@ -179,6 +179,25 @@ const createBookingApi = createApi({
     }),
 
     /**
+     * Mark a promotion as used
+     * ARGS : { promotion_id: string, booking_reference: string }
+     * RESPONSE : { message: string }
+     */
+    markPromotionAsUsed: builder.mutation<
+      { message: string },
+      { promotion_id: string; booking_reference: string }
+    >({
+      query: (data) => ({
+        url: "/api/v1/booking/mark_promotion_used/",
+        method: "POST",
+        data: {
+          promotion_id: data.promotion_id,
+          booking_reference: data.booking_reference,
+        },
+      }),
+    }),
+
+    /**
      * Get saved payment methods for the user
      * ARGS : void
      * RESPONSE : PaymentMethod[]
@@ -229,6 +248,7 @@ export const {
   useFetchAddOnsQuery,
   useFetchPaymentSheetDetailsMutation,
   useFetchPromotionsQuery,
+  useMarkPromotionAsUsedMutation,
   useGetPaymentMethodsQuery,
   useDeletePaymentMethodMutation,
 } = createBookingApi;

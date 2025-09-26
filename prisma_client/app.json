@@ -55,13 +55,21 @@
       ],
       "expo-secure-store"
     ],
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "detailer_app_url": "https://24a7c8282fed.ngrok-free.app/detailer",
-      "customer_app_url": "https://24a7c8282fed.ngrok-free.app/client",
-      "websocket_url": "wss://24a7c8282fed.ngrok-free.app/ws/client/",
+      "detailer_app_url": "https://detailer.prismavalet.com",
+      "customer_app_url": "https://client.prismavalet.com",
+      "websocket_url": "wss://client.prismavalet.com/ws/client/",
       "stripe": {
         "publishableKey": "pk_test_51S0pCyFO4bA8gRHV8aalwThKMBfWVy3jwM7xZ5cxNfM2QH0AygnOn4WPtEk7kPC3J1BJHLPQ508FpPjYtitk0Qfp00bYRMgL4p"
       },

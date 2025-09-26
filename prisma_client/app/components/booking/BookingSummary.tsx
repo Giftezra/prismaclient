@@ -13,6 +13,7 @@ import {
   UserProfileProps,
 } from "@/app/interfaces/ProfileInterfaces";
 import StyledText from "@/app/components/helpers/StyledText";
+import useBooking from "@/app/app-hooks/useBooking";
 
 interface BookingSummaryProps {
   vehicle: MyVehiclesProps;
@@ -60,24 +61,31 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
   const primaryPurpleColor = useThemeColor({}, "primary");
   const buttonColor = useThemeColor({}, "button");
 
-  // Calculate loyalty discount internally if not provided as prop
-  const getLoyaltyDiscountInternal = (): number => {
+  // Calculate loyalty discount based on user's loyalty benefits
+  const calculateLoyaltyDiscount = (): number => {
     if (!user?.loyalty_benefits?.discount) return 0;
-
     const totalBeforeDiscount = basePrice + addonPrice + suvPrice;
     return totalBeforeDiscount * (user.loyalty_benefits.discount / 100);
   };
 
-  const calculatedLoyaltyDiscount =
-    loyaltyDiscount || getLoyaltyDiscountInternal();
+  // Calculate promotion discount only if user has an active promotion
+  const calculatePromotionDiscount = (): number => {
+    // Only apply promotion discount if user has an active promotion
+    // For now, we'll return 0 unless there's a real promotion
+    // In real implementation, this would check if user has an active promotion
+    return 0; // No promotion discount by default
+  };
 
-  // Calculate original total (before loyalty discount)
+  const calculatedLoyaltyDiscount =
+    loyaltyDiscount || calculateLoyaltyDiscount();
+  const calculatedPromotionDiscount = calculatePromotionDiscount();
   const calculatedOriginalPrice =
     originalPrice || basePrice + addonPrice + suvPrice;
-
-  // Calculate final price (after loyalty discount)
   const calculatedFinalPrice =
-    finalPrice || calculatedOriginalPrice - calculatedLoyaltyDiscount;
+    finalPrice ||
+    calculatedOriginalPrice -
+      calculatedLoyaltyDiscount -
+      calculatedPromotionDiscount;
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-GB", {
@@ -452,25 +460,39 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
               </View>
             )}
 
-            {/* Show original total if loyalty discount is applied */}
-            {calculatedLoyaltyDiscount > 0 && (
-              <View style={styles.priceRow}>
-                <StyledText
-                  variant="bodyMedium"
-                  style={[styles.priceLabel, { color: textColor }]}
-                >
-                  Subtotal:
-                </StyledText>
-                <StyledText
-                  variant="bodyMedium"
-                  style={[styles.priceValue, { color: textColor }]}
-                >
-                  {formatPrice(calculatedOriginalPrice)}
-                </StyledText>
-              </View>
-            )}
+            {/* Always show subtotal before discounts */}
+            <View
+              style={[
+                styles.priceRow,
+                {
+                  borderTopWidth: 1,
+                  borderTopColor: textColor + "20",
+                  paddingTop: 8,
+                  marginTop: 8,
+                },
+              ]}
+            >
+              <StyledText
+                variant="bodyMedium"
+                style={[
+                  styles.priceLabel,
+                  { color: textColor, fontWeight: "600" },
+                ]}
+              >
+                Subtotal:
+              </StyledText>
+              <StyledText
+                variant="bodyMedium"
+                style={[
+                  styles.priceValue,
+                  { color: textColor, fontWeight: "600" },
+                ]}
+              >
+                {formatPrice(calculatedOriginalPrice)}
+              </StyledText>
+            </View>
 
-            {/* Show loyalty discount */}
+            {/* Show loyalty discount if applied */}
             {calculatedLoyaltyDiscount > 0 && (
               <View style={styles.priceRow}>
                 <StyledText
@@ -488,7 +510,35 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
               </View>
             )}
 
-            <View style={styles.totalRow}>
+            {/* Show promotion discount if applied */}
+            {calculatedPromotionDiscount > 0 && (
+              <View style={styles.priceRow}>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceLabel, { color: "#F59E0B" }]}
+                >
+                  Promotion Discount:
+                </StyledText>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceValue, { color: "#F59E0B" }]}
+                >
+                  -{formatPrice(calculatedPromotionDiscount)}
+                </StyledText>
+              </View>
+            )}
+
+            <View
+              style={[
+                styles.totalRow,
+                {
+                  borderTopWidth: 2,
+                  borderTopColor: buttonColor,
+                  paddingTop: 12,
+                  marginTop: 12,
+                },
+              ]}
+            >
               <StyledText
                 variant="titleMedium"
                 style={[styles.totalLabel, { color: textColor }]}
