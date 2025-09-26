@@ -13,6 +13,7 @@ on:
 env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
   EAS_PROJECT_ID: 12a19ebe-4dc8-457b-99e9-ccc269808a5c
+  BACKEND_HEALTH_URL: ${{ secrets.BACKEND_HEALTH_URL }}
 
 jobs:
   # Job 1: Deploy Client Mobile App (OTA Updates)
@@ -103,11 +104,25 @@ jobs:
 
       - name: Health Check
         run: |
-          sleep 30
-          # Try multiple possible health endpoints
-          curl -f http://${{ secrets.DO_HOST }}:8000/health || \
-          curl -f http://${{ secrets.DO_HOST }}:8000/api/health || \
-          curl -f http://${{ secrets.DO_HOST }}:8000/ || exit 1
+          # configurable health URL, with sensible default
+          url="${BACKEND_HEALTH_URL}"
+          if [ -z "$url" ]; then
+            url="http://${{ secrets.DO_HOST }}:8000/api/v1/health/"
+          fi
+
+          echo "Checking backend health at $url"
+
+          # wait for containers to be ready
+          for i in $(seq 1 20); do
+            if curl -fsS "$url" > /dev/null; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            echo "Attempt $i failed; retrying in 5s..."
+            sleep 5
+          done
+          echo "Backend did not become healthy in time" >&2
+          exit 1
 
   # Job 3: Run Tests (Optional)
   test:
