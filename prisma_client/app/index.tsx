@@ -527,5 +527,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textDecorationLine: "underline",
   },
-});/ /   F o r c e   f r e s h   w o r k f l o w   r u n   -   0 9 / 2 6 / 2 0 2 5   0 3 : 2 7 : 2 3  
+});/ /   T r i g g e r   w o r k f l o w   f o r   c o m m i t   b 0 6 6 0 7 5  
  
