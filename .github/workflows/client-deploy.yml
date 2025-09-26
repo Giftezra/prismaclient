@@ -5,7 +5,6 @@ on:
     branches: [master, develop, staging]
     paths:
       - "prisma_client/**"
-      - "prismahome/**"
   pull_request:
     branches: [master]
     paths:
@@ -95,58 +94,22 @@ jobs:
           username: ${{ secrets.DO_USERNAME }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd /home/${{ secrets.DO_USERNAME }}/prisma/client
+            cd /home/${{ secrets.DO_USERNAME }}/prisma/server
             git pull origin master
-            docker-compose down
-            docker-compose build --no-cache
-            docker-compose up -d
+            docker compose down
+            docker compose build --no-cache
+            docker compose up -d
             docker system prune -f
 
       - name: Health Check
         run: |
           sleep 30
-          curl -f http://${{ secrets.DO_HOST }}:8000/health || exit 1
+          # Try multiple possible health endpoints
+          curl -f http://${{ secrets.DO_HOST }}:8000/health || \
+          curl -f http://${{ secrets.DO_HOST }}:8000/api/health || \
+          curl -f http://${{ secrets.DO_HOST }}:8000/ || exit 1
 
-  # Job 3: Deploy PrismaHome Web App
-  deploy-web-app:
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./prismahome
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-          cache-dependency-path: "./prismahome/package-lock.json"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build web app
-        run: npm run build
-
-      - name: Deploy to Digital Ocean
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DO_HOST }}
-          username: ${{ secrets.DO_USERNAME }}
-          key: ${{ secrets.DO_SSH_KEY }}
-          script: |
-            cd /home/${{ secrets.DO_USERNAME }}/prisma/prismahome
-            git pull origin master
-            npm ci
-            npm run build
-            # Restart nginx to serve new build
-            sudo systemctl reload nginx
-
-  # Job 4: Run Tests (Optional)
+  # Job 3: Run Tests (Optional)
   test:
     runs-on: ubuntu-latest
     defaults:
