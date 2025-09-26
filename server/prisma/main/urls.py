@@ -11,6 +11,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from main.views.notifications import NotificationsView
 from main.views.password_reset import RequestPasswordResetView, ResetPasswordView, ValidateResetTokenView, WebResetPasswordView
+from main.views import HealthCheckView
 
 
 app_name = 'main'
@@ -26,6 +27,7 @@ urlpatterns = [
     path('dashboard/<action>/', DashboardView.as_view(), name='dashboard'),
     path('notifications/<action>/', NotificationsView.as_view(), name='notifications'),
     path('terms/<action>/', TermsView.as_view(), name='terms'),
+    path('health/', HealthCheckView.as_view(), name='health'),
     
     # Payment and webhook endpoints
     path('payment/<action>/', PaymentView.as_view(), name='payment'),
