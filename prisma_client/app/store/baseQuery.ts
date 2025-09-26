@@ -143,7 +143,7 @@ export const axiosBaseQuery = (): BaseQueryFn => {
           return {
             error: {
               status: 401,
-              data: "Token refresh failed",
+              data: "Authentication failed",
             },
           };
         }
