@@ -248,6 +248,57 @@ export const usePermissions = () => {
   };
 
   /**
+   * Toggle location permission - for use in settings
+   * This handles both enabling and disabling location access
+   */
+  const toggleLocationPermission = async (
+    enable: boolean
+  ): Promise<boolean> => {
+    try {
+      if (enable) {
+        // User wants to enable location
+        return await requestLocationPermission();
+      } else {
+        // User wants to disable location
+        // We can't actually disable system permissions, but we can update our state
+        // and show guidance to the user
+        const permissionInfo = {
+          granted: false,
+          canAskAgain: true,
+          status: "denied" as const,
+        };
+
+        setPermissionStatus((prev) => ({
+          ...prev,
+          location: permissionInfo,
+        }));
+
+        // Show alert to guide user to device settings
+        Alert.alert(
+          "Disable Location Access",
+          "To completely disable location access, please go to your device Settings > Apps > [App Name] > Permissions and turn off Location.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => {
+                import("expo-linking").then(({ openSettings }) =>
+                  openSettings()
+                );
+              },
+            },
+          ]
+        );
+
+        return true; // Return true because we successfully updated our state
+      }
+    } catch (error) {
+      console.error("Error toggling location permission:", error);
+      return false;
+    }
+  };
+
+  /**
    * Request all permissions (for first-time setup)
    */
   const requestAllPermissions = async () => {

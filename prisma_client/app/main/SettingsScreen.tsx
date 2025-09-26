@@ -14,8 +14,8 @@
  * - General: Auto-save, Location Services, and Analytics settings
  */
 
-import { ScrollView, StyleSheet, View } from "react-native";
 import React, { useState, useEffect } from "react";
+import { ScrollView, StyleSheet, View, Alert } from "react-native";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useThemeContext } from "@/app/contexts/ThemeProvider";
 import SettingSection from "../components/settings/SettingSection";
@@ -47,7 +47,7 @@ const SettingScreen = () => {
     isLoadingUpdateMarketingEmailToken,
   } = useProfile();
 
-  const { toggleNotificationPermission, permissionStatus } = usePermissions();
+  const { toggleNotificationPermission, toggleLocationPermission, permissionStatus } = usePermissions();
 
   // State for managing which sections are expanded
   const [expandedSections, setExpandedSections] = useState<{
@@ -74,7 +74,9 @@ const SettingScreen = () => {
 
   // General settings state
   const [autoSave, setAutoSave] = useState(true);
-  const [locationServices, setLocationServices] = useState(true);
+  const [locationServices, setLocationServices] = useState(
+    permissionStatus.location.granted
+  );
   const [analytics, setAnalytics] = useState(false);
 
   // Snackbar state for user feedback
@@ -92,6 +94,11 @@ const SettingScreen = () => {
       setMarketingNotifications(userProfile.marketing_email_token);
     }
   }, [userProfile, permissionStatus.notifications.granted]);
+
+  // Sync location settings with actual permission status
+  useEffect(() => {
+    setLocationServices(permissionStatus.location.granted);
+  }, [permissionStatus.location.granted]);
 
   /**
    * Toggle the expanded state of a section
@@ -214,13 +221,32 @@ const SettingScreen = () => {
    * @param type - The setting type (autoSave, location, analytics)
    * @param value - The new boolean value
    */
-  const handleGeneralToggle = (type: string, value: boolean) => {
+  const handleGeneralToggle = async (type: string, value: boolean) => {
     switch (type) {
       case "autoSave":
         setAutoSave(value);
         break;
       case "location":
-        setLocationServices(value);
+        // For location services, handle both permission and local state
+        if (value) {
+          // User wants to enable location
+          const success = await toggleLocationPermission(true);
+          if (success) {
+            // The useEffect will update the state based on actual permission status
+            setSnackbarMessage("Location services enabled successfully!");
+          } else {
+            setSnackbarMessage("Failed to enable location services");
+          }
+        } else {
+          // User wants to disable location
+          const success = await toggleLocationPermission(false);
+          if (success) {
+            setSnackbarMessage("Please disable location access in device settings");
+          } else {
+            setSnackbarMessage("Failed to update location settings");
+          }
+        }
+        setSnackbarVisible(true);
         break;
       case "analytics":
         setAnalytics(value);

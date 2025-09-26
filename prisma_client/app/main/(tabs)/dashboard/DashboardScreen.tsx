@@ -27,7 +27,6 @@ import useVehicles from "@/app/app-hooks/useVehicles";
 import ModalServices from "@/app/utils/ModalServices";
 import ReviewComponent from "@/app/components/booking/ReviewComponent";
 import { useAppSelector, RootState } from "@/app/store/main_store";
-
 const image = require("@/assets/images/user_image.jpg");
 const vehicleImage = require("@/assets/images/car.jpg");
 
@@ -41,7 +40,7 @@ const DashboardScreen = () => {
   const borderColor = useThemeColor({}, "borders");
 
   /* Get the currency symbol by getting the user's country */
-  const user = useAppSelector((state: RootState) => state.auth?.user);
+  const user = useAppSelector((state: RootState) => state.auth.user);
   let currencySymbol = "$";
   if (user?.address?.country === "United Kingdom") {
     currencySymbol = "£";
@@ -145,21 +144,26 @@ const DashboardScreen = () => {
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }
       >
+        {/* Ongoing Service Card */}
+        {inProgressAppointment && (
         <OngoingServiceCard appointment={inProgressAppointment} />
+        )}
 
         {/* Display the component that would show how many upcoming appointments a user has */}
-        <View style={styles.upcomingAppointmentDateContainer}>
-          <StyledText children="Upcoming Appointments" variant="labelLarge" />
-          <View style={{ paddingHorizontal: 10, gap: 5 }}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {appointments.map((appointment) => (
-                <View key={appointment.booking_reference}>
-                  {renderUpcomingAppointmentDate(appointment)}
-                </View>
-              ))}
-            </ScrollView>
+        {appointments.length > 0 && (
+          <View style={styles.upcomingAppointmentDateContainer}>
+            <StyledText children="Upcoming Appointments" variant="labelMedium" />
+            <View style={{ paddingHorizontal: 10, gap: 5 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {appointments.map((appointment) => (
+                  <View key={appointment.booking_reference}>
+                    {renderUpcomingAppointmentDate(appointment)}
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Vehicle section */}
         <View style={styles.vehicleSection}>

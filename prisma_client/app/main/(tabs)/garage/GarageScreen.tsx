@@ -39,6 +39,7 @@ const GarageScreen = () => {
 
   const [isAddVehicleModalVisible, setIsAddVehicleModalVisible] =
     useState(false);
+  const [loadingVehicleId, setLoadingVehicleId] = useState<string | null>(null);
 
   const vehicleStatsSelection = useCallback(
     (vehicleId: string) => {
@@ -88,7 +89,9 @@ const GarageScreen = () => {
                   key={index}
                   vehicle={vehicle}
                   onViewDetailsPress={async () => {
+                    setLoadingVehicleId(vehicle.id);
                     const success = await handleViewDetailsPress(vehicle.id);
+                    setLoadingVehicleId(null);
                     if (success) {
                       setIsModalVisible(true);
                     }
@@ -97,6 +100,7 @@ const GarageScreen = () => {
                     router.push("/main/(tabs)/bookings/BookingScreen");
                   }}
                   onDeletePress={() => handleDeleteVehicle(vehicle.id)}
+                  isLoadingVehicleStats={loadingVehicleId === vehicle.id}
                 />
               ))}
             </View>

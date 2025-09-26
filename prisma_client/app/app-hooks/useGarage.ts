@@ -17,6 +17,9 @@ import {
 import { router } from "expo-router";
 import { formatCurrency, formatDate } from "@/app/utils/methods";
 import { useSnackbar } from "../contexts/SnackbarContext";
+import axios from "axios";
+import { API_CONFIG } from "@/constants/Config";
+import * as SecureStore from "expo-secure-store";
 /**
  * Custom hook for managing garage-related functionality including vehicle management.
  *
@@ -302,23 +305,34 @@ const useGarage = () => {
   const handleViewDetailsPress = useCallback(
     async (vehicleId: string) => {
       try {
-        // Set the vehicle ID to trigger the stats query
+        // Set the vehicle ID for the hook state
         setVehicleId(vehicleId);
 
-        // Refetch vehicle stats to get the latest data
-        const result = await refetchVehicleStats();
+        // Make a direct API call to fetch vehicle stats to avoid race condition
+        const accessToken = await SecureStore.getItemAsync("access");
+        const response = await axios.get(
+          `${API_CONFIG.customerAppUrl}/api/v1/garage/get_vehicle_stats/${vehicleId}/`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-        // Check if we got valid data
-        if (result.data) {
-          // Data is loaded successfully, the modal will be shown by the parent component
+        // Update the local vehicleStats state with the fetched data
+        if (response.data) {
+          setVehicleStats(response.data);
           return true;
         } else {
           throw new Error("No data received from server");
         }
       } catch (error: any) {
         let errorMessage = "Failed to fetch vehicle details. Please try again.";
-        if (error?.data?.error) {
-          errorMessage = error.data.error;
+        if (error?.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        } else if (error?.message) {
+          errorMessage = error.message;
         }
         setAlertConfig({
           title: "Error",
@@ -332,7 +346,7 @@ const useGarage = () => {
         return false;
       }
     },
-    [setVehicleId, refetchVehicleStats, setAlertConfig, setIsVisible]
+    [setVehicleId, setVehicleStats, setAlertConfig, setIsVisible]
   );
 
   return {

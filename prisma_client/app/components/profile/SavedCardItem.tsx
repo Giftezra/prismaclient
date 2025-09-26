@@ -73,7 +73,7 @@ const SavedCardItem: React.FC<SavedCardItemProps> = ({
           <View style={styles.cardDetails}>
             <StyledText
               variant="titleMedium"
-              style={[styles.cardBrand, { color: cardColor }]}
+              style={[styles.cardBrand, { color: textColor }]}
             >
               {card.card.brand.toUpperCase()}
             </StyledText>

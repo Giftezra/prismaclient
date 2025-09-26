@@ -1,5 +1,10 @@
 import React from "react";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MyVehiclesProps } from "../../interfaces/GarageInterface";
 import StyledText from "../helpers/StyledText";
@@ -82,13 +87,22 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
 
         {/* Action Buttons */}
         <View style={styles.actions}>
-          <StyledButton
-            title="Details"
-            variant="tonal"
-            onPress={() => onViewDetailsPress?.(vehicle.id)}
-            style={styles.actionButton}
-            isLoading={isLoadingVehicleStats}
-          />
+          {isLoadingVehicleStats ? (
+            <View style={{flexDirection: "row", alignItems: "center", gap: 6,}}>
+              <ActivityIndicator size="small" color={textColor} />
+              <StyledText variant="bodySmall" style={styles.detailText}>Wait..</StyledText>
+            </View>
+          ) : (
+            <StyledButton
+              title={"Details"}
+              variant="tonal"
+              onPress={() => onViewDetailsPress?.(vehicle.id)}
+              style={styles.actionButton}
+              isLoading={isLoadingVehicleStats}
+              disabled={isLoadingVehicleStats}
+            />
+          )}
+
           <StyledButton
             title="Book"
             variant="tonal"
