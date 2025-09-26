@@ -3,12 +3,8 @@ name: Deploy Client App
 on:
   push:
     branches: [master, develop, staging]
-    paths:
-      - "prisma_client/**"
   pull_request:
     branches: [master]
-    paths:
-      - "prisma_client/**"
 
 env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
