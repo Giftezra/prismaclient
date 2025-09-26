@@ -239,9 +239,17 @@ class GarageView(APIView):
             # Get all bookings for this vehicle
             bookings = BookedAppointment.objects.filter(vehicle=vehicle)
             total_bookings = bookings.count() if bookings else 0
-            total_amount = bookings.filter(status__in=['completed', 'confirmed', 'in_progress']).aggregate(
-                total=models.Sum('total_amount')
-            )['total'] or 0.0
+            
+            # Calculate total amount including tips for completed bookings
+            completed_bookings = bookings.filter(status__in=['completed', 'confirmed', 'in_progress'])
+            total_amount = 0.0
+            
+            for booking in completed_bookings:
+                booking_total = float(booking.total_amount)
+                # Add tip if it exists
+                if booking.review_tip:
+                    booking_total += float(booking.review_tip)
+                total_amount += booking_total
             
             # Get the last cleaned date (last completed booking)
             last_cleaned = None
