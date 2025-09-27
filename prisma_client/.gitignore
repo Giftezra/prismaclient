@@ -9,6 +9,7 @@ expo-env.d.ts
 
 google-services.json
 eas.json
+app.json
 # Firebase service account keys
 *firebase-adminsdk*.json
 prisma-6fc48-firebase-adminsdk-fbsvc-73647534e7.json

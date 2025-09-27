@@ -34,11 +34,10 @@ jobs:
         run: npm ci
 
       - name: Setup EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          expo-version: latest
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          npm install -g @expo/cli@latest eas-cli@latest
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: Determine update type and branch
         id: update-info
@@ -75,9 +74,6 @@ jobs:
   deploy-backend-server:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./server
 
     steps:
       - name: Checkout repository
@@ -90,7 +86,7 @@ jobs:
           username: ${{ secrets.DO_USERNAME }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd /${{secrets.DO_USERNAME}}/prismaprod/client
+            cd /${{ secrets.DO_USERNAME }}/prismaprod/client
             git pull origin master
             docker compose down
             docker compose build --no-cache
@@ -100,9 +96,8 @@ jobs:
       - name: Health Check
         run: |
           echo "Waiting for server to start..."
-          sleep 60
+          sleep 30
           echo "Checking server health..."
-          # Check if server is responding (Django doesn't have /health endpoint)
           curl -f --connect-timeout 10 --max-time 30 http://${{ secrets.DO_HOST }}:8000/ || \
           echo "Server may still be starting, but deployment completed successfully"
 
