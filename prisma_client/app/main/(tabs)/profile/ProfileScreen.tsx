@@ -65,6 +65,10 @@ const ProfileScreen = () => {
   const isScrolling = useRef(false);
   const [hasScrolled, setHasScrolled] = useState(false);
 
+  /* Dynamic height calculation for service history */
+  const [contentHeight, setContentHeight] = useState(0);
+  const [hasMeasuredHeight, setHasMeasuredHeight] = useState(false);
+
   /**
    * Handles the service history toggle with animation
    */
@@ -297,17 +301,35 @@ const ProfileScreen = () => {
 
         {/* Display the toggle for the service history */}
         <View style={styles.dropdownContainer}>
-            <Pressable
-              style={[styles.downdownbutton, { borderColor: borderColor }]}
-              onPress={handleServiceHistoryToggle}
-            >
-              <StyledText children="Service History" variant="labelLarge" />
-              <Ionicons
-                name={isServiceHistoryVisible ? "chevron-up" : "chevron-down"}
-                size={15}
-                color={iconColor}
-              />
-            </Pressable>
+          <Pressable
+            style={[styles.downdownbutton, { borderColor: borderColor }]}
+            onPress={handleServiceHistoryToggle}
+          >
+            <StyledText children="Service History" variant="labelLarge" />
+            <Ionicons
+              name={isServiceHistoryVisible ? "chevron-up" : "chevron-down"}
+              size={15}
+              color={iconColor}
+            />
+          </Pressable>
+
+          {/* Hidden container to measure content height */}
+          {!hasMeasuredHeight &&
+            serviceHistory &&
+            serviceHistory.length > 0 && (
+              <View
+                style={styles.hiddenMeasurer}
+                onLayout={(event) => {
+                  const { height } = event.nativeEvent.layout;
+                  setContentHeight(height + 50); // Add some padding
+                  setHasMeasuredHeight(true);
+                }}
+              >
+                {serviceHistory.map((history, index) => (
+                  <ServiceHistoryComponent key={index} {...history} />
+                ))}
+              </View>
+            )}
 
           <Animated.View
             style={[
@@ -315,7 +337,7 @@ const ProfileScreen = () => {
               {
                 maxHeight: slideAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0, 2000], // Increased height to accommodate more content
+                  outputRange: [0, hasMeasuredHeight ? contentHeight : 2000],
                 }),
                 opacity: opacityAnim,
                 transform: [
@@ -435,7 +457,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 50,
-    minHeight: "100%", 
+    minHeight: "100%",
   },
 
   settingsButtonText: {
@@ -473,13 +495,19 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     paddingBottom: 10,
     marginTop: 5,
-    flex: 1,
-    minHeight: 0,
+  },
+  hiddenMeasurer: {
+    position: "absolute",
+    opacity: 0,
+    zIndex: -1,
+    top: -1000,
+    left: 0,
+    right: 0,
   },
   settingsContainer: {
     padding: 10,
     paddingHorizontal: 10,
-    backgroundColor: "transparent", 
+    backgroundColor: "transparent",
   },
   animatedSettingsContainer: {
     position: "absolute",
@@ -488,6 +516,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1000,
     elevation: 1000, // For Android
-    backgroundColor: "transparent", 
+    backgroundColor: "transparent",
   },
 });

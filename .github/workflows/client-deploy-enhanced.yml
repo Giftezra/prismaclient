@@ -147,25 +147,3 @@ jobs:
           echo "Checking server health..."
           curl -f --connect-timeout 10 --max-time 30 http://${{ secrets.DO_HOST }}:8000/ || \
           echo "Server may still be starting, but deployment completed successfully"
-
-  # Job 3: Run Tests (Optional)
-  # test:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./prisma_client
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: "18"
-  #         cache: "npm"
-  #         cache-dependency-path: "./prisma_client/package-lock.json"
-  #     - name: Install dependencies
-  #       run: npm ci
-  #     - name: Run linting
-  #       run: npm run lint -- --max-warnings 500
-  #     - name: Type check
-  #       run: npx tsc --noEmit

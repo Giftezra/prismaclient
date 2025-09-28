@@ -85,6 +85,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'marketing_email_token': user.allow_marketing_emails,
                 'loyalty_tier': loyalty.current_tier if loyalty else None,
                 'loyalty_benefits': loyalty_benefits,
+                'referral_code': user.referral_code if user.referral_code else None,
             }
         })
         return data

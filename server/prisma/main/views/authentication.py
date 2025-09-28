@@ -103,6 +103,7 @@ class AuthenticationView(CreateAPIView):
                     },
                     'loyalty_tier': loyalty.current_tier if loyalty else None,
                     'loyalty_benefits': loyalty_benefits,
+                    'referral_code': user.referral_code if user.referral_code else None,
                 },
                 'access': access_token,
                 'refresh': refresh_token

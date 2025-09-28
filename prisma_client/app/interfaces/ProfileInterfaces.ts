@@ -19,6 +19,7 @@ export interface UserProfileProps {
     discount: number;
     free_service: string[];
   };
+  referral_code?: string;
   latitude?: number;
   longitude?: number;
 }

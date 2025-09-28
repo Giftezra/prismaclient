@@ -27,6 +27,7 @@ import useVehicles from "@/app/app-hooks/useVehicles";
 import ModalServices from "@/app/utils/ModalServices";
 import ReviewComponent from "@/app/components/booking/ReviewComponent";
 import { useAppSelector, RootState } from "@/app/store/main_store";
+import ReferralSection from "@/app/components/dashboard/ReferralSection";
 const image = require("@/assets/images/user_image.jpg");
 const vehicleImage = require("@/assets/images/car.jpg");
 
@@ -193,6 +194,7 @@ const DashboardScreen = () => {
         <RecentServicesSection bookings={recentService} />
 
         <StatsSection stats={stats} />
+        <ReferralSection referral={user?.referral_code || ""} />
       </ScrollView>
 
       {/* Notification Permission Modal */}
