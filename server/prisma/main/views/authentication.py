@@ -60,7 +60,7 @@ class AuthenticationView(CreateAPIView):
                     referrer = User.objects.get(referral_code=referral_code)
                     referred_by = referrer
                 except User.DoesNotExist:
-                    pass  # Invalid referral code, but don't fail registration
+                    return Response({'error': 'Invalid referral code'}, status=status.HTTP_400_BAD_REQUEST)
             
             # Call the user model to create a new user
             user = User.objects.create_user(

@@ -95,6 +95,9 @@ jobs:
             sleep 10
             docker compose build --no-cache
             docker compose up -d
+            echo "Migrating database..."
+            docker compose exec client_server python manage.py makemigrations
+            docker compose exec client_server python manage.py migrate
             docker system prune -f
 
       - name: Health Check
