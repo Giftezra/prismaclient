@@ -1,333 +1,382 @@
 {% extends "base_email.html" %} {% block title %}Special Promotion - 10% Off
 Your Next Washes{% endblock %} {% block content %}
-<div class="greeting">
-  <h1>🎉 Special Promotion Alert! 🎉</h1>
-</div>
+<div class="email-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <h1 class="main-title">🎉 Special Promotion Alert! 🎉</h1>
+    <p class="greeting">
+      Hello <strong>{{ customer_name }}</strong>, we have exciting news for you!
+    </p>
+    <p class="intro-text">
+      You now have access to an exclusive promotion that's too good to miss.
+    </p>
+  </div>
 
-<div class="intro-text">
-  <p>
-    Hello <strong>{{ customer_name }}</strong>, we have exciting news for you!
-    You now have access to an exclusive promotion that's too good to miss.
-  </p>
-</div>
-
-<div class="promotion-banner">
-  <div class="promotion-title">10% OFF</div>
-  <div class="promotion-subtitle">Your Next Washes</div>
-  <div class="promotion-details">Valid for 30 days from today</div>
-</div>
-
-<div class="promotion-highlights">
-  <div class="highlight-item">
-    <div class="highlight-icon">✨</div>
-    <div class="highlight-text">
-      <strong>Premium Service</strong><br />
-      Same exceptional quality you love
+  <!-- Promotion Banner -->
+  <div class="promotion-banner">
+    <div class="promotion-content">
+      <div class="discount-amount">10% OFF</div>
+      <div class="discount-description">Your Next Washes</div>
+      <div class="validity-period">Valid for 30 days from today</div>
     </div>
   </div>
-  <div class="highlight-item">
-    <div class="highlight-icon">⏰</div>
-    <div class="highlight-text">
-      <strong>30-Day Window</strong><br />
-      Plenty of time to book your washes
-    </div>
-  </div>
-  <div class="highlight-item">
-    <div class="highlight-icon">💰</div>
-    <div class="highlight-text">
-      <strong>Instant Savings</strong><br />
-      Applied automatically at checkout
-    </div>
-  </div>
-</div>
 
-<div class="promotion-details-section">
-  <div class="section-title">How It Works</div>
-  <div class="steps-container">
-    <div class="step">
-      <div class="step-number">1</div>
-      <div class="step-content">
-        <strong>Book Your Service</strong><br />
-        Choose from our full range of wash services
+  <!-- Benefits Section -->
+  <div class="benefits-section">
+    <div class="benefit-card">
+      <div class="benefit-icon">✨</div>
+      <div class="benefit-content">
+        <h3>Premium Service</h3>
+        <p>Same exceptional quality you love</p>
       </div>
     </div>
-    <div class="step">
-      <div class="step-number">2</div>
-      <div class="step-content">
-        <strong>Discount Applied</strong><br />
-        10% off is automatically applied at checkout
+
+    <div class="benefit-card">
+      <div class="benefit-icon">⏰</div>
+      <div class="benefit-content">
+        <h3>30-Day Window</h3>
+        <p>Plenty of time to book your washes</p>
       </div>
     </div>
-    <div class="step">
-      <div class="step-number">3</div>
-      <div class="step-content">
-        <strong>Enjoy Savings</strong><br />
-        Experience premium service at a great price
+
+    <div class="benefit-card">
+      <div class="benefit-icon">💰</div>
+      <div class="benefit-content">
+        <h3>Instant Savings</h3>
+        <p>Applied automatically at checkout</p>
       </div>
     </div>
   </div>
-</div>
 
-<div class="cta-section">
-  <div class="cta-title">Ready to Save?</div>
-  <div class="cta-text">
-    Don't miss out on this limited-time offer. Book your next wash today and
-    enjoy 10% off!
+  <!-- How It Works Section -->
+  <div class="how-it-works">
+    <h2 class="section-title">How It Works</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h4>Book Your Service</h4>
+          <p>Choose from our full range of wash services</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h4>Discount Applied</h4>
+          <p>10% off is automatically applied at checkout</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h4>Enjoy Savings</h4>
+          <p>Experience premium service at a great price</p>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="cta-button-container">
+
+  <!-- Call to Action -->
+  <div class="cta-section">
+    <h2 class="cta-title">Ready to Save?</h2>
+    <p class="cta-description">
+      Don't miss out on this limited-time offer. Book your next wash today and
+      enjoy 10% off!
+    </p>
     <a href="{{ booking_url }}" class="cta-button">Book Now & Save 10%</a>
   </div>
-</div>
 
-<div class="terms-section">
-  <div class="section-title">Terms & Conditions</div>
-  <ul class="terms-list">
-    <li>Promotion valid for 30 days from the date of this email</li>
-    <li>10% discount applies to all wash services</li>
-    <li>Cannot be combined with other promotions</li>
-    <li>Subject to availability and standard booking terms</li>
-  </ul>
-</div>
+  <!-- Terms Section -->
+  <div class="terms-section">
+    <h3 class="terms-title">Terms & Conditions</h3>
+    <ul class="terms-list">
+      <li>Promotion valid for 30 days from the date of this email</li>
+      <li>10% discount applies to all wash services</li>
+      <li>Cannot be combined with other promotions</li>
+      <li>Subject to availability and standard booking terms</li>
+    </ul>
+  </div>
 
-<div class="contact-section">
-  <div class="section-title">Questions About This Promotion?</div>
-  <div class="contact-methods">
-    <div class="contact-method">
+  <!-- Contact Section -->
+  <div class="contact-section">
+    <h3 class="contact-title">Questions About This Promotion?</h3>
+    <div class="contact-info">
       <span class="contact-icon">📧</span>
       <a href="mailto:support@prismavalet.com" class="contact-link"
         >support@prismavalet.com</a
       >
     </div>
   </div>
-</div>
 
-<div class="closing">
-  <div class="closing-text">
-    Thank you for being a valued Prisma customer. We appreciate your trust in
-    our service and look forward to providing you with exceptional car care at
-    this special price.
-  </div>
-  <div class="signature">
-    Best regards,<br />
-    <span class="signature-name">The Prisma Team</span>
+  <!-- Footer -->
+  <div class="footer">
+    <p class="footer-text">
+      Thank you for being a valued Prisma customer. We appreciate your trust in
+      our service and look forward to providing you with exceptional car care at
+      this special price.
+    </p>
+    <div class="signature">
+      <p>Best regards,<br /><strong>The Prisma Team</strong></p>
+    </div>
   </div>
 </div>
 
 <style>
-  .promotion-banner {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
-    color: white;
-    padding: 40px 20px;
-    border-radius: 12px;
-    margin: 30px 0;
+  /* Reset and base styles */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .email-container {
+    max-width: 600px;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      sans-serif;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  /* Header Section */
+  .header-section {
     text-align: center;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+    padding: 40px 20px 30px;
+    background: #ffffff;
   }
 
-  .promotion-banner::before {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(
-      circle,
-      rgba(255, 255, 255, 0.1) 0%,
-      transparent 70%
-    );
-    animation: shimmer 3s ease-in-out infinite;
+  .main-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 20px;
+    line-height: 1.2;
   }
 
-  @keyframes shimmer {
-    0%,
-    100% {
-      transform: translateX(-100%) translateY(-100%) rotate(30deg);
-    }
-    50% {
-      transform: translateX(100%) translateY(100%) rotate(30deg);
-    }
+  .greeting {
+    font-size: 18px;
+    color: #4b5563;
+    margin-bottom: 10px;
   }
 
-  .promotion-title {
+  .intro-text {
+    font-size: 16px;
+    color: #6b7280;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* Promotion Banner */
+  .promotion-banner {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    padding: 50px 30px;
+    margin: 30px 0;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+  }
+
+  .promotion-content {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .discount-amount {
     font-size: 48px;
     font-weight: 900;
     margin-bottom: 8px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    position: relative;
-    z-index: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
-  .promotion-subtitle {
+  .discount-description {
     font-size: 24px;
     font-weight: 600;
-    margin-bottom: 8px;
-    position: relative;
-    z-index: 1;
+    margin-bottom: 12px;
   }
 
-  .promotion-details {
+  .validity-period {
     font-size: 16px;
     opacity: 0.9;
-    position: relative;
-    z-index: 1;
   }
 
-  .promotion-highlights {
+  /* Benefits Section */
+  .benefits-section {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin: 30px 0;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin: 50px 0;
+    padding: 0 20px;
   }
 
-  .highlight-item {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 20px;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border-radius: 10px;
-    border-left: 4px solid #3b82f6;
-    transition: transform 0.2s ease;
-  }
-
-  .highlight-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .highlight-icon {
-    font-size: 24px;
-    flex-shrink: 0;
-  }
-
-  .highlight-text {
-    font-size: 14px;
-    line-height: 1.4;
-  }
-
-  .promotion-details-section {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-    color: white;
-    padding: 30px;
+  .benefit-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
-    margin: 30px 0;
+    padding: 30px 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .benefit-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .benefit-icon {
+    font-size: 32px;
+    margin-bottom: 16px;
+  }
+
+  .benefit-content h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+  }
+
+  .benefit-content p {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  /* How It Works Section */
+  .how-it-works {
+    background: #f8fafc;
+    padding: 50px 30px;
+    margin: 50px 0;
+    border-radius: 16px;
   }
 
   .section-title {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
-    margin-bottom: 20px;
+    color: #1f2937;
     text-align: center;
+    margin-bottom: 40px;
   }
 
-  .steps-container {
+  .steps {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
   }
 
   .step {
     display: flex;
     align-items: flex-start;
-    gap: 15px;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    backdrop-filter: blur(10px);
+    gap: 20px;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 
   .step-number {
-    width: 32px;
-    height: 32px;
-    background: #f59e0b;
+    width: 40px;
+    height: 40px;
+    background: #3b82f6;
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 16px;
     flex-shrink: 0;
   }
 
-  .step-content {
-    font-size: 14px;
-    line-height: 1.4;
+  .step-content h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
   }
 
+  .step-content p {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  /* Call to Action */
   .cta-section {
     text-align: center;
-    padding: 40px 20px;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-radius: 12px;
-    margin: 30px 0;
-    border: 2px solid #0ea5e9;
+    padding: 50px 30px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    margin: 50px 0;
+    border-radius: 16px;
   }
 
   .cta-title {
     font-size: 28px;
     font-weight: 700;
-    color: #0c4a6e;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
 
-  .cta-text {
+  .cta-description {
     font-size: 16px;
-    color: #0369a1;
-    margin-bottom: 25px;
-    line-height: 1.5;
-  }
-
-  .cta-button-container {
-    margin-top: 20px;
+    margin-bottom: 30px;
+    opacity: 0.9;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .cta-button {
     display: inline-block;
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    color: white;
+    background: white;
+    color: #059669;
     padding: 16px 32px;
     border-radius: 8px;
     text-decoration: none;
     font-weight: 700;
-    font-size: 18px;
-    box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+    font-size: 16px;
     transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   }
 
   .cta-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     text-decoration: none;
-    color: white;
+    color: #059669;
   }
 
+  /* Terms Section */
   .terms-section {
-    background-color: #f8fafc;
-    padding: 25px;
-    border-radius: 8px;
-    margin: 30px 0;
+    background: #f9fafb;
+    padding: 30px;
+    margin: 40px 0;
+    border-radius: 12px;
     border-left: 4px solid #6b7280;
+  }
+
+  .terms-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 20px;
   }
 
   .terms-list {
     list-style: none;
     padding: 0;
-    margin: 0;
   }
 
   .terms-list li {
     position: relative;
     padding-left: 20px;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     color: #4b5563;
-    line-height: 1.5;
     font-size: 14px;
+    line-height: 1.5;
   }
 
   .terms-list li:before {
@@ -338,82 +387,111 @@ Your Next Washes{% endblock %} {% block content %}
     left: 0;
   }
 
+  /* Contact Section */
   .contact-section {
-    background-color: #f0f9ff;
-    padding: 25px;
-    border-radius: 8px;
-    margin: 30px 0;
-    border-left: 4px solid #0ea5e9;
+    background: #eff6ff;
+    padding: 30px;
+    margin: 40px 0;
+    border-radius: 12px;
+    border-left: 4px solid #3b82f6;
   }
 
-  .contact-methods {
+  .contact-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 16px;
+  }
+
+  .contact-info {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 12px;
   }
 
-  .contact-method {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
   .contact-icon {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .contact-link {
-    color: #0ea5e9;
+    color: #3b82f6;
     text-decoration: none;
     font-weight: 500;
+    font-size: 16px;
   }
 
   .contact-link:hover {
     text-decoration: underline;
   }
 
-  .closing {
-    margin-top: 30px;
-    padding-top: 25px;
-    border-top: 2px solid #e5e7eb;
+  /* Footer */
+  .footer {
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
   }
 
-  .closing-text {
+  .footer-text {
+    font-size: 15px;
+    color: #6b7280;
     margin-bottom: 20px;
     line-height: 1.6;
-    font-size: 15px;
   }
 
+  .signature p {
+    font-size: 14px;
+    color: #4b5563;
+  }
+
+  /* Mobile Responsive */
   @media only screen and (max-width: 600px) {
-    .promotion-title {
+    .email-container {
+      padding: 0 10px;
+    }
+
+    .main-title {
+      font-size: 28px;
+    }
+
+    .discount-amount {
       font-size: 36px;
     }
 
-    .promotion-subtitle {
+    .discount-description {
       font-size: 20px;
     }
 
-    .promotion-highlights {
+    .benefits-section {
       grid-template-columns: 1fr;
+      gap: 20px;
+      padding: 0 10px;
     }
 
-    .steps-container {
+    .steps {
       grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .step {
+      flex-direction: column;
+      text-align: center;
+      gap: 15px;
     }
 
     .cta-title {
       font-size: 24px;
     }
 
-    .cta-button {
-      padding: 14px 24px;
-      font-size: 16px;
+    .promotion-banner,
+    .how-it-works,
+    .cta-section {
+      padding: 30px 20px;
     }
 
-    .promotion-banner,
-    .promotion-details-section,
-    .cta-section {
-      padding: 25px 15px;
+    .terms-section,
+    .contact-section {
+      padding: 25px 20px;
     }
   }
 </style>

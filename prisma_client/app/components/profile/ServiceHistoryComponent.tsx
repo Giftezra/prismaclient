@@ -124,7 +124,7 @@ const ServiceHistoryComponent = ({
       <View style={[styles.footer, { borderTopColor: borderColor }]}>
         <StyledText variant="titleMedium" children="Total Amount" />
         <StyledText
-          style={[styles.totalAmount, { color: primaryPurple }]}
+          style={[styles.totalAmount, { color: textColor }]}
           children={formatCurrency(total_amount)}
         />
       </View>

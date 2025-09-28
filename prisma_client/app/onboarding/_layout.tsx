@@ -1,12 +1,18 @@
-import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import { KeyboardAvoidingView, Platform, StatusBar, StyleSheet } from "react-native";
 import React from "react";
 import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { useThemeContext } from "../contexts/ThemeProvider";
 
 const OnboardingLayout = () => {
   const backgroundColor = useThemeColor({}, "background");
+  const { currentTheme } = useThemeContext();
 
+  // Set status bar style based on theme
+  // Light theme -> dark content, Dark theme -> light content
+  const statusBarStyle =
+    currentTheme === "dark" ? "light-content" : "dark-content";
   return (
     <SafeAreaView
       style={{
@@ -19,6 +25,7 @@ const OnboardingLayout = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
+        <StatusBar barStyle={statusBarStyle} />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="OnboardingScreen" />
           <Stack.Screen name="SigninScreen" />

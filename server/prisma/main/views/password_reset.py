@@ -110,6 +110,18 @@ class ResetPasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        if not any(c.islower() for c in new_password):
+            return Response(
+                {'error': 'Password must contain at least one lowercase letter'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not any(c.isupper() for c in new_password):
+            return Response(
+                {'error': 'Password must contain at least one uppercase letter'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         try:
             reset_token = PasswordResetToken.objects.get(token=token)
             
@@ -217,12 +229,6 @@ class WebResetPasswordView(APIView):
             return render(request, 'password_reset_form.html', {
                 'token': token,
                 'error': 'Password must contain at least one uppercase letter'
-            })
-        
-        if not any(c.isdigit() for c in new_password):
-            return render(request, 'password_reset_form.html', {
-                'token': token,
-                'error': 'Password must contain at least one number'
             })
         
         try:

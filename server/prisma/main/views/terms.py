@@ -47,7 +47,7 @@ class TermsView(APIView):
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                         background-color: #FFFFFF;
                         color: #000000;
-                        font-size: 16px;
+                        font-size: 12px;
                         line-height: 1.5;
                         padding: 0;
                     }}
@@ -67,7 +67,7 @@ class TermsView(APIView):
                     /* Section headers - first strong element in paragraph */
                     p strong:first-child {{
                         display: block;
-                        font-size: 18px;
+                        font-size: 15px;
                         font-weight: bold;
                         margin-bottom: 8px;
                         margin-top: 20px;

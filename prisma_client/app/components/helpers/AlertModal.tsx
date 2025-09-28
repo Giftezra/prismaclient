@@ -59,10 +59,7 @@ const AlertModal = ({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <LinearGradient
-          colors={[backgroundColor, textColor]}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 2, y: 4 }}
+        <View
           style={[
             styles.modalContainer,
             {
@@ -83,7 +80,7 @@ const AlertModal = ({
             children={message}
           />
 
-          <View style={styles.buttonContainer}>
+          <View style={[styles.buttonContainer, { borderTopColor: borderColor }]}>
             {onClose && (
               <TouchableOpacity
                 onPress={onClose}
@@ -109,19 +106,18 @@ const AlertModal = ({
                 }}
                 style={[
                   styles.button,
-                  { backgroundColor: getTitleColor() },
                 ]}
                 activeOpacity={0.8}
               >
                 <StyledText
                   children="Confirm"
                   variant="labelMedium"
-                  style={styles.confirmButtonText}
+                  style={[styles.confirmButtonText, { color: textColor }]}
                 />
               </TouchableOpacity>
             )}
           </View>
-        </LinearGradient>
+        </View>
       </View>
     </Modal>
   );
@@ -136,7 +132,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   modalContainer: {
-    borderRadius: 40,
+    borderRadius: 10,
     borderWidth: 1,
     padding: 15,
     width: Math.min(screenWidth - 40, 350),
@@ -166,9 +162,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   buttonContainer: {
+    borderTopWidth: 1,
     flexDirection: "row",
     justifyContent: "flex-end",
     gap: 12,
+    marginBottom: -10,
   },
   button: {
     paddingHorizontal: 20,
@@ -177,13 +175,13 @@ const styles = StyleSheet.create({
     minWidth: 80,
     alignItems: "center",
     justifyContent: "center",
+    flex: 1,
   },
   cancelButtonText: {
     fontWeight: "500",
     fontSize: 15,
   },
   confirmButtonText: {
-    color: "#FFFFFF",
     fontWeight: "500",
     fontSize: 15,
   },

@@ -302,10 +302,10 @@ const ProfileScreen = () => {
         {/* Display the toggle for the service history */}
         <View style={styles.dropdownContainer}>
           <Pressable
-            style={[styles.downdownbutton, { borderColor: borderColor }]}
+            style={[styles.downdownbutton]}
             onPress={handleServiceHistoryToggle}
           >
-            <StyledText children="Service History" variant="labelLarge" />
+            <StyledText children="Service History" variant="labelLarge"  style={{fontSize: 16, fontStyle: 'italic', fontWeight: 'bold'}}/>
             <Ionicons
               name={isServiceHistoryVisible ? "chevron-up" : "chevron-down"}
               size={15}
@@ -474,8 +474,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 5,
     paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 5,
+    height: 50,
   },
   addressHeader: {
     flexDirection: "row",

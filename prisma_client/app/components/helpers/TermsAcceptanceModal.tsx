@@ -9,12 +9,12 @@ import {
   StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { WebView } from "react-native-webview";
 import StyledText from "./StyledText";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useGetTermsAndConditionsQuery } from "@/app/store/api/authApi";
 import { ActivityIndicator } from "react-native-paper";
+import LinearGradientComponent from "./LinearGradientComponent";
 
 const { height } = Dimensions.get("window");
 
@@ -52,11 +52,12 @@ const TermsAcceptanceModal: React.FC<TermsAcceptanceModalProps> = ({
         <StatusBar barStyle="light-content" />
 
         {/* Gradient Header */}
-        <LinearGradient
-          colors={["#8B5CF6", "#A855F7", "#C084FC"]}
+        <LinearGradientComponent
+          color1= {backgroundColor}
+          color2={textColor}
           style={styles.header}
           start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
+          end={{ x: 5, y: 1 }}
         >
           {/* Navigation */}
           <View style={styles.navigation}>
@@ -76,7 +77,7 @@ const TermsAcceptanceModal: React.FC<TermsAcceptanceModalProps> = ({
               Conditions
             </StyledText>
           </View>
-        </LinearGradient>
+        </LinearGradientComponent>
 
         {/* Content Section */}
         <View style={styles.contentSection}>
@@ -171,8 +172,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   header: {
-    paddingTop: 50,
-    paddingBottom: 30,
+    paddingTop: 20,
+    paddingBottom: 10,
     paddingHorizontal: 20,
   },
   navigation: {
@@ -210,11 +211,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    padding: 20,
+    marginTop: 10,
+    padding: 10,
     paddingBottom: 100, // Space for footer buttons
   },
   termsTitle: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#000000",
     marginBottom: 8,
@@ -225,7 +227,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   lastUpdatedText: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#666666",
     marginLeft: 6,
   },
@@ -272,9 +274,9 @@ const styles = StyleSheet.create({
   },
   declineButton: {
     flex: 1,
-    height: 50,
+    height: 35,
     backgroundColor: "#F5F5F5",
-    borderRadius: 8,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -285,8 +287,8 @@ const styles = StyleSheet.create({
   },
   acceptButton: {
     flex: 1,
-    height: 50,
-    borderRadius: 8,
+    height: 35,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },

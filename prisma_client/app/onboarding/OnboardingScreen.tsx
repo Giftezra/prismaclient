@@ -4,8 +4,7 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
-  Dimensions,
-  StatusBar,
+  Dimensions,     
   Pressable,
   Modal,
   TouchableOpacity,
@@ -55,7 +54,12 @@ const OnboardingScreen = () => {
   const handleSubmit = async () => {
     if (!signUpData) return;
     try {
-      if (!signUpData.name || !signUpData.email || !signUpData.password) {
+      if (
+        !signUpData.name ||
+        !signUpData.email ||
+        !signUpData.phone ||
+        !signUpData.password
+      ) {
         setAlertConfig({
           title: "Missing Fields",
           message: "Please fill in all required fields",
@@ -80,10 +84,6 @@ const OnboardingScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <StatusBar
-        barStyle={textColor === "#FFFFFF" ? "light-content" : "dark-content"}
-        backgroundColor={backgroundColor}
-      />
 
       <KeyboardAvoidingView
         style={styles.container}
@@ -141,6 +141,22 @@ const OnboardingScreen = () => {
                   value={signUpData?.email || ""}
                   onChangeText={(text) => handleSignUpData("email", text)}
                   keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={styles.textInput}
+                  placeholderTextColor={
+                    textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"
+                  }
+                />
+              </View>
+
+              {/* Phone Input */}
+              <View style={styles.inputContainer}>
+                <StyledTextInput
+                  label="Phone Number"
+                  placeholder="Enter your phone number"
+                  value={signUpData?.phone || ""}
+                  onChangeText={(text) => handleSignUpData("phone", text)}
+                  keyboardType="phone-pad"
                   autoCapitalize="none"
                   style={styles.textInput}
                   placeholderTextColor={

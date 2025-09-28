@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
-import { Platform, Alert } from "react-native";
+import { Platform } from "react-native";
+import { useAlertContext } from "../contexts/AlertContext";
+import { useSnackbar } from "../contexts/SnackbarContext";
 
 /**
  * Permission status types
@@ -32,6 +34,8 @@ export interface PermissionStatus {
  * - Graceful degradation when permissions are denied
  */
 export const usePermissions = () => {
+  const { setAlertConfig, setIsVisible } = useAlertContext();
+
   const [permissionStatus, setPermissionStatus] = useState<PermissionStatus>({
     notifications: {
       granted: false,
@@ -198,22 +202,16 @@ export const usePermissions = () => {
       const currentStatus = await Location.getForegroundPermissionsAsync();
 
       if (!currentStatus.canAskAgain) {
-        Alert.alert(
-          "Location Permission Required",
-          "Please enable location services in your device settings to find nearby services and provide accurate location-based features.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Open Settings",
-              onPress: () => {
-                // For location, we can use Linking to open app settings
-                import("expo-linking").then(({ openSettings }) =>
-                  openSettings()
-                );
-              },
-            },
-          ]
-        );
+        setAlertConfig({
+          isVisible: true,
+          title: "Location Permission Required",
+          message:
+            "Please enable location services in your device settings to find nearby services and provide accurate location-based features.",
+          type: "warning",
+          onConfirm: () => {
+            import("expo-linking").then(({ openSettings }) => openSettings());
+          },
+        });
         return false;
       }
 
@@ -234,11 +232,16 @@ export const usePermissions = () => {
       if (status === "granted") {
         return true;
       } else {
-        Alert.alert(
-          "Permission Denied",
-          "You can enable location services later in the app settings.",
-          [{ text: "OK" }]
-        );
+        setAlertConfig({
+          isVisible: true,
+          title: "Permission Denied",
+          message:
+            "You can enable location services later in the app settings.",
+          type: "warning",
+          onClose: () => {
+            setIsVisible(false);
+          },
+        });
         return false;
       }
     } catch (error) {
@@ -274,21 +277,19 @@ export const usePermissions = () => {
         }));
 
         // Show alert to guide user to device settings
-        Alert.alert(
-          "Disable Location Access",
-          "To completely disable location access, please go to your device Settings > Apps > [App Name] > Permissions and turn off Location.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Open Settings",
-              onPress: () => {
-                import("expo-linking").then(({ openSettings }) =>
-                  openSettings()
-                );
-              },
-            },
-          ]
-        );
+        setAlertConfig({
+          isVisible: true,
+          title: "Disable Location Access",
+          message:
+            "To completely disable location access, please go to your device Settings > Apps > Prisma Valet > Permissions and turn off Location.",
+          type: "warning",
+          onConfirm: () => {
+            import("expo-linking").then(({ openSettings }) => openSettings());
+          },
+          onClose: () => {
+            setIsVisible(false);
+          },
+        });
 
         return true; // Return true because we successfully updated our state
       }
@@ -352,6 +353,7 @@ export const usePermissions = () => {
     requestNotificationPermission,
     toggleNotificationPermission,
     requestLocationPermission,
+    toggleLocationPermission,
     requestAllPermissions,
   };
 };

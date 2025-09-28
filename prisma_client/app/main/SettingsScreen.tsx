@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { ScrollView, StyleSheet, View, Alert } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useThemeContext } from "@/app/contexts/ThemeProvider";
 import SettingSection from "../components/settings/SettingSection";
@@ -47,7 +47,11 @@ const SettingScreen = () => {
     isLoadingUpdateMarketingEmailToken,
   } = useProfile();
 
-  const { toggleNotificationPermission, toggleLocationPermission, permissionStatus } = usePermissions();
+  const {
+    toggleNotificationPermission,
+    toggleLocationPermission,
+    permissionStatus,
+  } = usePermissions();
 
   // State for managing which sections are expanded
   const [expandedSections, setExpandedSections] = useState<{
@@ -223,9 +227,6 @@ const SettingScreen = () => {
    */
   const handleGeneralToggle = async (type: string, value: boolean) => {
     switch (type) {
-      case "autoSave":
-        setAutoSave(value);
-        break;
       case "location":
         // For location services, handle both permission and local state
         if (value) {
@@ -241,15 +242,14 @@ const SettingScreen = () => {
           // User wants to disable location
           const success = await toggleLocationPermission(false);
           if (success) {
-            setSnackbarMessage("Please disable location access in device settings");
+            setSnackbarMessage(
+              "Please disable location access in device settings"
+            );
           } else {
             setSnackbarMessage("Failed to update location settings");
           }
         }
         setSnackbarVisible(true);
-        break;
-      case "analytics":
-        setAnalytics(value);
         break;
     }
   };
@@ -355,22 +355,10 @@ const SettingScreen = () => {
             onToggle={() => toggleSection("general")}
           >
             <SettingItem
-              title="Auto Save"
-              description="Automatically save your progress"
-              value={autoSave}
-              onValueChange={(value) => handleGeneralToggle("autoSave", value)}
-            />
-            <SettingItem
               title="Location Services"
               description="Allow app to access your location"
               value={locationServices}
               onValueChange={(value) => handleGeneralToggle("location", value)}
-            />
-            <SettingItem
-              title="Analytics"
-              description="Help improve the app with usage data"
-              value={analytics}
-              onValueChange={(value) => handleGeneralToggle("analytics", value)}
             />
           </SettingSection>
         </View>

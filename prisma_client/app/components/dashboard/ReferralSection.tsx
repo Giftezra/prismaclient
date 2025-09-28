@@ -23,16 +23,17 @@ const ReferralSection: React.FC<ReferralSectionProps> = ({ referral }) => {
 
   const copyReferralCode = async () => {
     try {
-      await Clipboard.setStringAsync(referral);
+      const promotionalMessage = `Join Prisma Valet, the best mobile detailing tech integrated service and get 10% off your first wash! Use code: ${referral}`;
+      await Clipboard.setStringAsync(promotionalMessage);
       setCopied(true);
       showSnackbarWithConfig({
-        message: "Referral code copied to clipboard",
+        message: "Referral message copied to clipboard",
         type: "success",
         duration: 3000,
       });
     } catch (error) {
       showSnackbarWithConfig({
-        message: "Failed to copy referral code",
+        message: "Failed to copy referral message",
         type: "error",
         duration: 3000,
       });

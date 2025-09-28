@@ -25,8 +25,9 @@ const ToggleComponent = ({
 }: ToggleComponentProps) => {
   const slideAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
 
-  const secondaryColor = useThemeColor({}, "secondaryButton");
   const backgroundColor = useThemeColor({}, "background");
+  const textColor = useThemeColor({}, "text");
+  const borderColor = useThemeColor({}, "borders");
 
   useEffect(() => {
     Animated.timing(slideAnim, {
@@ -53,35 +54,70 @@ const ToggleComponent = ({
     styles.container,
     isLarge ? styles.containerLarge : styles.containerSmall,
     value ? styles.containerOn : styles.containerOff,
-    value ? {
-      backgroundColor: backgroundColor,
-    } : {
-      backgroundColor: secondaryColor,
-    },
+    value
+      ? {
+          backgroundColor: backgroundColor,
+          borderColor: borderColor,
+        }
+      : {
+          backgroundColor: backgroundColor,
+          borderColor: borderColor,
+        },
     disabled && styles.containerDisabled,
   ];
+
+  // Determine knob color based on theme and toggle state
+  const getLuminance = (color: string) => {
+    // Remove # if present
+    const hex = color.replace("#", "");
+    const r = parseInt(hex.substr(0, 2), 16) / 255;
+    const g = parseInt(hex.substr(2, 2), 16) / 255;
+    const b = parseInt(hex.substr(4, 2), 16) / 255;
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  };
+
+  // For light themes, always use dark knob for better contrast
+  // For dark themes, use light knob
+  const backgroundColorLuminance = getLuminance(backgroundColor);
+  const knobColor = backgroundColorLuminance > 0.5 ? "#2C2C2C" : "#FFFFFF";
 
   const knobStyle = [
     styles.knob,
     isLarge ? styles.knobLarge : styles.knobSmall,
-    value ? styles.knobOn : styles.knobOff ,
+    {
+      backgroundColor: knobColor,
+      borderColor: backgroundColorLuminance > 0.5 ? "#000000" : "#FFFFFF",
+      borderWidth: 1,
+      shadowColor: value ? "#4CAF50" : borderColor,
+    },
     disabled && styles.knobDisabled,
     {
       transform: [{ translateX: knobTranslateX }],
     },
   ];
 
+  // Better text contrast logic
+  const activeTextColor = textColor; // Use theme text color for active state
+  const inactiveTextColor =
+    backgroundColorLuminance > 0.5
+      ? "rgba(0, 0, 0, 0)" // Dark text with transparency for light backgrounds
+      : "rgba(255, 255, 255, 0.7)"; // Light text with transparency for dark backgrounds
+
   const onTextStyle = [
     styles.text,
     isLarge ? styles.textLarge : styles.textSmall,
-    value ? styles.textOn : styles.textOff,
+    {
+      color: value ? activeTextColor : inactiveTextColor,
+    },
     disabled && styles.textDisabled,
   ];
 
   const offTextStyle = [
     styles.text,
     isLarge ? styles.textLarge : styles.textSmall,
-    value ? styles.textOff : styles.textOn,
+    {
+      color: !value ? activeTextColor : inactiveTextColor,
+    },
     disabled && styles.textDisabled,
   ];
 
@@ -129,10 +165,10 @@ const styles = StyleSheet.create({
     height: 30,
   },
   containerOn: {
-    borderColor: "#45A049",
+    // borderColor will be set dynamically
   },
   containerOff: {
-    borderColor: "#1A1A1A",
+    // borderColor will be set dynamically
   },
   containerDisabled: {
     backgroundColor: "#666666",
@@ -155,12 +191,7 @@ const styles = StyleSheet.create({
   textSmall: {
     fontSize: 10,
   },
-  textOn: {
-    color: "#FFFFFF",
-  },
-  textOff: {
-    color: "#FFFFFF",
-  },
+  // textOn and textOff colors are now set dynamically
   textDisabled: {
     color: "#999999",
   },
@@ -189,16 +220,7 @@ const styles = StyleSheet.create({
     height: 24,
     top: 1,
   },
-  knobOn: {
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#4CAF50",
-    shadowOpacity: 0.4,
-  },
-  knobOff: {
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#2C2C2C",
-    shadowOpacity: 0.3,
-  },
+  // knobOn and knobOff styles are now set dynamically
   knobDisabled: {
     backgroundColor: "#CCCCCC",
     shadowOpacity: 0.2,
