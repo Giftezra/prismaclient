@@ -11,7 +11,6 @@ import {
 import React, { useState, useEffect, useRef } from "react";
 import StyledText from "../components/helpers/StyledText";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { Colors } from "@/constants/Colors";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -140,7 +139,18 @@ const ModalServices = ({
                 )}
               </View>
             )}
-            <View style={styles.fullscreenContent}>{component}</View>
+            <ScrollView
+              style={styles.fullscreenContent}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.fullscreenScrollContent}
+              bounces={true}
+              alwaysBounceVertical={false}
+              scrollEnabled={true}
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
+            >
+              {component}
+            </ScrollView>
           </View>
         );
 
@@ -294,7 +304,7 @@ const styles = StyleSheet.create({
   fullscreenContainer: {
     flex: 1,
     width: "100%",
-    marginTop: 30,
+    marginTop: 0,
   },
   fullscreenHeader: {
     flexDirection: "row",
@@ -310,6 +320,10 @@ const styles = StyleSheet.create({
   },
   fullscreenContent: {
     flex: 1,
+  },
+  fullscreenScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
   },
 
   // Sheet styles

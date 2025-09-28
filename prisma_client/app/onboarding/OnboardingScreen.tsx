@@ -212,6 +212,27 @@ const OnboardingScreen = () => {
                 )}
               </View>
 
+              {/* Referral Code Input */}
+              <View style={styles.inputContainer}>
+                <StyledTextInput
+                  label="Referral Code (Optional)"
+                  placeholder="Enter referral code if you have one"
+                  value={signUpData?.referred_code || ""}
+                  onChangeText={(text) =>
+                    handleSignUpData("referred_code", text)
+                  }
+                  keyboardType="default"
+                  autoCapitalize="characters"
+                  style={styles.textInput}
+                  placeholderTextColor={
+                    textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"
+                  }
+                />
+                <StyledText style={[styles.helpText, { color: textColor }]}>
+                  Get 10% off your first service with a valid referral code!
+                </StyledText>
+              </View>
+
               {/* Terms and Conditions Checkbox */}
               <View style={styles.termsContainer}>
                 <TouchableOpacity
@@ -357,6 +378,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
+  },
+  helpText: {
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    opacity: 0.7,
   },
   termsContainer: {
     marginBottom: 24,

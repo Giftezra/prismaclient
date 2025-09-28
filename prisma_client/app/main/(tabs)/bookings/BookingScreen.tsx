@@ -7,6 +7,8 @@ import {
   Alert,
   TextInput,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -39,6 +41,7 @@ import ModalServices from "@/app/utils/ModalServices";
 import PromotionsCardComponent from "@/app/components/booking/PromotionsCard";
 import { PromotionsProps } from "@/app/interfaces/GarageInterface";
 import useProfile from "@/app/app-hooks/useProfile";
+import BookingConfirmationModal from "@/app/components/booking/BookingConfirmationModal";
 
 // Define step interface
 interface BookingStep {
@@ -143,6 +146,12 @@ const BookingScreen = () => {
     getOriginalPrice,
     getFinalPrice,
     getLoyaltyDiscount,
+
+    // Confirmation modal state and handlers
+    isConfirmationModalVisible,
+    confirmationBookingData,
+    handleCloseConfirmationModal,
+    handleViewDashboard,
   } = useBooking();
 
   const { addresses } = useAddresses();
@@ -381,10 +390,10 @@ const BookingScreen = () => {
           style={[styles.navButton, styles.backButton, { borderColor }]}
           onPress={handlePreviousStep}
         >
-          <Ionicons name="arrow-back" size={20} color={primaryPurpleColor} />
+          <Ionicons name="arrow-back" size={20} color={textColor} />
           <StyledText
             variant="bodyMedium"
-            style={[styles.backButtonText, { color: primaryPurpleColor }]}
+            style={[styles.backButtonText, { color: textColor }]}
           >
             Back
           </StyledText>
@@ -415,61 +424,104 @@ const BookingScreen = () => {
     return <ActivityIndicator size="large" color={primaryPurpleColor} />;
   }
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      {promotions && (
-        <View>
-          <PromotionsCardComponent {...promotions} />
-        </View>
-      )}
-      {renderStepIndicator()}
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {renderStepContent()}
-      </ScrollView>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <View style={[styles.container, { backgroundColor }]}>
+        {promotions && (
+          <View>
+            <PromotionsCardComponent {...promotions} />
+          </View>
+        )}
+        {renderStepIndicator()}
+        <ScrollView
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderStepContent()}
+        </ScrollView>
 
-      {renderNavigationButtons()}
+        {renderNavigationButtons()}
 
-      {/* Addon Selection Modal */}
-      <ModalServices
-        visible={isAddonModalVisible}
-        onClose={handleCloseAddonModal}
-        component={
-          <AddonSelection
-            onClose={handleCloseAddonModal}
-            onConfirm={handleConfirmAddons}
-            addons={addOns || []}
-            selectedAddons={selectedAddons}
-            onAddonSelect={handleAddonSelectionWithRefresh}
-            totalAddonPrice={getAddonPrice()}
-            totalAddonDuration={getAddonDuration()}
-            formatPrice={formatPrice}
-          />
-        }
-        title="Add-ons"
-        modalType="fullscreen"
-        animationType="slide"
-        showCloseButton={true}
-      />
+        {/* Addon Selection Modal */}
+        <ModalServices
+          visible={isAddonModalVisible}
+          onClose={handleCloseAddonModal}
+          component={
+            <AddonSelection
+              onClose={handleCloseAddonModal}
+              onConfirm={handleConfirmAddons}
+              addons={addOns || []}
+              selectedAddons={selectedAddons}
+              onAddonSelect={handleAddonSelectionWithRefresh}
+              totalAddonPrice={getAddonPrice()}
+              totalAddonDuration={getAddonDuration()}
+              formatPrice={formatPrice}
+            />
+          }
+          title="Add-ons"
+          modalType="fullscreen"
+          animationType="slide"
+          showCloseButton={true}
+        />
 
-      {/* Address Modal */}
-      <ModalServices
-        visible={isAddressModalVisible}
-        onClose={() => setIsAddressModalVisible(false)}
-        modalType="sheet"
-        animationType="slide"
-        showCloseButton={true}
-        component={
-          <AddAddressModal
-            isVisible={isAddressModalVisible}
-            onClose={() => setIsAddressModalVisible(false)}
-            onSave={handleSaveAddress}
-            title="Add New Address"
-          />
-        }
-      />
-    </View>
+        {/* Address Modal */}
+        <ModalServices
+          visible={isAddressModalVisible}
+          onClose={() => setIsAddressModalVisible(false)}
+          modalType="sheet"
+          animationType="slide"
+          showCloseButton={true}
+          component={
+            <AddAddressModal
+              isVisible={isAddressModalVisible}
+              onClose={() => setIsAddressModalVisible(false)}
+              onSave={handleSaveAddress}
+              title="Add New Address"
+            />
+          }
+        />
+
+        {/* Booking Confirmation Modal */}
+        {confirmationBookingData &&
+          selectedVehicle &&
+          selectedServiceType &&
+          selectedValetType &&
+          selectedAddress && (
+            <ModalServices
+              visible={isConfirmationModalVisible}
+              onClose={handleCloseConfirmationModal}
+              modalType="fullscreen"
+              animationType="slide"
+              showCloseButton={true}
+              component={
+                <BookingConfirmationModal
+                  bookingReference={
+                    confirmationBookingData.job?.booking_reference || "N/A"
+                  }
+                  vehicle={selectedVehicle}
+                  serviceType={selectedServiceType}
+                  valetType={selectedValetType}
+                  address={selectedAddress}
+                  selectedDate={selectedDate}
+                  specialInstructions={specialInstructions}
+                  selectedAddons={selectedAddons}
+                  finalPrice={getFinalPrice()}
+                  originalPrice={getOriginalPrice()}
+                  loyaltyDiscount={getLoyaltyDiscount()}
+                  formatPrice={formatPrice}
+                  formatDuration={formatDuration}
+                  user={user || undefined}
+                  onClose={handleCloseConfirmationModal}
+                  onViewDashboard={handleViewDashboard}
+                />
+              }
+            />
+          )}
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 

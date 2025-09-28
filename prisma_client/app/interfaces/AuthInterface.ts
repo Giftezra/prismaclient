@@ -14,6 +14,7 @@ export interface SignUpScreenProps {
   email: string;
   phone: string;
   password: string;
+  referred_code?: string;
 }
 
 export interface LoginScreenProps {

@@ -107,10 +107,19 @@ const createBookingApi = createApi({
     /**
      * Cancel a booking for the user.
      * ARGS : void
-     * RESPONSE : string of the message from the server
+     * RESPONSE : { message: string, booking_status: string, refund: any, hours_until_appointment: number } | string
      * QUERY_PARAMS : booking_id : string
      */
-    cancelBooking: builder.mutation<string, string>({
+    cancelBooking: builder.mutation<
+      | {
+          message: string;
+          booking_status: string;
+          refund: any;
+          hours_until_appointment: number;
+        }
+      | string,
+      string
+    >({
       query: (booking_reference) => ({
         url: `/api/v1/booking/cancel_booking/`,
         method: "PATCH",

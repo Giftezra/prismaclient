@@ -165,10 +165,6 @@ class StripeWebhookView(View):
         payload = request.body
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
         
-        print(f"Webhook received - Path: {request.path}")
-        print(f"Signature header: {sig_header}")
-        print(f"Payload length: {len(payload)}")
-        
         try:
             # Verify webhook signature
             event = stripe.Webhook.construct_event(
@@ -191,16 +187,26 @@ class StripeWebhookView(View):
                     # Get the booking
                     booking = BookedAppointment.objects.get(booking_reference=booking_reference)
                     
-                    # Create payment transaction record
-                    PaymentTransaction.objects.create(
+                    # Check if PaymentTransaction already exists to avoid duplicates
+                    existing_transaction = PaymentTransaction.objects.filter(
                         booking=booking,
-                        user=booking.user,
-                        stripe_payment_intent_id=payment_intent.id,
-                        transaction_type='payment',
-                        amount=payment_intent.amount / 100,  # Convert from cents
-                        currency=payment_intent.currency,
-                        status='succeeded'
-                    )
+                        stripe_payment_intent_id=payment_intent.id
+                    ).first()
+                    
+                    if not existing_transaction:
+                        # Create payment transaction record
+                        PaymentTransaction.objects.create(
+                            booking=booking,
+                            user=booking.user,
+                            stripe_payment_intent_id=payment_intent.id,
+                            transaction_type='payment',
+                            amount=payment_intent.amount / 100,  # Convert from cents
+                            currency=payment_intent.currency,
+                            status='succeeded'
+                        )
+                        print(f"Payment transaction created for booking: {booking_reference}")
+                    else:
+                        print(f"Payment transaction already exists for booking: {booking_reference}")
                     booking.save()
                     
                     print(f"Payment recorded for booking: {booking_reference}")

@@ -2,7 +2,9 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import timedelta
 from django.utils import timezone
-from main.models import User, BookedAppointment, LoyaltyProgram, Promotions,Notification, JobChatRoom
+from django.db.models import Sum
+from decimal import Decimal
+from main.models import PaymentTransaction, User, BookedAppointment, LoyaltyProgram, Promotions,Notification, JobChatRoom
 from main.tasks import send_promotional_email, send_push_notification
 from main.tasks import cleanup_job_chat, create_job_chat_room
 
@@ -157,3 +159,118 @@ def handle_booking_status_change(sender, instance, created, **kwargs):
                 print(f"Chat room closed for booking {instance.booking_reference}")
             except JobChatRoom.DoesNotExist:
                 pass
+
+@receiver(post_save, sender=BookedAppointment)
+def handle_booking_creation(sender, instance, created, **kwargs):
+    if created:
+        # We will check if a payment transaction has been created for the booking before creating another one
+        if PaymentTransaction.objects.filter(booking=instance).exists():
+            pass
+        else:
+            PaymentTransaction.objects.create(
+                booking=instance,
+                user=instance.user,
+                stripe_payment_intent_id=instance.stripe_payment_intent_id,
+                transaction_type='payment',
+                amount=instance.total_amount,
+                currency='gbp',
+                status='succeeded'
+            )
+
+
+@receiver(post_save, sender=BookedAppointment)
+def handle_booking_completion_referral(sender, instance, created, **kwargs):
+    """Handle referral rewards when booking is completed"""
+    if not created and instance.status == 'completed':
+        # Check referral rewards when booking is marked as completed
+        check_referral_rewards(instance.user)
+
+@receiver(post_save, sender=BookedAppointment)
+def handle_booking_creation_fallback(sender, instance, created, **kwargs):
+    """Fallback: Ensure PaymentTransaction is created for new bookings"""
+    if created:
+        # Check if PaymentTransaction already exists for this booking
+        existing_transaction = PaymentTransaction.objects.filter(
+            booking=instance,
+            transaction_type='payment',
+            status='succeeded'
+        ).first()
+        
+        if not existing_transaction:
+            # Create fallback PaymentTransaction
+            PaymentTransaction.objects.create(
+                booking=instance,
+                user=instance.user,
+                stripe_payment_intent_id=f"fallback_{instance.booking_reference}",
+                transaction_type='payment',
+                amount=instance.total_amount,
+                currency='gbp',
+                status='succeeded'
+            )
+            print(f"Fallback PaymentTransaction created for booking: {instance.booking_reference}")
+        
+        # Check referral rewards
+        check_referral_rewards(instance.user)
+
+@receiver(post_save, sender=PaymentTransaction)
+def handle_payment_transaction_creation(sender, instance, created, **kwargs):
+    """Handle referral rewards when PaymentTransaction is created"""
+    if created and instance.status == 'succeeded' and instance.transaction_type == 'payment':
+        # Only trigger on successful payments, not refunds
+        check_referral_rewards(instance.user)
+
+def check_referral_rewards(user):
+    """Check if user's spending triggers referral rewards - only for completed bookings"""
+    # Only count spending from COMPLETED bookings (not cancelled or pending)
+    completed_bookings = BookedAppointment.objects.filter(
+        user=user,
+        status='completed'
+    )
+    
+    # Calculate total spending from completed bookings only
+    total_completed_spending = Decimal('0.00')
+    for booking in completed_bookings:
+        # Get the payment transaction for this completed booking
+        payment_transaction = PaymentTransaction.objects.filter(
+            booking=booking,
+            transaction_type='payment',
+            status='succeeded'
+        ).first()
+        
+        if payment_transaction:
+            total_completed_spending += payment_transaction.amount
+    
+    # Check if user has spent €100+ on COMPLETED bookings
+    if total_completed_spending >= Decimal('100.00'):
+        # Check if this user was referred by someone
+        if user.referred_by:
+            referrer = user.referred_by
+            
+            # Check if referrer already got their reward for THIS specific referral
+            # We need to track which referral earned the reward to avoid duplicates
+            existing_reward = Promotions.objects.filter(
+                user=referrer,
+                title="Referral Reward",
+                description__contains=user.name
+            ).exists()
+            
+            if not existing_reward:
+                # Create reward promotion for referrer
+                Promotions.objects.create(
+                    user=referrer,
+                    title="Referral Reward",
+                    description=f"Get 10% off your next service! (Referred: {user.name})",
+                    discount_percentage=10,
+                    valid_until=timezone.now() + timedelta(days=30),
+                    is_active=True,
+                    terms_conditions="Valid for 30 days. Cannot be combined with other offers."
+                )
+                
+                # Send notification to referrer
+                if referrer.allow_push_notifications and referrer.notification_token:
+                    send_push_notification.delay(
+                        referrer.id,
+                        "Referral Reward Earned! 🎉",
+                        f"Your friend {user.name} has completed services worth €100+! You've earned a 10% discount on your next service!",
+                        "referral_reward"
+                    )

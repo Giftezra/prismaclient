@@ -8,6 +8,7 @@ from ..serializer import CustomTokenObtainPairSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from main.tasks import send_welcome_email, send_promotional_email
+from time import sleep
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -43,12 +44,24 @@ class AuthenticationView(CreateAPIView):
                     "name": "John Doe",
                     "email": "john.doe@example.com",
                     "phone": "1234567890",
-                    "password": "password"
+                    "password": "password",
+                    "referralCode": "ABC123"  # Optional
                 }
             }
         """
         try:
             data = request.data.get('credentials')
+            referral_code = data.get('referred_code', None)
+            
+            # Handle referral if code provided
+            referred_by = None
+            if referral_code:
+                try:
+                    referrer = User.objects.get(referral_code=referral_code)
+                    referred_by = referrer
+                except User.DoesNotExist:
+                    pass  # Invalid referral code, but don't fail registration
+            
             # Call the user model to create a new user
             user = User.objects.create_user(
                 name=data['name'],
@@ -56,8 +69,14 @@ class AuthenticationView(CreateAPIView):
                 phone=data['phone'],
                 password=data['password']
             )
+            
+            # Set referral relationship if valid code was provided
+            if referred_by:
+                user.referred_by = referred_by
+                user.save()
             # Send the welcome and promotional emails to the user even if they have not allowed them as this is a new user
             send_welcome_email.delay(user.email)
+            sleep(60)
             send_promotional_email.delay(user.email, user.name)
             
             # Generate tokens for the newly created user

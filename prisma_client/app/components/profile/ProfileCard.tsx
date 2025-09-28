@@ -72,7 +72,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 
         {/* Logout overlay icon */}
         <Pressable style={styles.logoutOverlay} onPress={onLogoutPress}>
-          <Ionicons name="log-out-outline" size={20} color={'#000'} />
+          <Ionicons name="log-out-outline" size={20} color={textColor} />
           <StyledText children="Logout" variant="bodySmall" />
         </Pressable>
       </View>

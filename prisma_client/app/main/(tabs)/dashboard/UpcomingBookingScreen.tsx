@@ -18,6 +18,7 @@ import { formatCurrency } from "@/app/utils/methods";
 import { useAppSelector, RootState } from "@/app/store/main_store";
 import useBooking from "@/app/app-hooks/useBooking";
 import RescheduleComponent from "@/app/components/booking/RescheduleComponent";
+import BookingCancellationModal from "@/app/components/booking/BookingCancellationModal";
 import ModalServices from "@/app/utils/ModalServices";
 import { useAlertContext } from "@/app/contexts/AlertContext";
 
@@ -31,7 +32,7 @@ const UpcomingBookingScreen = () => {
   const cardColor = useThemeColor({}, "cards");
   const borderColor = useThemeColor({}, "borders");
   const primaryColor = useThemeColor({}, "primary");
-  const buttonColor = useThemeColor({}, "button");
+  const iconColor = useThemeColor({}, "icons");
 
   const params = useLocalSearchParams();
   const { appointments, callDetailer } = useDashboard();
@@ -42,6 +43,13 @@ const UpcomingBookingScreen = () => {
     isLoadingCancelBooking,
     handleRescheduleBooking,
     isLoadingRescheduleBooking,
+    // Cancellation modal state and handlers
+    isCancellationModalVisible,
+    cancellationData,
+    cancellationBookingReference,
+    showCancellationModal,
+    handleCloseCancellationModal,
+    handleConfirmCancellation,
   } = useBooking();
 
   // Get user data for currency formatting
@@ -114,7 +122,15 @@ const UpcomingBookingScreen = () => {
       type: "warning",
       onConfirm: () => {
         setIsVisible(false);
-        handleCancelBooking(appointment?.booking_reference || "");
+        const appointmentDateTime =
+          appointment?.booking_date && appointment?.start_time
+            ? `${appointment.booking_date}T${appointment.start_time}`
+            : undefined;
+        showCancellationModal(
+          appointment?.booking_reference || "",
+          appointmentDateTime,
+          appointment?.total_amount
+        );
       },
       onClose: () =>
         setAlertConfig({
@@ -124,7 +140,7 @@ const UpcomingBookingScreen = () => {
           type: "warning",
         }),
     });
-  }, [setAlertConfig, setIsVisible, handleCancelBooking, appointment]);
+  }, [setAlertConfig, setIsVisible, showCancellationModal, appointment]);
 
   // Helper function to show reschedule restriction alert
   const showRescheduleRestrictionAlert = useCallback(() => {
@@ -223,37 +239,24 @@ const UpcomingBookingScreen = () => {
         showLateCancellationWarning();
         return;
       } else {
-        // Regular cancellation with confirmation (outside 12 hours - with refund)
-        setAlertConfig({
-          isVisible: true,
-          title: "Cancel Appointment",
-          message:
-            "Are you sure you want to cancel this appointment? You will receive a full refund.",
-          type: "warning",
-          onConfirm: async () => {
-            try {
-              await handleCancelBooking(appointmentId);
-            } catch (error) {
-              console.error("Error cancelling appointment:", error);
-            }
-          },
-          onClose: () =>
-            setAlertConfig({
-              isVisible: false,
-              title: "",
-              message: "",
-              type: "warning",
-            }),
-        });
+        // Show cancellation modal with details
+        const appointmentDateTime =
+          appointment?.booking_date && appointment?.start_time
+            ? `${appointment.booking_date}T${appointment.start_time}`
+            : undefined;
+        showCancellationModal(
+          appointmentId,
+          appointmentDateTime,
+          appointment?.total_amount
+        );
       }
     },
     [
       appointment,
       isAppointmentInProgress,
       isWithin12Hours,
-      showCancellationRestrictionAlert,
       showLateCancellationWarning,
-      handleCancelBooking,
+      showCancellationModal,
       setAlertConfig,
     ]
   );
@@ -307,7 +310,7 @@ const UpcomingBookingScreen = () => {
 
         <View style={styles.timingInfo}>
           <View style={styles.timeItem}>
-            <Ionicons name="calendar" size={20} color={primaryColor} />
+            <Ionicons name="calendar" size={20} color={iconColor} />
             <View>
               <StyledText
                 variant="bodySmall"
@@ -325,7 +328,7 @@ const UpcomingBookingScreen = () => {
           </View>
 
           <View style={styles.timeItem}>
-            <Ionicons name="time" size={20} color={primaryColor} />
+            <Ionicons name="time" size={20} color={iconColor} />
             <View>
               <StyledText
                 variant="bodySmall"
@@ -343,7 +346,7 @@ const UpcomingBookingScreen = () => {
           </View>
 
           <View style={styles.timeItem}>
-            <Ionicons name="hourglass" size={20} color={primaryColor} />
+            <Ionicons name="hourglass" size={20} color={iconColor} />
             <View>
               <StyledText
                 variant="bodySmall"
@@ -371,7 +374,7 @@ const UpcomingBookingScreen = () => {
         end={{ x: 0, y: 5 }}
       >
         <View style={styles.sectionHeader}>
-          <Ionicons name="car" size={24} color={primaryColor} />
+          <Ionicons name="car" size={24} color={iconColor} />
           <StyledText
             variant="titleMedium"
             style={[styles.sectionTitle, { color: textColor }]}
@@ -420,7 +423,7 @@ const UpcomingBookingScreen = () => {
         end={{ x: 0, y: 5 }}
       >
         <View style={styles.sectionHeader}>
-          <Ionicons name="construct" size={24} color={primaryColor} />
+          <Ionicons name="construct" size={24} color={iconColor} />
           <StyledText
             variant="titleMedium"
             style={[styles.sectionTitle, { color: textColor }]}
@@ -469,7 +472,7 @@ const UpcomingBookingScreen = () => {
             </StyledText>
             <StyledText
               variant="titleMedium"
-              style={[styles.priceValue, { color: primaryColor }]}
+              style={[styles.priceValue, { color: textColor }]}
             >
               {formatCurrency(appointment.total_amount, user?.address?.country)}
             </StyledText>
@@ -516,7 +519,7 @@ const UpcomingBookingScreen = () => {
                   </StyledText>
                   <StyledText
                     variant="bodySmall"
-                    style={[styles.addonPrice, { color: primaryColor }]}
+                    style={[styles.addonPrice, { color: textColor }]}
                   >
                     {formatCurrency(item.price, user?.address?.country)}
                   </StyledText>
@@ -536,7 +539,7 @@ const UpcomingBookingScreen = () => {
         end={{ x: 0, y: 5 }}
       >
         <View style={styles.sectionHeader}>
-          <Ionicons name="person" size={24} color={primaryColor} />
+          <Ionicons name="person" size={24} color={iconColor} />
           <StyledText
             variant="titleMedium"
             style={[styles.sectionTitle, { color: textColor }]}
@@ -590,7 +593,7 @@ const UpcomingBookingScreen = () => {
         end={{ x: 0, y: 5 }}
       >
         <View style={styles.sectionHeader}>
-          <Ionicons name="location" size={24} color={primaryColor} />
+          <Ionicons name="location" size={24} color={iconColor} />
           <StyledText
             variant="titleMedium"
             style={[styles.sectionTitle, { color: textColor }]}
@@ -600,7 +603,7 @@ const UpcomingBookingScreen = () => {
         </View>
 
         <View style={styles.locationInfo}>
-          <Ionicons name="location-outline" size={20} color={textColor} />
+          <Ionicons name="location-outline" size={20} color={iconColor} />
           <View style={styles.locationText}>
             <StyledText
               variant="bodyMedium"
@@ -685,7 +688,7 @@ const UpcomingBookingScreen = () => {
           </StyledText>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[
             styles.actionButton,
             styles.rescheduleButton,
@@ -728,7 +731,7 @@ const UpcomingBookingScreen = () => {
               ? "Cannot Reschedule (Within 12 Hours)"
               : "Reschedule Appointment"}
           </StyledText>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Reschedule Modal */}
@@ -754,6 +757,25 @@ const UpcomingBookingScreen = () => {
           animationType="slide"
           title="Reschedule Appointment"
           modalType="fullscreen"
+        />
+      )}
+
+      {/* Booking Cancellation Modal */}
+      {cancellationData && (
+        <ModalServices
+          visible={isCancellationModalVisible}
+          onClose={handleCloseCancellationModal}
+          modalType="fullscreen"
+          animationType="slide"
+          showCloseButton={true}
+          component={
+            <BookingCancellationModal
+              bookingReference={cancellationBookingReference}
+              cancellationData={cancellationData}
+              onCancel={handleCloseCancellationModal}
+              onConfirm={handleConfirmCancellation}
+            />
+          }
         />
       )}
     </ScrollView>

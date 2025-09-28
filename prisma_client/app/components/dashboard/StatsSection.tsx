@@ -28,7 +28,7 @@ const StatsSection: React.FC<StatsSectionProps> = ({ stats }) => {
 
   return (
     <View style={styles.section}>
-      <StyledText style={{ color: textColor }} variant="labelMedium" children="Your Stats" />
+      <StyledText style={{ color: textColor, paddingHorizontal: 10 }} variant="labelMedium" children="My Stats"/>
       <View style={styles.statsGrid}>
         {stats.map((stat, index) => (
           <StatsCard key={index} {...stat} />
