@@ -17,7 +17,6 @@ export const saveDataToStorage = async (
     await SecureStore.setItemAsync("user", JSON.stringify(user));
     await SecureStore.setItemAsync("access", access);
     await SecureStore.setItemAsync("refresh", refresh);
-    console.log("Data saved to storage");
   } catch (error) {
     console.error("Error saving data to storage:", error);
   }
@@ -48,7 +47,6 @@ export const getUserFromStorage =
 export const updateUserInStorage = async (user: UserProfileProps) => {
   try {
     await SecureStore.setItemAsync("user", JSON.stringify(user));
-    console.log("User data updated in storage");
   } catch (error) {
     console.error("Error updating user data in storage:", error);
   }

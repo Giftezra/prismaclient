@@ -24,13 +24,7 @@ export const API_CONFIG = {
     config.websocket_url
 };
 
-// Debug logging
-console.log("Raw config from app.json:", config);
-console.log("Config loaded:", {
-  detailerAppUrl: API_CONFIG.detailerAppUrl,
-  customerAppUrl: API_CONFIG.customerAppUrl,
-  websocketUrl: API_CONFIG.websocketUrl,
-});
+// Debug logging removed
 // App Configuration
 export const APP_CONFIG = {
   name: Constants.expoConfig?.name || "Prisma Client",

@@ -201,7 +201,6 @@ const useBooking = () => {
    * @example
    * try {
    *   const slots = await fetchAvailableTimeSlots(dayjs('2024-01-15'));
-   *   console.log('Available slots:', slots);
    * } catch (error) {
    *   console.error('Failed to fetch slots:', error);
    * }
@@ -700,11 +699,6 @@ const useBooking = () => {
       // Calculate the new total duration with the updated addons
       const totalServiceDuration =
         calculateTotalServiceDuration(newSelectedAddons);
-
-      console.log(
-        "Addon selection changed - New total duration:",
-        totalServiceDuration
-      );
 
       // Re-fetch time slots with the new duration
       if (selectedAddress?.country && selectedAddress?.city && selectedDay) {
@@ -1371,7 +1365,7 @@ const useBooking = () => {
    * try {
    *   const booking = await createBooking();
    *   if (booking) {
-   *     console.log('Booking created:', booking.appointment_id);
+   *     // booking created
    *   }
    * } catch (error) {
    *   console.error('Booking failed:', error.message);
@@ -1426,7 +1420,6 @@ const useBooking = () => {
         loyalty_tier: user?.loyalty_tier || "",
         loyalty_benefits: user?.loyalty_benefits?.free_service || [],
       };
-      console.log("Booking data: ", bookingData);
       /* Send the data to the detailer app stack and append the booking data to the url as params
        * The stack returns the DetailerProfileProps
        */

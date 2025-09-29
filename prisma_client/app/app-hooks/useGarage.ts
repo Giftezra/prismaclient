@@ -199,7 +199,6 @@ const useGarage = () => {
 
       if (formData) {
         const response = await addNewVehicle(formData).unwrap();
-        console.log("Vehicle submission response:", response);
         if (response && response.message) {
           setAlertConfig({
             title: "Success",
@@ -216,7 +215,6 @@ const useGarage = () => {
         throw new Error("Failed to prepare vehicle data for submission");
       }
     } catch (error: any) {
-      console.log("Vehicle submission error:", error);
 
       /* If the error is thrown, call the alert and the dispatch {setIsLoading} */
       let errorMessage = "Failed to add vehicle. Please try again.";
@@ -260,7 +258,6 @@ const useGarage = () => {
    */
   const handleDeleteVehicle = useCallback(
     async (vehicleId: string) => {
-      console.log("vehicleId", vehicleId);
       try {
         setAlertConfig({
           title: "Deleting Vehicle",

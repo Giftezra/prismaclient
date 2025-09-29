@@ -124,7 +124,6 @@ const useDashboard = () => {
 
   const handleBookingUpdate = useCallback(
     (data: any) => {
-      console.log("Booking update received:", data);
       // Trigger dashboard refresh
       handleRefresh();
     },

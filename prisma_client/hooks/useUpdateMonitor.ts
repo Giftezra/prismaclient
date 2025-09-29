@@ -6,9 +6,6 @@ export const useUpdateMonitor = () => {
     const checkForUpdates = async () => {
       try {
         const update = await Updates.checkForUpdateAsync();
-        if (update.isAvailable) {
-          console.log("Update available:", update);
-        }
       } catch (error) {
         console.error("Update check failed:", error);
       }
