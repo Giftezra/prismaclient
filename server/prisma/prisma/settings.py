@@ -14,8 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
 ALLOWED_ORIGINS = [BASE_URL]   
-CSRF_TRUSTED_ORIGINS = [BASE_URL]  
-CORS_ALLOWED_ORIGINS = [BASE_URL]   
+CSRF_TRUSTED_ORIGINS = [BASE_URL, os.getenv('HOME_URL')]  
+CORS_ALLOWED_ORIGINS = [BASE_URL, os.getenv('HOME_URL')]   
 CORS_ALLOW_CREDENTIALS = True
 ALLOWED_HOSTS=[os.getenv('ALLOWED_HOSTS'), 'localhost', '127.0.0.1']
 
