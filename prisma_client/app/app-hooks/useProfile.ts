@@ -96,7 +96,6 @@ const useProfile = () => {
         update: value,
       }).unwrap();
       if (response.success) {
-        console.log("Push notification setting updated:", value);
         // Update the user state with the new value
         dispatch(updateUser({ field: "push_notification_token", value }));
         // Update storage with the new user data
@@ -138,7 +137,6 @@ const useProfile = () => {
         update: value,
       }).unwrap();
       if (response.success) {
-        console.log("Email notification setting updated:", value);
         // Update the user state with the new value
         dispatch(updateUser({ field: "email_notification_token", value }));
         // Update storage with the new user data
@@ -180,7 +178,6 @@ const useProfile = () => {
         update: value,
       }).unwrap();
       if (response.success) {
-        console.log("Marketing email setting updated:", value);
         // Update the user state with the new value
         dispatch(updateUser({ field: "marketing_email_token", value }));
         // Update storage with the new user data
@@ -327,7 +324,6 @@ const useProfile = () => {
     try {
       /* Send the address data to the server
        */
-      console.log(newAddress);
       const response = await addNewAddress(newAddress).unwrap();
 
       if (response && response.id && response.address) {

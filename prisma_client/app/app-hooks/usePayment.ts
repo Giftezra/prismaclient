@@ -81,12 +81,7 @@ const usePayment = () => {
         currencyCode = "GBP";
       }
 
-      console.log("Google Pay Config:", {
-        countryCode,
-        currencyCode,
-        testEnv: __DEV__,
-        merchantDisplayName,
-      });
+      
 
       try {
         const { paymentIntent, ephemeralKey, customer } =
@@ -118,7 +113,7 @@ const usePayment = () => {
           throw error;
         }
 
-        console.log("Payment sheet initialized successfully");
+        
       } catch (error: any) {
         console.error("Error initializing payment sheet:", error);
         throw error;
@@ -157,7 +152,6 @@ const usePayment = () => {
         if (error) {
           // Handle specific error cases
           if (error.code === "Canceled") {
-            console.log("Payment was canceled by user");
             return false;
           }
 

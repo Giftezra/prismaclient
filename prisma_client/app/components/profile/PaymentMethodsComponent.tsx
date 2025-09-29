@@ -39,7 +39,6 @@ const PaymentMethodsComponent: React.FC<PaymentMethodsComponentProps> = () => {
 
   // Ensure paymentMethods is always an array
   const safePaymentMethods = paymentMethods || [];
-  console.log("safePaymentMethods", safePaymentMethods);  
   const [deletePaymentMethod, { isLoading: isDeleting }] =
     useDeletePaymentMethodMutation();
 

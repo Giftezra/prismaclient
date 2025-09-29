@@ -31,7 +31,6 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
           setTheme(savedTheme as ThemeMode);
         }
       } catch (error) {
-        console.log("Error loading saved theme:", error);
       } finally {
         setIsLoading(false);
       }
