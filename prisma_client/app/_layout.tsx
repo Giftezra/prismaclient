@@ -9,9 +9,13 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import NotificationInitializer from "./components/notification/NotificationInitializer";
 import { StatusBar } from "react-native";
+import { useUpdateMonitor } from "@/hooks/useUpdateMonitor";
 
 export default function RootLayout() {
   const { currentTheme } = useThemeContext();
+
+  // Initialize update monitoring
+  useUpdateMonitor();
 
   // Set status bar style based on theme
   // Light theme -> dark content, Dark theme -> light content

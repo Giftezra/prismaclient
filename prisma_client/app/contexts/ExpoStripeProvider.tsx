@@ -24,7 +24,10 @@ export default function ExpoStripeProvider(
   >
 ) {
   // For mobile payments, redirect to dashboard after payment completion
-  const returnurl = Linking.createURL("/main/(tabs)/dashboard/DashboardScreen");
+  const returnurl = Platform.select({
+    web: "https://prismavalet.com/payment/return",
+    default: Linking.createURL("/main/(tabs)/dashboard/DashboardScreen"),
+  });
 
   // For native platforms
   return (
