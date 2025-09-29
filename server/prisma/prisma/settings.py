@@ -14,12 +14,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
-HOME_URL = os.getenv('HOME_URL')
 
 
-ALLOWED_ORIGINS = [url for url in [BASE_URL, HOME_URL] if url]    
-CSRF_TRUSTED_ORIGINS = [url for url in [BASE_URL, HOME_URL] if url]
-CORS_ALLOWED_ORIGINS = [url for url in [BASE_URL, HOME_URL] if url]  
+ALLOWED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com']    
+CSRF_TRUSTED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com']
+CORS_ALLOWED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com']  
 CORS_ALLOW_CREDENTIALS = True
 ALLOWED_HOSTS=[os.getenv('ALLOWED_HOSTS'), 'localhost', '127.0.0.1']
 
