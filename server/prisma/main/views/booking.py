@@ -199,6 +199,9 @@ class BookingView(APIView):
                     booking.appointment_date, 
                     booking.start_time
                 )
+                # Make the appointment datetime timezone-aware
+                appointment_datetime = timezone.make_aware(appointment_datetime)
+                
                 hours_until_appointment = (appointment_datetime - now).total_seconds() / 3600
                 logger.info(f"Hours until appointment: {hours_until_appointment}")
             except Exception as e:
