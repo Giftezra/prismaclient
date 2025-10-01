@@ -477,7 +477,7 @@ class BookingView(APIView):
                 
                 logger.info(f"Looking up address ID: {address_id}")
                 address = Address.objects.get(id=address_id)
-                logger.info(f"Address found: {address.id} - {address.address_line_1}")
+                logger.info(f"Address found: {address.id} - {address.address}")
                 
             except Exception as e:
                 logger.error(f"Error fetching related objects: {str(e)}")
