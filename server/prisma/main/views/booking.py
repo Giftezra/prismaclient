@@ -431,76 +431,147 @@ class BookingView(APIView):
     
 
     def _book_appointment(self, request):
+        logger = logging.getLogger('main.views.booking')
         appointment = None
+        
+        logger.info(f"Starting booking appointment creation for user: {request.user.id}")
+        logger.info(f"Request data: {request.data}")
+        
         try:
             # Get the booking data from the request
             booking_data = request.data.get('booking_data', request.data)
+            logger.info(f"Booking data extracted: {booking_data}")
 
-            detailer = DetailerProfile.objects.create(
-                name = booking_data.get('detailer', {}).get('name'),
-                phone = booking_data.get('detailer', {}).get('phone'),
-                rating = booking_data.get('detailer', {}).get('rating'),
-            )
+            # Create detailer profile
+            try:
+                logger.info("Creating detailer profile...")
+                detailer = DetailerProfile.objects.create(
+                    name = booking_data.get('detailer', {}).get('name'),
+                    phone = booking_data.get('detailer', {}).get('phone'),
+                    rating = booking_data.get('detailer', {}).get('rating'),
+                )
+                logger.info(f"Detailer created successfully: {detailer.id}")
+            except Exception as e:
+                logger.error(f"Error creating detailer: {str(e)}")
+                raise e
             
             # Get existing objects by ID
-            vehicle = Vehicles.objects.get(id=booking_data.get('vehicle', {}).get('id'))
-            valet_type = ValetType.objects.get(id=booking_data.get('valet_type', {}).get('id'))
-            service_type = ServiceType.objects.get(id=booking_data.get('service_type', {}).get('id'))
-            address = Address.objects.get(id=booking_data.get('address', {}).get('id'))
+            try:
+                logger.info("Fetching related objects...")
+                vehicle_id = booking_data.get('vehicle', {}).get('id')
+                valet_type_id = booking_data.get('valet_type', {}).get('id')
+                service_type_id = booking_data.get('service_type', {}).get('id')
+                address_id = booking_data.get('address', {}).get('id')
+                
+                logger.info(f"Looking up vehicle ID: {vehicle_id}")
+                vehicle = Vehicles.objects.get(id=vehicle_id)
+                logger.info(f"Vehicle found: {vehicle.id} - {vehicle.make} {vehicle.model}")
+                
+                logger.info(f"Looking up valet type ID: {valet_type_id}")
+                valet_type = ValetType.objects.get(id=valet_type_id)
+                logger.info(f"Valet type found: {valet_type.id} - {valet_type.name}")
+                
+                logger.info(f"Looking up service type ID: {service_type_id}")
+                service_type = ServiceType.objects.get(id=service_type_id)
+                logger.info(f"Service type found: {service_type.id} - {service_type.name}")
+                
+                logger.info(f"Looking up address ID: {address_id}")
+                address = Address.objects.get(id=address_id)
+                logger.info(f"Address found: {address.id} - {address.address_line_1}")
+                
+            except Exception as e:
+                logger.error(f"Error fetching related objects: {str(e)}")
+                raise e
             
             # Convert date string to date object
-            appointment_date = datetime.strptime(booking_data.get('date'), '%Y-%m-%d').date()
+            try:
+                logger.info("Converting date string...")
+                date_str = booking_data.get('date')
+                logger.info(f"Date string: {date_str}")
+                appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                logger.info(f"Appointment date converted: {appointment_date}")
+            except Exception as e:
+                logger.error(f"Error converting date: {str(e)}")
+                raise e
             
             # Convert start_time string to time object
-            start_time = None
-            if booking_data.get('start_time'):
-                start_time = datetime.strptime(booking_data.get('start_time'), '%H:%M:%S.%f').time()
+            try:
+                logger.info("Converting start time...")
+                start_time_str = booking_data.get('start_time')
+                logger.info(f"Start time string: {start_time_str}")
+                start_time = None
+                if start_time_str:
+                    start_time = datetime.strptime(start_time_str, '%H:%M:%S.%f').time()
+                    logger.info(f"Start time converted: {start_time}")
+                else:
+                    logger.info("No start time provided")
+            except Exception as e:
+                logger.error(f"Error converting start time: {str(e)}")
+                raise e
+            
             # Create the booking in the database
-            appointment = BookedAppointment.objects.create(
-                user = request.user,
-                appointment_date = appointment_date,
-                vehicle = vehicle,
-                valet_type = valet_type,
-                service_type = service_type,
-                detailer = detailer,
-                address = address,
-                status = booking_data.get('status'),
-                total_amount = booking_data.get('total_amount'),
-                start_time = start_time,
-                duration = booking_data.get('duration'),
-                special_instructions = booking_data.get('special_instructions'),
-                booking_reference = booking_data.get('booking_reference')
-            )
+            try:
+                logger.info("Creating BookedAppointment...")
+                appointment = BookedAppointment.objects.create(
+                    user = request.user,
+                    appointment_date = appointment_date,
+                    vehicle = vehicle,
+                    valet_type = valet_type,
+                    service_type = service_type,
+                    detailer = detailer,
+                    address = address,
+                    status = booking_data.get('status'),
+                    total_amount = booking_data.get('total_amount'),
+                    start_time = start_time,
+                    duration = booking_data.get('duration'),
+                    special_instructions = booking_data.get('special_instructions'),
+                    booking_reference = booking_data.get('booking_reference')
+                )
+                logger.info(f"BookedAppointment created successfully: {appointment.id}")
+                logger.info(f"Booking reference: {appointment.booking_reference}")
+            except Exception as e:
+                logger.error(f"Error creating BookedAppointment: {str(e)}")
+                raise e
             
             # Add add-ons if any (with error handling)
             try:
+                logger.info("Processing add-ons...")
                 addons_data = booking_data.get('addons', [])
+                logger.info(f"Add-ons data: {addons_data}")
                 if addons_data:
                     addon_ids = [addon.get('id') for addon in addons_data]
+                    logger.info(f"Add-on IDs: {addon_ids}")
                     addons = AddOns.objects.filter(id__in=addon_ids)
+                    logger.info(f"Found {addons.count()} add-ons")
                     appointment.add_ons.set(addons)
-                appointment.save()
+                    appointment.save()
+                    logger.info("Add-ons added successfully")
+                else:
+                    logger.info("No add-ons to process")
             except Exception as e:
-                print(f"Error adding add-ons: {str(e)}")
+                logger.error(f"Error adding add-ons: {str(e)}")
                 # Don't fail the entire booking for add-on errors
 
             # Send booking confirmation notification (with error handling)
             try:
+                logger.info("Sending push notification...")
                 send_push_notification.delay(
                     request.user.id,
                     "Booking Assigned! 🎉",
                     f"Your valet service has been assigned to one of our detailers for {appointment.appointment_date} at {appointment.start_time}. Please wait for confirmation.",
                     "booking_assigned"
                 )
+                logger.info("Push notification sent successfully")
             except Exception as e:
-                print(f"Error sending notification: {str(e)}")
+                logger.error(f"Error sending notification: {str(e)}")
                 # Don't fail the entire booking for notification errors
 
+            logger.info(f"Booking appointment creation completed successfully: {appointment.id}")
             return Response({'appointment_id': str(appointment.id)}, status=status.HTTP_200_OK)
+            
         except Exception as e:
-            print(f"Error creating appointment: {str(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
+            logger.error(f"Error creating appointment: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
