@@ -8,6 +8,8 @@ from django.conf import settings
 from datetime import datetime
 from django.utils import timezone
 from main.tasks import publish_booking_cancelled, publish_booking_rescheduled, send_push_notification
+import logging
+import traceback
 
 # Initialize Stripe with your secret key
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -77,7 +79,8 @@ class BookingView(APIView):
             else:
                 return Response(None, status=status.HTTP_200_OK)
         except Exception as e:
-            print(f"Error fetching promotions: {str(e)}")
+            logger = logging.getLogger('main.views.booking')
+            logger.error(f"Error fetching promotions: {str(e)}")
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -111,7 +114,8 @@ class BookingView(APIView):
                           status=status.HTTP_200_OK)
             
         except Exception as e:
-            print(f"Error marking promotion as used: {str(e)}")
+            logger = logging.getLogger('main.views.booking')
+            logger.error(f"Error marking promotion as used: {str(e)}")
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             
@@ -154,12 +158,33 @@ class BookingView(APIView):
 
 
     def cancel_booking(self, request):
+        logger = logging.getLogger('main.views.booking')
         booking_reference = request.data.get('booking_reference')
+        
+        logger.info(f"Starting booking cancellation for reference: {booking_reference}, user: {request.user.id}")
+        
         try:
-            booking = BookedAppointment.objects.get(booking_reference=booking_reference)
+            # Validate booking_reference
+            if not booking_reference:
+                logger.error("No booking_reference provided in request")
+                return Response({'error': 'Booking reference is required'}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get booking with user validation
+            try:
+                booking = BookedAppointment.objects.get(
+                    booking_reference=booking_reference, 
+                    user=request.user
+                )
+                logger.info(f"Found booking: {booking.id}, status: {booking.status}")
+            except BookedAppointment.DoesNotExist:
+                logger.error(f"Booking not found for reference: {booking_reference}, user: {request.user.id}")
+                return Response({'error': 'Booking not found'}, 
+                              status=status.HTTP_404_NOT_FOUND)
             
             # Check if booking can be cancelled - only allow if not completed, cancelled, or in progress
             if booking.status in ['completed', 'cancelled', 'in_progress']:
+                logger.warning(f"Cannot cancel booking {booking_reference} - status: {booking.status}")
                 if booking.status == 'in_progress':
                     return Response({'error': 'Cannot cancel - service is already in progress'}, 
                                   status=status.HTTP_400_BAD_REQUEST)
@@ -169,73 +194,117 @@ class BookingView(APIView):
             
             # Calculate time until appointment
             now = timezone.now()
-            appointment_datetime = timezone.datetime.combine(
-                booking.appointment_date, 
-            booking.start_time
-        )
-            hours_until_appointment = (appointment_datetime - now).total_seconds() / 3600
+            try:
+                appointment_datetime = timezone.datetime.combine(
+                    booking.appointment_date, 
+                    booking.start_time
+                )
+                hours_until_appointment = (appointment_datetime - now).total_seconds() / 3600
+                logger.info(f"Hours until appointment: {hours_until_appointment}")
+            except Exception as e:
+                logger.error(f"Error calculating appointment datetime: {str(e)}")
+                return Response({'error': 'Invalid appointment data'}, 
+                              status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # New refund rule: Only refund if cancelled MORE than 12 hours before appointment
             # Allow cancellation within 12 hours but no refund
             refund_eligible = hours_until_appointment > 12
+            logger.info(f"Refund eligible: {refund_eligible}")
             
             # Update booking status
-            booking.status = 'cancelled'
-            booking.save()
+            try:
+                booking.status = 'cancelled'
+                booking.save()
+                logger.info(f"Booking {booking_reference} status updated to cancelled")
+            except Exception as e:
+                logger.error(f"Error updating booking status: {str(e)}")
+                return Response({'error': 'Failed to update booking status'}, 
+                              status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Publish to Redis for detailer app updates (only once)
-            publish_booking_cancelled.delay(booking_reference)
+            try:
+                publish_booking_cancelled.delay(booking_reference)
+                logger.info(f"Published booking cancellation to Redis for {booking_reference}")
+            except Exception as e:
+                logger.error(f"Error publishing to Redis: {str(e)}")
+                # Don't fail the cancellation for Redis errors
             
             refund_data = {'eligible': refund_eligible, 'amount': 0, 'processed': False}
             
             # Process refund if eligible (only outside 12-hour window)
             if refund_eligible:
-                refund_result = self._process_refund(booking)
-                refund_data.update(refund_result)
+                try:
+                    logger.info(f"Processing refund for booking {booking_reference}")
+                    refund_result = self._process_refund(booking)
+                    refund_data.update(refund_result)
+                    logger.info(f"Refund processing result: {refund_result}")
+                except Exception as e:
+                    logger.error(f"Error processing refund: {str(e)}")
+                    refund_data['error'] = str(e)
             
             # Prepare response message based on refund eligibility
-            vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}"
-            message = f'You have cancelled your booking for {vehicle_name} on {booking.appointment_date}'
-            
-            if refund_eligible and refund_data['processed']:
-                message += f"\n\nRefund of £{refund_data['amount']} has been processed and will appear in your account within 3-5 business days."
+            try:
+                vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}"
+                message = f'You have cancelled your booking for {vehicle_name} on {booking.appointment_date}'
                 
-                # Send push notification for refunded cancellation
-                send_push_notification.delay(
-                    request.user.id,
-                    "Booking Cancelled - Refund Processed!",
-                    f"Your valet service has been cancelled for {booking.appointment_date} at {booking.start_time}. You will be refunded within 3-5 business days.",
-                    "booking_cancelled_refunded"
-                )
-            else:
-                message += f"\n\nNo refund available - cancellation was within 12 hours of appointment start time."
+                if refund_eligible and refund_data.get('processed', False):
+                    message += f"\n\nRefund of £{refund_data['amount']} has been processed and will appear in your account within 3-5 business days."
+                    
+                    # Send push notification for refunded cancellation
+                    try:
+                        send_push_notification.delay(
+                            request.user.id,
+                            "Booking Cancelled - Refund Processed!",
+                            f"Your valet service has been cancelled for {booking.appointment_date} at {booking.start_time}. You will be refunded within 3-5 business days.",
+                            "booking_cancelled_refunded"
+                        )
+                        logger.info("Sent refund notification")
+                    except Exception as e:
+                        logger.error(f"Error sending refund notification: {str(e)}")
+                else:
+                    message += f"\n\nNo refund available - cancellation was within 12 hours of appointment start time."
+                    
+                    # Send push notification for non-refunded cancellation
+                    try:
+                        send_push_notification.delay(
+                            request.user.id,
+                            "Booking Cancelled",
+                            f"Your valet service has been cancelled for {booking.appointment_date} at {booking.start_time}. No refund available due to late cancellation.",
+                            "booking_cancelled_no_refund"
+                        )
+                        logger.info("Sent no-refund notification")
+                    except Exception as e:
+                        logger.error(f"Error sending no-refund notification: {str(e)}")
                 
-                # Send push notification for non-refunded cancellation
-                send_push_notification.delay(
-                    request.user.id,
-                    "Booking Cancelled",
-                    f"Your valet service has been cancelled for {booking.appointment_date} at {booking.start_time}. No refund available due to late cancellation.",
-                    "booking_cancelled_no_refund"
-                )
+                logger.info(f"Booking cancellation completed successfully for {booking_reference}")
+                return Response({
+                    'message': message,
+                    'booking_status': 'cancelled',
+                    'refund': refund_data,
+                    'hours_until_appointment': hours_until_appointment
+                }, status=status.HTTP_200_OK)
+                
+            except Exception as e:
+                logger.error(f"Error preparing response message: {str(e)}")
+                return Response({'error': 'Failed to prepare response'}, 
+                              status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-            return Response({
-                'message': message,
-                'booking_status': 'cancelled',
-                'refund': refund_data,
-                'hours_until_appointment': hours_until_appointment
-            }, status=status.HTTP_200_OK)
-            
-        except BookedAppointment.DoesNotExist:
-            return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Unexpected error in cancel_booking: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response({'error': 'Internal server error'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
 
     def _process_refund(self, booking):
         """Process refund through Stripe with proper status tracking"""
+        logger = logging.getLogger('main.views.booking')
+        
         try:
+            logger.info(f"Starting refund process for booking {booking.booking_reference}")
+            
             # Get the original payment transaction
             original_transaction = PaymentTransaction.objects.filter(
                 booking=booking,
@@ -244,19 +313,28 @@ class BookingView(APIView):
             ).first()
             
             if not original_transaction:
+                logger.error(f"No successful payment found for booking {booking.booking_reference}")
                 return {'processed': False, 'error': 'No payment found'}
             
+            logger.info(f"Found original transaction: {original_transaction.id}, amount: {original_transaction.amount}")
+            
             # Create refund record first
-            refund_record = RefundRecord.objects.create(
-                booking=booking,
-                user=booking.user,
-                original_transaction=original_transaction,
-                requested_amount=original_transaction.amount,
-                status='pending'
-            )
+            try:
+                refund_record = RefundRecord.objects.create(
+                    booking=booking,
+                    user=booking.user,
+                    original_transaction=original_transaction,
+                    requested_amount=original_transaction.amount,
+                    status='pending'
+                )
+                logger.info(f"Created refund record: {refund_record.id}")
+            except Exception as e:
+                logger.error(f"Error creating refund record: {str(e)}")
+                return {'processed': False, 'error': f'Failed to create refund record: {str(e)}'}
             
             try:
                 # Create refund with Stripe
+                logger.info(f"Creating Stripe refund for payment intent: {original_transaction.stripe_payment_intent_id}")
                 refund = stripe.Refund.create(
                     payment_intent=original_transaction.stripe_payment_intent_id,
                     amount=int(original_transaction.amount * 100),  # Convert to cents
@@ -267,6 +345,8 @@ class BookingView(APIView):
                         'refund_record_id': str(refund_record.id)
                     }
                 )
+                
+                logger.info(f"Stripe refund created successfully: {refund.id}")
                 
                 # Update refund record with success
                 refund_record.stripe_refund_id = refund.id
@@ -286,6 +366,7 @@ class BookingView(APIView):
                     status='succeeded'
                 )
                 
+                logger.info(f"Refund processed successfully: {refund.id}")
                 return {
                     'processed': True,
                     'amount': float(original_transaction.amount),
@@ -294,6 +375,7 @@ class BookingView(APIView):
                 }
                 
             except stripe.error.StripeError as e:
+                logger.error(f"Stripe error during refund: {str(e)}")
                 # Update refund record with failure
                 refund_record.status = 'failed'
                 refund_record.failure_reason = str(e)
@@ -307,7 +389,8 @@ class BookingView(APIView):
                 }
                 
         except Exception as e:
-            print(f"Refund processing error: {str(e)}")
+            logger.error(f"Refund processing error: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return {'processed': False, 'error': str(e)}
 
 
