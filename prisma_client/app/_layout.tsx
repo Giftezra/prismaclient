@@ -30,8 +30,8 @@ export default function RootLayout() {
               <AuthContextProvider>
                 <NotificationInitializer>
                   <GestureHandlerRootView>
+                    <StatusBar barStyle={statusBarStyle} />
                     <Stack screenOptions={{ headerShown: false }}>
-                      <StatusBar barStyle={statusBarStyle} />
                       <Stack.Screen name="onboarding" />
                       <Stack.Screen name="main" />
                     </Stack>

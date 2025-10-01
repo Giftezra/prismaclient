@@ -237,11 +237,11 @@ class GarageView(APIView):
                 return Response({'error': 'Vehicle not found'}, status=status.HTTP_404_NOT_FOUND)
             
             # Get all bookings for this vehicle
-            bookings = BookedAppointment.objects.filter(vehicle=vehicle)
+            bookings = BookedAppointment.objects.filter(vehicle=vehicle, status__in=['completed', 'in_progress'])
             total_bookings = bookings.count() if bookings else 0
             
-            # Calculate total amount including tips for completed bookings
-            completed_bookings = bookings.filter(status__in=['completed', 'confirmed', 'in_progress'])
+            # Calculate total amount including tips for COMPLETED bookings only
+            completed_bookings = bookings.filter(status='completed')
             total_amount = 0.0
             
             for booking in completed_bookings:

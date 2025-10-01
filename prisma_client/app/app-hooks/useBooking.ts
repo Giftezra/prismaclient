@@ -1591,8 +1591,9 @@ const useBooking = () => {
       }
       /* if payment is successful, create the booking */
       const booking: ReturnBookingProps = await createBooking(bookingReference);
-      /* When the data is returned trigger the create appointment api call */
+
       if (booking.detailer && booking.job) {
+        console.log("Booking data from detailer app stack: ", booking);
         const response = await bookAppointment({
           date: selectedDate?.toISOString().split("T")[0] || "",
           vehicle: selectedVehicle!,
@@ -1610,7 +1611,8 @@ const useBooking = () => {
         }).unwrap();
 
         /* If the appointment is created successfully, show the confirmation modal */
-        if (response) {
+        if (response.appointment_id && response) {
+          console.log("Appointment created successfully: ", response);
           // Mark promotion as used if there's an active promotion
           if (promotions?.is_active && promotions?.id) {
             try {
@@ -1628,16 +1630,21 @@ const useBooking = () => {
           setIsConfirmationModalVisible(true);
         }
       }
-    } catch (error) {
-      console.error("Booking confirmation failed:", error);
-      setAlertConfig({
-        title: "Booking Failed",
-        message: "Please try again or contact support.",
+    } catch (error:any) {
+      let message = "";
+      if (error?.data?.error) {
+        message = error.data.error;
+      } else if (error?.status === 400) {
+        message = "Booking confirmation failed";
+      } else if (error?.status === 401) {
+        message = "You must be logged in to create a booking.";
+      } else if (error?.status === 500) {
+        message = "Server error. Please try again later.";
+      }
+      showSnackbarWithConfig({
+        message: message,
         type: "error",
-        isVisible: true,
-        onConfirm: () => {
-          setIsVisible(false);
-        },
+        duration: 3000,
       });
     } finally {
       setIsLoading(false);

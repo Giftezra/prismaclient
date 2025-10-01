@@ -219,7 +219,8 @@ class ProfileView(APIView):
         try:
             # Get all booked appointments for the current user
             # Include related data to avoid N+1 queries
-            appointments = BookedAppointment.objects.filter(user=request.user, status__in=["completed", "cancelled"])
+            # Order by appointment_date in descending order (most recent first)
+            appointments = BookedAppointment.objects.filter(user=request.user, status__in=["completed", "cancelled"]).order_by('-appointment_date')
             service_history = []
             
             for appointment in appointments:

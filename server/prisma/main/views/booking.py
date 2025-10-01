@@ -62,10 +62,6 @@ class BookingView(APIView):
 
 
     def get_promotions(self, request):
-        """ Get the promotions for the user.
-            ARGS : void
-            RESPONSE : PromotionsProps or null
-        """
         try:
             promotions = Promotions.objects.filter(user=request.user, is_active=True).first()
             if promotions:
@@ -84,11 +80,8 @@ class BookingView(APIView):
             print(f"Error fetching promotions: {str(e)}")
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
     def mark_promotion_used(self, request):
-        """ Mark a promotion as used when booking is confirmed.
-            ARGS : { promotion_id: string, booking_reference: string }
-            RESPONSE : { message: string }
-        """
         try:
             promotion_id = request.data.get('promotion_id')
             booking_reference = request.data.get('booking_reference')
@@ -144,15 +137,6 @@ class BookingView(APIView):
         
         
     def get_valet_type(self, request):
-        """ Get the valet type predefined by the admin in the system.
-            ARGS : void
-            RESPONSE : ValetTypeProps[]
-            {
-                id : string
-                name : string
-                description : string
-            }
-        """
         try:
             valet_type = ValetType.objects.all()
             valet_type_data = []
@@ -185,9 +169,10 @@ class BookingView(APIView):
             
             # Calculate time until appointment
             now = timezone.now()
-            appointment_datetime = timezone.make_aware(
-                timezone.datetime.combine(booking.appointment_date, booking.start_time or timezone.datetime.min.time())
-            )
+            appointment_datetime = timezone.datetime.combine(
+                booking.appointment_date, 
+            booking.start_time
+        )
             hours_until_appointment = (appointment_datetime - now).total_seconds() / 3600
             
             # New refund rule: Only refund if cancelled MORE than 12 hours before appointment
@@ -360,13 +345,7 @@ class BookingView(APIView):
     
 
     def _book_appointment(self, request):
-        """ Create a booking and assign the booking to the user from the country.
-            ARGs: CreateBookingProps
-
-            RESPONSE: {
-                appointment_id: string
-            }
-        """
+        appointment = None
         try:
             # Get the booking data from the request
             booking_data = request.data.get('booking_data', request.data)
@@ -406,21 +385,30 @@ class BookingView(APIView):
                 special_instructions = booking_data.get('special_instructions'),
                 booking_reference = booking_data.get('booking_reference')
             )
-            # Add add-ons if any
-            addons_data = booking_data.get('addons', [])
-            if addons_data:
-                addon_ids = [addon.get('id') for addon in addons_data]
-                addons = AddOns.objects.filter(id__in=addon_ids)
-                appointment.add_ons.set(addons)
-            appointment.save()
+            
+            # Add add-ons if any (with error handling)
+            try:
+                addons_data = booking_data.get('addons', [])
+                if addons_data:
+                    addon_ids = [addon.get('id') for addon in addons_data]
+                    addons = AddOns.objects.filter(id__in=addon_ids)
+                    appointment.add_ons.set(addons)
+                appointment.save()
+            except Exception as e:
+                print(f"Error adding add-ons: {str(e)}")
+                # Don't fail the entire booking for add-on errors
 
-            # Send booking confirmation notification
-            send_push_notification.delay(
-                request.user.id,
-                "Booking Assigned! 🎉",
-                f"Your valet service has been assigned to one of our detailers for {appointment.appointment_date} at {appointment.start_time}. Please wait for confirmation.",
-                "booking_assigned"
-            )
+            # Send booking confirmation notification (with error handling)
+            try:
+                send_push_notification.delay(
+                    request.user.id,
+                    "Booking Assigned! 🎉",
+                    f"Your valet service has been assigned to one of our detailers for {appointment.appointment_date} at {appointment.start_time}. Please wait for confirmation.",
+                    "booking_assigned"
+                )
+            except Exception as e:
+                print(f"Error sending notification: {str(e)}")
+                # Don't fail the entire booking for notification errors
 
             return Response({'appointment_id': str(appointment.id)}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -448,9 +436,6 @@ class BookingView(APIView):
         except Exception as e:
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-
-
-
 
 
 
