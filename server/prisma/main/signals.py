@@ -160,23 +160,6 @@ def handle_booking_status_change(sender, instance, created, **kwargs):
             except JobChatRoom.DoesNotExist:
                 pass
 
-@receiver(post_save, sender=BookedAppointment)
-def handle_booking_creation(sender, instance, created, **kwargs):
-    if created:
-        # We will check if a payment transaction has been created for the booking before creating another one
-        if PaymentTransaction.objects.filter(booking=instance).exists():
-            pass
-        else:
-            PaymentTransaction.objects.create(
-                booking=instance,
-                user=instance.user,
-                stripe_payment_intent_id=instance.stripe_payment_intent_id,
-                transaction_type='payment',
-                amount=instance.total_amount,
-                currency='gbp',
-                status='succeeded'
-            )
-
 
 @receiver(post_save, sender=BookedAppointment)
 def handle_booking_completion_referral(sender, instance, created, **kwargs):
@@ -185,32 +168,11 @@ def handle_booking_completion_referral(sender, instance, created, **kwargs):
         # Check referral rewards when booking is marked as completed
         check_referral_rewards(instance.user)
 
-@receiver(post_save, sender=BookedAppointment)
-def handle_booking_creation_fallback(sender, instance, created, **kwargs):
-    """Fallback: Ensure PaymentTransaction is created for new bookings"""
-    if created:
-        # Check if PaymentTransaction already exists for this booking
-        existing_transaction = PaymentTransaction.objects.filter(
-            booking=instance,
-            transaction_type='payment',
-            status='succeeded'
-        ).first()
+# Removed handle_booking_creation_fallback signal
+# This was creating fake payment transactions which caused refund processing to fail
+# Payment transactions should only be created via Stripe webhooks when payment is actually processed
+
         
-        if not existing_transaction:
-            # Create fallback PaymentTransaction
-            PaymentTransaction.objects.create(
-                booking=instance,
-                user=instance.user,
-                stripe_payment_intent_id=f"fallback_{instance.booking_reference}",
-                transaction_type='payment',
-                amount=instance.total_amount,
-                currency='gbp',
-                status='succeeded'
-            )
-            print(f"Fallback PaymentTransaction created for booking: {instance.booking_reference}")
-        
-        # Check referral rewards
-        check_referral_rewards(instance.user)
 
 @receiver(post_save, sender=PaymentTransaction)
 def handle_payment_transaction_creation(sender, instance, created, **kwargs):
@@ -218,6 +180,7 @@ def handle_payment_transaction_creation(sender, instance, created, **kwargs):
     if created and instance.status == 'succeeded' and instance.transaction_type == 'payment':
         # Only trigger on successful payments, not refunds
         check_referral_rewards(instance.user)
+        
 
 def check_referral_rewards(user):
     """Check if user's spending triggers referral rewards - only for completed bookings"""

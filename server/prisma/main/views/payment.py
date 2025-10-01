@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views import View
+import logging
 
 # Initialize Stripe with your secret key
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -23,6 +24,7 @@ class PaymentView(APIView):
     action_handlers = {
         'create_payment_sheet' : 'create_payment_sheet',
         'get_refund_status' : 'get_refund_status',
+        'check_payment_status' : 'check_payment_status',
     }
 
     def get(self, request, *args, **kwargs):
@@ -152,6 +154,54 @@ class PaymentView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def check_payment_status(self, request):
+        """Check payment status for a booking - useful for debugging"""
+        logger = logging.getLogger('main.views.payment')
+        
+        try:
+            booking_reference = request.data.get('booking_reference')
+            logger.info(f"Checking payment status for booking: {booking_reference}")
+            
+            booking = BookedAppointment.objects.get(booking_reference=booking_reference)
+            logger.info(f"Found booking: {booking.id}, user: {booking.user.id}, total_amount: {booking.total_amount}")
+            
+            # Check for payment transactions
+            payment_transactions = PaymentTransaction.objects.filter(
+                booking=booking,
+                transaction_type='payment'
+            ).order_by('-created_at')
+            
+            logger.info(f"Found {payment_transactions.count()} payment transactions for booking")
+            
+            payment_data = []
+            for transaction in payment_transactions:
+                payment_data.append({
+                    'id': transaction.id,
+                    'stripe_payment_intent_id': transaction.stripe_payment_intent_id,
+                    'amount': float(transaction.amount),
+                    'currency': transaction.currency,
+                    'status': transaction.status,
+                    'created_at': transaction.created_at,
+                    'processed_at': transaction.processed_at
+                })
+                logger.info(f"Payment transaction: {transaction.id} - {transaction.status} - {transaction.amount} {transaction.currency}")
+            
+            return Response({
+                'booking_reference': booking_reference,
+                'booking_id': booking.id,
+                'booking_total_amount': float(booking.total_amount),
+                'has_payment': payment_transactions.filter(status='succeeded').exists(),
+                'payment_transactions': payment_data,
+                'successful_payments': payment_transactions.filter(status='succeeded').count()
+            }, status=status.HTTP_200_OK)
+            
+        except BookedAppointment.DoesNotExist:
+            logger.error(f"Booking not found: {booking_reference}")
+            return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error checking payment status: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class StripeWebhookView(View):
@@ -159,11 +209,16 @@ class StripeWebhookView(View):
     Dedicated webhook view that's CSRF exempt
     """
     def post(self, request, *args, **kwargs):
+        logger = logging.getLogger('main.views.payment')
+        
         # Initialize Stripe with your secret key
         stripe.api_key = settings.STRIPE_SECRET_KEY
         
         payload = request.body
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        
+        logger.info(f"Stripe webhook received - payload size: {len(payload)} bytes")
+        logger.info(f"Stripe signature header: {sig_header}")
         
         try:
             # Verify webhook signature
@@ -171,21 +226,31 @@ class StripeWebhookView(View):
                 payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
             )
             
-            print(f"Event type: {event['type']}")
+            logger.info(f"Stripe webhook event verified: {event['type']}")
+            logger.info(f"Event ID: {event.get('id', 'unknown')}")
             
             # Handle payment success events
             if event['type'] == 'payment_intent.succeeded':
                 payment_intent = event['data']['object']
                 metadata = payment_intent.metadata
-                print(f"Metadata: {metadata}")
+                
+                logger.info(f"Payment intent succeeded - ID: {payment_intent.id}")
+                logger.info(f"Payment intent amount: {payment_intent.amount} {payment_intent.currency}")
+                logger.info(f"Payment intent metadata: {metadata}")
+                
                 try:
                     # Get booking reference from metadata
                     booking_reference = metadata.get('booking_reference')
+                    logger.info(f"Booking reference from metadata: {booking_reference}")
+                    
                     if not booking_reference:
+                        logger.error("No booking reference found in payment intent metadata")
                         return JsonResponse({'error': 'No booking reference in metadata'}, status=400)
                     
                     # Get the booking
+                    logger.info(f"Looking up booking with reference: {booking_reference}")
                     booking = BookedAppointment.objects.get(booking_reference=booking_reference)
+                    logger.info(f"Found booking: {booking.id}, user: {booking.user.id}, amount: {booking.total_amount}")
                     
                     # Check if PaymentTransaction already exists to avoid duplicates
                     existing_transaction = PaymentTransaction.objects.filter(
@@ -193,64 +258,76 @@ class StripeWebhookView(View):
                         stripe_payment_intent_id=payment_intent.id
                     ).first()
                     
-                    if not existing_transaction:
-                        # Create payment transaction record
-                        PaymentTransaction.objects.create(
-                            booking=booking,
-                            user=booking.user,
-                            stripe_payment_intent_id=payment_intent.id,
-                            transaction_type='payment',
-                            amount=payment_intent.amount / 100,  # Convert from cents
-                            currency=payment_intent.currency,
-                            status='succeeded'
-                        )
-                        print(f"Payment transaction created for booking: {booking_reference}")
-                    else:
-                        print(f"Payment transaction already exists for booking: {booking_reference}")
-                    booking.save()
+                    if existing_transaction:
+                        logger.warning(f"Payment transaction already exists for booking: {booking_reference}, transaction ID: {existing_transaction.id}")
+                        return JsonResponse({'status': 'payment already recorded'}, status=200)
                     
-                    print(f"Payment recorded for booking: {booking_reference}")
+                    # Create payment transaction record
+                    logger.info(f"Creating payment transaction for booking: {booking_reference}")
+                    payment_transaction = PaymentTransaction.objects.create(
+                        booking=booking,
+                        user=booking.user,
+                        stripe_payment_intent_id=payment_intent.id,
+                        transaction_type='payment',
+                        amount=payment_intent.amount / 100,  # Convert from cents
+                        currency=payment_intent.currency,
+                        status='succeeded'
+                    )
+                    logger.info(f"Payment transaction created successfully: {payment_transaction.id}")
+                    logger.info(f"Payment transaction details - Amount: {payment_transaction.amount}, Currency: {payment_transaction.currency}, Status: {payment_transaction.status}")
+                    
+                    booking.save()
+                    logger.info(f"Booking saved after payment transaction creation")
+                    
+                    logger.info(f"Payment recorded successfully for booking: {booking_reference}")
                     return JsonResponse({'status': 'payment recorded'}, status=200)
                     
                 except BookedAppointment.DoesNotExist:
-                    print(f"Booking not found: {booking_reference}")
+                    logger.error(f"Booking not found for reference: {booking_reference}")
                     return JsonResponse({'error': 'Booking not found'}, status=400)
                 except Exception as e:
-                    print(f"Error processing webhook: {str(e)}")
+                    logger.error(f"Error processing payment webhook: {str(e)}")
+                    import traceback
+                    logger.error(f"Traceback: {traceback.format_exc()}")
                     return JsonResponse({'error': str(e)}, status=400)
             
             # Handle refund events
             elif event['type'] == 'charge.dispute.created':
-                # Handle disputes
+                logger.info(f"Handling dispute created event")
                 dispute = event['data']['object']
                 self._handle_dispute(dispute)
                 
             elif event['type'] == 'charge.refunded':
-                # Refund succeeded
+                logger.info(f"Handling refund succeeded event")
                 refund = event['data']['object']
                 self._handle_refund_success(refund)
 
             elif event['type'] == 'charge.updated':
-                # Refund updated
+                logger.info(f"Handling charge updated event")
                 refund = event['data']['object']
                 self._handle_refund_updated(refund)
                 
             elif event['type'] == 'charge.failed':
-                # Refund failed
+                logger.info(f"Handling charge failed event")
                 refund = event['data']['object']
                 self._handle_refund_failure(refund)
             
-            print(f"Event processed: {event['type']}")
+            else:
+                logger.info(f"Unhandled Stripe event type: {event['type']}")
+            
+            logger.info(f"Stripe event processed successfully: {event['type']}")
             return JsonResponse({'status': 'event processed'}, status=200)
             
         except ValueError as e:
-            print(f"ValueError: {str(e)}")
+            logger.error(f"ValueError in webhook: {str(e)}")
             return JsonResponse({'error': 'Invalid payload'}, status=400)
         except stripe.error.SignatureVerificationError as e:
-            print(f"Signature verification error: {str(e)}")
+            logger.error(f"Stripe signature verification error: {str(e)}")
             return JsonResponse({'error': 'Invalid signature'}, status=400)
         except Exception as e:
-            print(f"Unexpected error: {str(e)}")
+            logger.error(f"Unexpected error in webhook: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return JsonResponse({'error': str(e)}, status=500)
 
 
