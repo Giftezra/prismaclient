@@ -188,7 +188,6 @@ export const useNotification = () => {
         return false;
       }
     } catch (error) {
-      console.error("Error saving push token:", error);
       return false;
     } finally {
       setIsSavingToken(false);

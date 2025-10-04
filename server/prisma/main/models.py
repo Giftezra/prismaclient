@@ -192,7 +192,7 @@ class BookedAppointment(models.Model):
     ]
     booking_reference = models.CharField(max_length=255, editable=False, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    vehicle = models.ForeignKey(Vehicles, on_delete=models.CASCADE)
+    vehicle = models.ForeignKey(Vehicles, on_delete=models.SET_NULL, null=True, blank=True)
     valet_type = models.ForeignKey(ValetType, on_delete=models.CASCADE)
     service_type = models.ForeignKey(ServiceType, on_delete=models.CASCADE)
     add_ons = models.ManyToManyField(AddOns, blank=True)

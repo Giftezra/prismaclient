@@ -39,7 +39,6 @@ const PaymentMethodsComponent: React.FC<PaymentMethodsComponentProps> = () => {
 
   // Ensure paymentMethods is always an array
   const safePaymentMethods = paymentMethods || [];
-  console.log("safePaymentMethods", safePaymentMethods);  
   const [deletePaymentMethod, { isLoading: isDeleting }] =
     useDeletePaymentMethodMutation();
 
@@ -150,7 +149,6 @@ const PaymentMethodsComponent: React.FC<PaymentMethodsComponentProps> = () => {
         bounces={false}
         decelerationRate="fast"
       >
-
         {safePaymentMethods.map((card: PaymentMethod) => (
           <SavedCardItem
             key={card.id}

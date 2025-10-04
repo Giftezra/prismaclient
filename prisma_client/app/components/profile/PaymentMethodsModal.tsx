@@ -32,11 +32,6 @@ const PaymentMethodsComponent: React.FC<PaymentMethodsComponentProps> = () => {
     refetch,
   } = useGetPaymentMethodsQuery();
 
-  // Debug logging
-  console.log("PaymentMethodsModal - paymentMethods:", paymentMethods);
-  console.log("PaymentMethodsModal - isLoading:", isLoading);
-  console.log("PaymentMethodsModal - error:", error);
-
   // Ensure paymentMethods is always an array
   const safePaymentMethods = paymentMethods || [];
 

@@ -30,7 +30,7 @@ const TabsLayout = () => {
         screenOptions={{
           tabBarStyle: {
             backgroundColor: backgroundColor,
-            maxHeight: 60,
+            maxHeight: 45,
           },
           headerShown: false,
         }}
@@ -71,6 +71,16 @@ const TabsLayout = () => {
             title: "My Garage",
             tabBarIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="car" color={color} size={size} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="history"
+          options={{
+            headerShown: false,
+            title: "History",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name='history' color={color} size={size} />
             ),
           }}
         />

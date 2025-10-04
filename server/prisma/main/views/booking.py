@@ -445,14 +445,43 @@ class BookingView(APIView):
             # Create detailer profile
             try:
                 logger.info("Creating detailer profile...")
-                detailer = DetailerProfile.objects.create(
-                    name = booking_data.get('detailer', {}).get('name'),
-                    phone = booking_data.get('detailer', {}).get('phone'),
-                    rating = booking_data.get('detailer', {}).get('rating'),
-                )
-                logger.info(f"Detailer created successfully: {detailer.id}")
+                detailer_data = booking_data.get('detailer', {})
+                
+                # Validate required fields
+                if not detailer_data.get('name') or not detailer_data.get('phone'):
+                    logger.error("Missing required detailer fields: name or phone")
+                    return Response({'error': 'Detailer name and phone are required'}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+                
+                # Normalize data for comparison
+                detailer_name = detailer_data.get('name').strip()
+                detailer_phone = detailer_data.get('phone').strip()
+                detailer_rating = detailer_data.get('rating', 0.0)
+                
+                # Check if this detailer already exists (case-insensitive name match)
+                detailer = DetailerProfile.objects.filter(
+                    name__iexact=detailer_name, 
+                    phone=detailer_phone
+                ).first()
+                
+                if not detailer:
+                    # Create new detailer
+                    detailer = DetailerProfile.objects.create(
+                        name=detailer_name,
+                        phone=detailer_phone,
+                        rating=detailer_rating,
+                    )
+                    logger.info(f"Detailer created successfully: {detailer.id} - {detailer.name}")
+                else:
+                    # Update rating if provided and different
+                    if detailer_rating and detailer_rating != detailer.rating:
+                        detailer.rating = detailer_rating
+                        detailer.save()
+                        logger.info(f"Detailer rating updated: {detailer.id} - {detailer.name} (rating: {detailer.rating})")
+                    else:
+                        logger.info(f"Detailer already exists: {detailer.id} - {detailer.name}")
+                        
             except Exception as e:
-                logger.error(f"Error creating detailer: {str(e)}")
                 raise e
             
             # Get existing objects by ID
