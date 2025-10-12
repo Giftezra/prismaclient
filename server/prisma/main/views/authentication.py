@@ -8,6 +8,7 @@ from ..serializer import CustomTokenObtainPairSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from main.tasks import send_welcome_email, send_promotional_email
+from time import sleep
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -43,12 +44,26 @@ class AuthenticationView(CreateAPIView):
                     "name": "John Doe",
                     "email": "john.doe@example.com",
                     "phone": "1234567890",
-                    "password": "password"
+                    "password": "password",
+                    "referralCode": "ABC123",  # Optional
+                    "isFleetOwner": false  # Optional, defaults to false
                 }
             }
         """
         try:
             data = request.data.get('credentials')
+            referral_code = data.get('referred_code', None)
+            is_fleet_owner = data.get('isFleetOwner', False)
+            
+            # Handle referral if code provided
+            referred_by = None
+            if referral_code:
+                try:
+                    referrer = User.objects.get(referral_code=referral_code)
+                    referred_by = referrer
+                except User.DoesNotExist:
+                    return Response({'error': 'Invalid referral code'}, status=status.HTTP_400_BAD_REQUEST)
+            
             # Call the user model to create a new user
             user = User.objects.create_user(
                 name=data['name'],
@@ -56,8 +71,15 @@ class AuthenticationView(CreateAPIView):
                 phone=data['phone'],
                 password=data['password']
             )
+            
+            # Set fleet owner status and referral relationship
+            user.is_fleet_owner = is_fleet_owner
+            if referred_by:
+                user.referred_by = referred_by
+            user.save()
             # Send the welcome and promotional emails to the user even if they have not allowed them as this is a new user
             send_welcome_email.delay(user.email)
+            sleep(60)
             send_promotional_email.delay(user.email, user.name)
             
             # Generate tokens for the newly created user
@@ -76,6 +98,7 @@ class AuthenticationView(CreateAPIView):
                     'name': user.name,
                     'email': user.email,
                     'phone': user.phone,
+                    'is_fleet_owner': user.is_fleet_owner,
                     'address': {
                         'address': address.address if address else None,
                         'city': address.city if address else None,
@@ -84,6 +107,7 @@ class AuthenticationView(CreateAPIView):
                     },
                     'loyalty_tier': loyalty.current_tier if loyalty else None,
                     'loyalty_benefits': loyalty_benefits,
+                    'referral_code': user.referral_code if user.referral_code else None,
                 },
                 'access': access_token,
                 'refresh': refresh_token

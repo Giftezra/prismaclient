@@ -21,6 +21,7 @@ import {
   useRescheduleBookingMutation,
   useFetchPromotionsQuery,
   useMarkPromotionAsUsedMutation,
+  useCheckFreeWashQuery,
 } from "@/app/store/api/bookingApi";
 import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "@/app/contexts/AlertContext";
@@ -34,6 +35,22 @@ import { ReturnBookingProps } from "../interfaces/OtherInterfaces";
 import useDashboard from "./useDashboard";
 import usePayment from "./usePayment";
 import { API_CONFIG } from "@/constants/Config";
+
+/**
+ * Formats a Date object to local time string in HH:mm:ss.SSS format
+ * This prevents timezone conversion issues when sending time data to the server
+ *
+ * @param date - The Date object to format
+ * @returns Formatted time string (e.g., "19:00:00.000" for 7:00 PM)
+ */
+const formatLocalTime = (date: Date): string => {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
+  const milliseconds = date.getMilliseconds().toString().padStart(3, "0");
+  return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+};
+
 /**
  * Custom hook for managing the booking process state and logic.
  *
@@ -79,6 +96,11 @@ const useBooking = () => {
     useRescheduleBookingMutation();
   const [markPromotionAsUsed] = useMarkPromotionAsUsedMutation();
 
+  // Lazy query for checking free wash - only called when needed
+  const { refetch: checkFreeWash } = useCheckFreeWashQuery(undefined, {
+    skip: true,
+  });
+
   const { setAlertConfig, setIsVisible } = useAlertContext();
   const { showSnackbarWithConfig, showSnackbar } = useSnackbar();
   const [selectedVehicle, setSelectedVehicle] =
@@ -100,6 +122,24 @@ const useBooking = () => {
   const [selectedAddons, setSelectedAddons] = useState<AddOnsProps[]>([]);
   const [isAddonModalVisible, setIsAddonModalVisible] =
     useState<boolean>(false);
+
+  // Booking confirmation modal state
+  const [isConfirmationModalVisible, setIsConfirmationModalVisible] =
+    useState<boolean>(false);
+  const [confirmationBookingData, setConfirmationBookingData] =
+    useState<ReturnBookingProps | null>(null);
+
+  // Booking cancellation modal state
+  const [isCancellationModalVisible, setIsCancellationModalVisible] =
+    useState<boolean>(false);
+  const [cancellationData, setCancellationData] = useState<{
+    message: string;
+    booking_status: string;
+    refund: any;
+    hours_until_appointment: number;
+  } | null>(null);
+  const [cancellationBookingReference, setCancellationBookingReference] =
+    useState<string>("");
 
   // Time slot management state
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
@@ -1183,17 +1223,91 @@ const useBooking = () => {
   }, [selectedServiceType, isSUV, selectedAddons]);
 
   /**
+   * Calculate final price with option to exclude service base price (for free washes)
+   *
+   * This method provides a unified price calculation that can optionally exclude
+   * the base service price when a free Quick Sparkle is applied. All discounts
+   * and surcharges are calculated based on the actual amount being charged.
+   *
+   * @param excludeServicePrice - If true, sets service base price to 0 (free wash)
+   * @returns The final price after all calculations
+   *
+   * @example
+   * // Normal booking
+   * const price = calculateFinalPrice(false);  // £35.88
+   *
+   * // Free Quick Sparkle (only charge addons)
+   * const price = calculateFinalPrice(true);   // £13.45
+   */
+  const calculateFinalPrice = useCallback(
+    (excludeServicePrice: boolean = false): number => {
+      // Step 1: Calculate base amounts
+      const basePrice = excludeServicePrice
+        ? 0
+        : selectedServiceType?.price || 0;
+
+      // Step 2: Calculate addon costs (with 4+ addon discount)
+      let addonCosts = 0;
+      if (selectedAddons.length >= 4) {
+        const cheapestAddon = selectedAddons.reduce((min, addon) =>
+          addon.price < min.price ? addon : min
+        );
+        addonCosts =
+          selectedAddons.reduce((total, addon) => total + addon.price, 0) -
+          cheapestAddon.price;
+      } else {
+        addonCosts = selectedAddons.reduce(
+          (total, addon) => total + addon.price,
+          0
+        );
+      }
+
+      // Step 3: Calculate subtotal
+      const subtotal = basePrice + addonCosts;
+
+      // Step 4: Add SUV surcharge (NO surcharge when free wash is applied)
+      const suvSurcharge = excludeServicePrice
+        ? 0
+        : isSUV
+        ? subtotal * 0.15
+        : 0;
+
+      // Step 5: Total before loyalty/promotion discounts
+      const totalBeforeDiscounts = subtotal + suvSurcharge;
+
+      // Step 6: Calculate loyalty discount (applied to current total)
+      const loyaltyDiscount = user?.loyalty_benefits?.discount
+        ? totalBeforeDiscounts * (user.loyalty_benefits.discount / 100)
+        : 0;
+
+      // Step 7: Calculate promotion discount (applied to current total)
+      const promotionDiscount =
+        promotions?.is_active && promotions?.discount_percentage
+          ? totalBeforeDiscounts * (promotions.discount_percentage / 100)
+          : 0;
+
+      // Step 8: Final price
+      return totalBeforeDiscounts - loyaltyDiscount - promotionDiscount;
+    },
+    [
+      selectedServiceType,
+      selectedAddons,
+      isSUV,
+      user?.loyalty_benefits,
+      promotions,
+    ]
+  );
+
+  /**
    * Gets the final price after all discounts (loyalty + promotion)
    *
+   * @deprecated Use calculateFinalPrice(false) instead for consistency
    * @returns The final price after all applicable discounts
    */
   const getFinalPrice = useCallback((): number => {
-    const originalPrice = getOriginalPrice();
-    const loyaltyDiscount = getLoyaltyDiscount();
-    const promotionDiscount = getPromotionDiscount();
-
-    return originalPrice - loyaltyDiscount - promotionDiscount;
-  }, [getOriginalPrice, getLoyaltyDiscount, getPromotionDiscount]);
+    // Use the new unified method for consistency
+    return calculateFinalPrice(false);
+  }, [calculateFinalPrice]);
 
   /**
    * Gets the total cost of selected addons
@@ -1208,8 +1322,8 @@ const useBooking = () => {
    * const addonCost = getAddonPrice(); // Returns 25 if two addons cost 10 and 15
    */
   const getAddonPrice = useCallback((): number => {
-    // if the user select three addons, remove the cheapest addon price
-    if (selectedAddons.length >= 3) {
+    // if the user select four or more addons, remove the cheapest addon price
+    if (selectedAddons.length >= 4) {
       const cheapestAddon = selectedAddons.reduce((min, addon) =>
         addon.price < min.price ? addon : min
       );
@@ -1387,11 +1501,12 @@ const useBooking = () => {
         booking_reference: bookingReference,
         service_type: selectedServiceType?.name || "",
         booking_date: selectedDate?.toISOString().split("T")[0] || "",
-        start_time: startTime.toISOString().split("T")[1].replace("Z", ""),
-        end_time: endTime.toISOString().split("T")[1].replace("Z", ""),
+        start_time: formatLocalTime(startTime),
+        end_time: formatLocalTime(endTime),
         loyalty_tier: user?.loyalty_tier || "",
         loyalty_benefits: user?.loyalty_benefits?.free_service || [],
       };
+      console.log("Booking data: ", bookingData);
       /* Send the data to the detailer app stack and append the booking data to the url as params
        * The stack returns the DetailerProfileProps
        */
@@ -1449,6 +1564,8 @@ const useBooking = () => {
    * - isSUV: false
    * - selectedAddons: empty array
    * - isAddonModalVisible: false
+   * - isConfirmationModalVisible: false
+   * - confirmationBookingData: null
    *
    * @example
    * resetBooking();
@@ -1465,6 +1582,60 @@ const useBooking = () => {
     setIsSUV(false);
     setSelectedAddons([]);
     setIsAddonModalVisible(false);
+    setIsConfirmationModalVisible(false);
+    setConfirmationBookingData(null);
+    setIsCancellationModalVisible(false);
+    setCancellationData(null);
+    setCancellationBookingReference("");
+  }, []);
+
+  /**
+   * Handles closing the confirmation modal
+   *
+   * This method closes the confirmation modal and resets the booking state.
+   *
+   * @example
+   * handleCloseConfirmationModal();
+   * // Closes the confirmation modal and resets booking
+   */
+  const handleCloseConfirmationModal = useCallback(() => {
+    setIsConfirmationModalVisible(false);
+    setConfirmationBookingData(null);
+    resetBooking();
+    refetchAppointments();
+    router.push("/main/(tabs)/dashboard/DashboardScreen");
+  }, [resetBooking, refetchAppointments]);
+
+  /**
+   * Handles viewing the dashboard from the confirmation modal
+   *
+   * This method closes the confirmation modal and navigates to the dashboard.
+   *
+   * @example
+   * handleViewDashboard();
+   * // Closes modal and navigates to dashboard
+   */
+  const handleViewDashboard = useCallback(() => {
+    setIsConfirmationModalVisible(false);
+    setConfirmationBookingData(null);
+    resetBooking();
+    refetchAppointments();
+    router.push("/main/(tabs)/dashboard/DashboardScreen");
+  }, [resetBooking, refetchAppointments]);
+
+  /**
+   * Handles closing the cancellation modal
+   *
+   * This method closes the cancellation modal without proceeding with cancellation.
+   *
+   * @example
+   * handleCloseCancellationModal();
+   * // Closes the cancellation modal
+   */
+  const handleCloseCancellationModal = useCallback(() => {
+    setIsCancellationModalVisible(false);
+    setCancellationData(null);
+    setCancellationBookingReference("");
   }, []);
 
   /**
@@ -1473,7 +1644,7 @@ const useBooking = () => {
    * This method orchestrates the entire booking confirmation process:
    * 1. Processes payment through Stripe
    * 2. Creates the booking if payment is successful
-   * 3. Shows success/error messages to the user
+   * 3. Shows confirmation modal with booking details
    * 4. Handles navigation after successful booking
    *
    * @example
@@ -1486,8 +1657,37 @@ const useBooking = () => {
       // Generate a booking reference
       const bookingReference = `APT${Date.now()}`;
 
-      // First, handle payment
-      const finalPrice = getFinalPrice();
+      // Check if this is a Quick Sparkle and user can use free wash
+      const isQuickSparkle = selectedServiceType?.name === "The Quick Sparkle";
+      const canUseFreeWash =
+        isQuickSparkle && user?.loyalty_tier === "platinum";
+      let finalPrice = getFinalPrice();
+      let applyFreeQuickSparkle = false;
+
+      if (canUseFreeWash && isQuickSparkle) {
+        try {
+          // Use RTK Query to check free wash availability
+          const checkResult = await checkFreeWash();
+
+          if (checkResult.data && checkResult.data.can_use_free_wash) {
+            // Calculate price excluding service base price and SUV surcharge
+            // Only charge for addons with discounts applied
+            finalPrice = calculateFinalPrice(true);
+            applyFreeQuickSparkle = true;
+
+            // Show user they're getting free wash
+            showSnackbarWithConfig({
+              message: `Free Quick Sparkle applied! You have ${checkResult.data.remaining_quick_sparkles} left this month.`,
+              type: "success",
+              duration: 3000,
+            });
+          }
+        } catch (error) {
+          console.error("Free wash check failed:", error);
+        }
+      }
+
+      // Handle payment with adjusted price
       const paymentResult = await openPaymentSheet(
         finalPrice,
         "Prisma Valet",
@@ -1500,8 +1700,9 @@ const useBooking = () => {
       }
       /* if payment is successful, create the booking */
       const booking: ReturnBookingProps = await createBooking(bookingReference);
-      /* When the data is returned trigger the create appointment api call */
+
       if (booking.detailer && booking.job) {
+        console.log("Booking data from detailer app stack: ", booking);
         const response = await bookAppointment({
           date: selectedDate?.toISOString().split("T")[0] || "",
           vehicle: selectedVehicle!,
@@ -1510,19 +1711,18 @@ const useBooking = () => {
           detailer: booking.detailer,
           address: selectedAddress!,
           status: "pending",
-          total_amount: getFinalPrice(),
+          total_amount: finalPrice,
           addons: selectedAddons,
-          start_time: selectedDate
-            ?.toISOString()
-            .split("T")[1]
-            .replace("Z", ""),
+          start_time: selectedDate ? formatLocalTime(selectedDate) : "",
           duration: getEstimatedDuration(),
           special_instructions: specialInstructions,
           booking_reference: booking.job.booking_reference,
+          applied_free_quick_sparkle: applyFreeQuickSparkle,
         }).unwrap();
 
-        /* If the appointment is created successfully, show the success message */
-        if (response) {
+        /* If the appointment is created successfully, show the confirmation modal */
+        if (response.appointment_id && response) {
+          console.log("Appointment created successfully: ", response);
           // Mark promotion as used if there's an active promotion
           if (promotions?.is_active && promotions?.id) {
             try {
@@ -1532,35 +1732,29 @@ const useBooking = () => {
               }).unwrap();
             } catch (error) {
               console.error("Failed to mark promotion as used:", error);
-              // Don't fail the booking if promotion marking fails
             }
           }
 
-          let message = `Your booking has been assigned to one of our detailers.\n\nYour booking reference is ${booking.job.booking_reference}.\n\nKeep an eye on your email for the booking confirmation.\n\nThank you for choosing PrismaValet!`;
-          setAlertConfig({
-            title: "Booking Confirmed!",
-            message: message,
-            type: "success",
-            isVisible: true,
-            onConfirm: () => {
-              setIsVisible(false);
-              resetBooking();
-              refetchAppointments();
-              router.push("/main/(tabs)/dashboard/DashboardScreen");
-            },
-          });
+          // Store booking data and show confirmation modal
+          setConfirmationBookingData(booking);
+          setIsConfirmationModalVisible(true);
         }
       }
-    } catch (error) {
-      console.error("Booking confirmation failed:", error);
-      setAlertConfig({
-        title: "Booking Failed",
-        message: "Please try again or contact support.",
+    } catch (error: any) {
+      let message = "";
+      if (error?.data?.error) {
+        message = error.data.error;
+      } else if (error?.status === 400) {
+        message = "Booking confirmation failed";
+      } else if (error?.status === 401) {
+        message = "You must be logged in to create a booking.";
+      } else if (error?.status === 500) {
+        message = "Server error. Please try again later.";
+      }
+      showSnackbarWithConfig({
+        message: message,
         type: "error",
-        isVisible: true,
-        onConfirm: () => {
-          setIsVisible(false);
-        },
+        duration: 3000,
       });
     } finally {
       setIsLoading(false);
@@ -1573,48 +1767,86 @@ const useBooking = () => {
     refetchAppointments,
   ]);
 
-  /* Handle booking cancellation */
+  /* Show cancellation modal with details */
+  const showCancellationModal = useCallback(
+    (
+      bookingReference: string,
+      appointmentDate?: string,
+      totalAmount?: number
+    ) => {
+      // Calculate hours until appointment
+      let hoursUntilAppointment = 0;
+      if (appointmentDate) {
+        const appointment = new Date(appointmentDate);
+        const now = new Date();
+        const timeDifference = appointment.getTime() - now.getTime();
+        hoursUntilAppointment = Math.max(
+          0,
+          Math.ceil(timeDifference / (1000 * 60 * 60))
+        );
+      }
+
+      // Use actual booking amount or default to 0
+      const actualAmount = totalAmount || 0;
+      const refundAmount = hoursUntilAppointment <= 12 ? 0 : actualAmount;
+
+      // Create cancellation data with actual booking amount
+      const cancellationData = {
+        message:
+          hoursUntilAppointment <= 12
+            ? "This booking will be cancelled. You will NOT receive a refund due to late cancellation."
+            : "This booking will be cancelled and you will receive a full refund.",
+        booking_status: "pending_cancellation",
+        refund:
+          refundAmount > 0 ? { amount: Math.round(refundAmount * 100) } : null, // Convert to cents
+        hours_until_appointment: hoursUntilAppointment,
+      };
+
+      setCancellationData(cancellationData);
+      setCancellationBookingReference(bookingReference);
+      setIsCancellationModalVisible(true);
+    },
+    []
+  );
+
+  /* Handle actual booking cancellation */
   const handleCancelBooking = useCallback(
     async (bookingReference: string) => {
-      /* Process the cancellation directly - confirmation already handled in UI */
+      /* Process the actual cancellation */
       try {
         const response = await cancelBooking(bookingReference).unwrap();
         if (response) {
-          setAlertConfig({
-            title: "Booking Cancelled",
-            message: response,
+          showSnackbarWithConfig({
+            message: "Appointment cancelled successfully",
             type: "success",
-            isVisible: true,
-            onConfirm: () => {
-              setIsVisible(false);
-              refetchAppointments();
-              router.push("/main/(tabs)/dashboard/DashboardScreen");
-            },
+            duration: 3000,
           });
+          refetchAppointments();
+          // Navigate to dashboard after successful cancellation
+          router.push("/main/(tabs)/dashboard/DashboardScreen");
+          return true; // Return success status
         } else {
           showSnackbarWithConfig({
             message: "Booking Cancellation Failed",
             type: "error",
             duration: 3000,
           });
+          return false; // Return failure status
         }
       } catch (error: any) {
         let message = "Failed to cancel booking";
         if (error?.data?.error) {
           message = error.data.error;
         }
-        setAlertConfig({
-          title: "Error",
+        showSnackbarWithConfig({
           message: message,
           type: "error",
-          isVisible: true,
-          onConfirm: () => {
-            setIsVisible(false);
-          },
+          duration: 3000,
         });
+        throw error; // Re-throw to be caught by handleConfirmCancellation
       }
     },
-    [cancelBooking, setAlertConfig, setIsVisible, refetchAppointments]
+    [cancelBooking, showSnackbarWithConfig, refetchAppointments]
   );
 
   const handleRescheduleBooking = useCallback(
@@ -1659,6 +1891,30 @@ const useBooking = () => {
     },
     [rescheduleBooking, setAlertConfig, setIsVisible]
   );
+
+  /**
+   * Handles confirming the cancellation
+   *
+   * This method processes the actual cancellation and navigates to the dashboard.
+   *
+   * @example
+   * handleConfirmCancellation();
+   * // Processes cancellation and navigates to dashboard
+   */
+  const handleConfirmCancellation = useCallback(async () => {
+    if (cancellationBookingReference) {
+      try {
+        await handleCancelBooking(cancellationBookingReference);
+        // Close modal after successful cancellation
+        setIsCancellationModalVisible(false);
+        setCancellationData(null);
+        setCancellationBookingReference("");
+      } catch (error) {
+        // Keep modal open if cancellation fails
+        console.error("Cancellation failed:", error);
+      }
+    }
+  }, [cancellationBookingReference, handleCancelBooking]);
 
   return {
     // State
@@ -1718,6 +1974,20 @@ const useBooking = () => {
     // Booking
     createBooking,
     resetBooking,
+
+    // Confirmation modal state and handlers
+    isConfirmationModalVisible,
+    confirmationBookingData,
+    handleCloseConfirmationModal,
+    handleViewDashboard,
+
+    // Cancellation modal state and handlers
+    isCancellationModalVisible,
+    cancellationData,
+    cancellationBookingReference,
+    showCancellationModal,
+    handleCloseCancellationModal,
+    handleConfirmCancellation,
 
     // Utilities
     getTotalPrice,

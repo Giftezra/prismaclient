@@ -31,7 +31,7 @@ const useOnboarding = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   /* Handle the collection of the users data to create an account */
-  const collectSignupData = (field: string, value: string) => {
+  const collectSignupData = (field: string, value: string | boolean) => {
     dispatch(setSignUpData({ field, value }));
   };
 
@@ -41,7 +41,12 @@ const useOnboarding = () => {
    */
   const registerUser = async () => {
     if (!signUpData) return;
-    if (!signUpData.name || !signUpData.email || !signUpData.phone || !signUpData.password) {
+    if (
+      !signUpData.name ||
+      !signUpData.email ||
+      !signUpData.phone ||
+      !signUpData.password
+    ) {
       setAlertConfig({
         title: "Missing Fields",
         message: "Please fill in all required fields",
@@ -56,7 +61,8 @@ const useOnboarding = () => {
     if (!termsAccepted) {
       setAlertConfig({
         title: "Terms Required",
-        message: "You must accept the terms and conditions to create an account",
+        message:
+          "You must accept the terms and conditions to create an account",
         type: "error",
         isVisible: true,
         onConfirm: () => {
@@ -76,7 +82,7 @@ const useOnboarding = () => {
         dispatch(setAccessToken(response.access));
         dispatch(setRefreshToken(response.refresh));
         dispatch(setIsAuthenticated(true));
-        
+
         setAlertConfig({
           title: "Registration Successful",
           message: response.message,

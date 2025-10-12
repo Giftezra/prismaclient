@@ -10,7 +10,8 @@ export interface UserProfileProps {
   name: string;
   email: string;
   phone: string;
-  address: MyAddressProps;
+  is_fleet_owner?: boolean;
+  address: MyAddressProps | null;
   push_notification_token: boolean;
   email_notification_token: boolean;
   marketing_email_token: boolean;

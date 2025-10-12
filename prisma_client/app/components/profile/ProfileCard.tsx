@@ -120,22 +120,22 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         <View style={styles.addressSection}>
           <StyledText style={styles.sectionLabel}>Address:</StyledText>
           <View style={styles.addressContainer}>
-            {(profile.address.address || address?.address) && (
+            {(profile.address?.address || address?.address) && (
               <StyledText
-                children={profile.address.address || address?.address}
+                children={profile.address?.address || address?.address}
               />
             )}
-            {(profile.address.city || address?.city) && (
-              <StyledText children={profile.address.city || address?.city} />
+            {(profile.address?.city || address?.city) && (
+              <StyledText children={profile.address?.city || address?.city} />
             )}
-            {(profile.address.post_code || address?.post_code) && (
+            {(profile.address?.post_code || address?.post_code) && (
               <StyledText
-                children={profile.address.post_code || address?.post_code}
+                children={profile.address?.post_code || address?.post_code}
               />
             )}
-            {(profile.address.country || address?.country) && (
+            {(profile.address?.country || address?.country) && (
               <StyledText
-                children={profile.address.country || address?.country}
+                children={profile.address?.country || address?.country}
               />
             )}
           </View>

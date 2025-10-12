@@ -17,17 +17,32 @@ def handle_booking_completion(sender, instance, created, **kwargs):
         if instance.service_type.name != 'Basic Wash':
             loyalty, created = LoyaltyProgram.objects.get_or_create(user=user)
             loyalty.completed_bookings += 1
+            loyalty.last_booking_date = now.date()
             
-            # Check for tier upgrade
+            # Check for tier upgrade - different thresholds for fleet owners vs regular users
             old_tier = loyalty.current_tier
-            if loyalty.completed_bookings >= 40:
-                loyalty.current_tier = 'platinum'
-            elif loyalty.completed_bookings >= 25:
-                loyalty.current_tier = 'gold'
-            elif loyalty.completed_bookings >= 10:
-                loyalty.current_tier = 'silver'
+            
+            if user.is_fleet_owner:
+                # Fleet owner tier thresholds
+                if loyalty.completed_bookings >= 100:
+                    loyalty.current_tier = 'platinum'
+                elif loyalty.completed_bookings >= 50:
+                    loyalty.current_tier = 'gold'
+                elif loyalty.completed_bookings >= 20:
+                    loyalty.current_tier = 'silver'
+                else:
+                    loyalty.current_tier = 'bronze'
             else:
-                loyalty.current_tier = 'bronze'
+                # Regular user tier thresholds
+                if loyalty.completed_bookings >= 40:
+                    loyalty.current_tier = 'platinum'
+                elif loyalty.completed_bookings >= 25:
+                    loyalty.current_tier = 'gold'
+                elif loyalty.completed_bookings >= 10:
+                    loyalty.current_tier = 'silver'
+                else:
+                    loyalty.current_tier = 'bronze'
+            
             loyalty.save()
         else:
             # For Basic Wash, we still need old_tier for notification logic

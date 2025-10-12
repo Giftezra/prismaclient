@@ -237,6 +237,31 @@ const createBookingApi = createApi({
         data: { payment_method_id: data.payment_method_id },
       }),
     }),
+
+    /**
+     * Check if user can use a free Quick Sparkle this month
+     * ARGS : void
+     * RESPONSE : {
+     *   can_use_free_wash: boolean
+     *   remaining_quick_sparkles: number
+     *   total_monthly_limit: number
+     *   resets_in_days: number
+     * }
+     */
+    checkFreeWash: builder.query<
+      {
+        can_use_free_wash: boolean;
+        remaining_quick_sparkles: number;
+        total_monthly_limit: number;
+        resets_in_days: number;
+      },
+      void
+    >({
+      query: () => ({
+        url: "/api/v1/booking/check_free_wash/",
+        method: "GET",
+      }),
+    }),
   }),
 });
 export const {
@@ -251,5 +276,6 @@ export const {
   useMarkPromotionAsUsedMutation,
   useGetPaymentMethodsQuery,
   useDeletePaymentMethodMutation,
+  useCheckFreeWashQuery,
 } = createBookingApi;
 export default createBookingApi;

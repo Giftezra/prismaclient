@@ -11,11 +11,14 @@ from celery.schedules import crontab
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
-ALLOWED_ORIGINS = [BASE_URL]   
-CSRF_TRUSTED_ORIGINS = [BASE_URL]  
-CORS_ALLOWED_ORIGINS = [BASE_URL]   
+
+
+ALLOWED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://9581c9497927.ngrok-free.app" ]    
+CSRF_TRUSTED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://9581c9497927.ngrok-free.app" ]
+CORS_ALLOWED_ORIGINS = ['https://prismavalet.com', 'https://www.prismavalet.com', "https://9581c9497927.ngrok-free.app"]  
 CORS_ALLOW_CREDENTIALS = True
 ALLOWED_HOSTS=[os.getenv('ALLOWED_HOSTS'), 'localhost', '127.0.0.1']
 
@@ -71,8 +74,6 @@ TEMPLATES = [
         },
     },
 ]
-
-
 
 # Database
 DATABASES = {
@@ -135,7 +136,7 @@ CHANNEL_LAYERS = {
 CHANNELS_WS_PROTOCOLS = ["websocket"]
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=120),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
@@ -189,6 +190,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'main.tasks.send_promotion_expiration',
         'schedule': crontab(hour=6, minute=0) # Run at 6:00 AM every day
     },
+    'check-loyalty-decay': {
+        'task': 'main.tasks.check_loyalty_decay',
+        'schedule': crontab(hour=3, minute=0)  # Run at 3:00 AM every day
+    },
 }
 
 AUTH_USER_MODEL = 'main.User'
@@ -226,3 +231,59 @@ AWS_S3_VERIFY = True
 AWS_S3_FILE_OVERWRITE = False
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django_error.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file', 'error_file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'main': {
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'main.views.booking': {
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}

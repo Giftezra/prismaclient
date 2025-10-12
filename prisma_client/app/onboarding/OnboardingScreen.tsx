@@ -5,7 +5,6 @@ import {
   ScrollView,
   Platform,
   Dimensions,
-  StatusBar,
   Pressable,
   Modal,
   TouchableOpacity,
@@ -55,7 +54,12 @@ const OnboardingScreen = () => {
   const handleSubmit = async () => {
     if (!signUpData) return;
     try {
-      if (!signUpData.name || !signUpData.email || !signUpData.password) {
+      if (
+        !signUpData.name ||
+        !signUpData.email ||
+        !signUpData.phone ||
+        !signUpData.password
+      ) {
         setAlertConfig({
           title: "Missing Fields",
           message: "Please fill in all required fields",
@@ -80,11 +84,6 @@ const OnboardingScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <StatusBar
-        barStyle={textColor === "#FFFFFF" ? "light-content" : "dark-content"}
-        backgroundColor={backgroundColor}
-      />
-
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -141,6 +140,22 @@ const OnboardingScreen = () => {
                   value={signUpData?.email || ""}
                   onChangeText={(text) => handleSignUpData("email", text)}
                   keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={styles.textInput}
+                  placeholderTextColor={
+                    textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"
+                  }
+                />
+              </View>
+
+              {/* Phone Input */}
+              <View style={styles.inputContainer}>
+                <StyledTextInput
+                  label="Phone Number"
+                  placeholder="Enter your phone number"
+                  value={signUpData?.phone || ""}
+                  onChangeText={(text) => handleSignUpData("phone", text)}
+                  keyboardType="phone-pad"
                   autoCapitalize="none"
                   style={styles.textInput}
                   placeholderTextColor={
@@ -210,6 +225,60 @@ const OnboardingScreen = () => {
                     {passwordError}
                   </StyledText>
                 )}
+              </View>
+
+              {/* Referral Code Input */}
+              <View style={styles.inputContainer}>
+                <StyledTextInput
+                  label="Referral Code (Optional)"
+                  placeholder="Enter referral code if you have one"
+                  value={signUpData?.referred_code || ""}
+                  onChangeText={(text) =>
+                    handleSignUpData("referred_code", text)
+                  }
+                  keyboardType="default"
+                  autoCapitalize="characters"
+                  style={styles.textInput}
+                  placeholderTextColor={
+                    textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"
+                  }
+                />
+                <StyledText style={[styles.helpText, { color: textColor }]}>
+                  Get 10% off your first service with a valid referral code!
+                </StyledText>
+              </View>
+
+              {/* Fleet Owner Checkbox */}
+              <View style={styles.fleetOwnerContainer}>
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() =>
+                    handleSignUpData("isFleetOwner", !signUpData?.isFleetOwner)
+                  }
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      {
+                        borderColor: borderColor,
+                        backgroundColor: signUpData?.isFleetOwner
+                          ? buttonColor
+                          : "transparent",
+                      },
+                    ]}
+                  >
+                    {signUpData?.isFleetOwner && (
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <StyledText
+                      style={[styles.fleetOwnerText, { color: textColor }]}
+                    >
+                      I am a fleet owner
+                    </StyledText>
+                  </View>
+                </TouchableOpacity>
               </View>
 
               {/* Terms and Conditions Checkbox */}
@@ -357,6 +426,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
+  },
+  helpText: {
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    opacity: 0.7,
+  },
+  fleetOwnerContainer: {
+    marginBottom: 20,
+  },
+  fleetOwnerText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "500",
   },
   termsContainer: {
     marginBottom: 24,

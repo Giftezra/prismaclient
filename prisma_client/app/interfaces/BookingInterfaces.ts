@@ -49,6 +49,7 @@ export interface BookedAppointmentProps {
   start_time?: string;
   duration?: number;
   special_instructions?: string;
+  applied_free_quick_sparkle?: boolean;
 }
 export default interface BookingState {
   selected_service_type: ServiceTypeProps | null;

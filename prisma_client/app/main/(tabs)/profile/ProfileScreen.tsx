@@ -9,6 +9,7 @@ import {
   Animated,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  RefreshControl,
 } from "react-native";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import ProfileCard from "@/app/components/profile/ProfileCard";
@@ -16,7 +17,6 @@ import AddressCard from "@/app/components/profile/AddressCard";
 import StyledText from "@/app/components/helpers/StyledText";
 import { Ionicons } from "@expo/vector-icons";
 import useProfile from "@/app/app-hooks/useProfile";
-import ServiceHistoryComponent from "@/app/components/profile/ServiceHistoryComponent";
 import StyledButton from "@/app/components/helpers/StyledButton";
 import AddAddressModal from "@/app/components/profile/AddAddressModal";
 import PaymentMethodsComponent from "@/app/components/profile/PaymentMethodsComponent";
@@ -26,13 +26,15 @@ import ModalServices from "@/app/utils/ModalServices";
 
 const ProfileScreen = () => {
   const {
-    serviceHistory,
     userProfile,
     addresses,
     saveNewAddress,
-    isLoadingServiceHistory,
-    errorServiceHistory,
+    refetchUserProfile,
+    refetchAddresses,
     refetchServiceHistory,
+    isLoadingUserProfile,
+    isLoadingAddresses,
+    isLoadingServiceHistory,
   } = useProfile();
   const { handleLogout } = useAuthContext();
 
@@ -41,15 +43,10 @@ const ProfileScreen = () => {
   const iconColor = useThemeColor({}, "icons");
   const borderColor = useThemeColor({}, "borders");
   /* State management */
-  const [isServiceHistoryVisible, setIsServiceHistoryVisible] = useState(false);
   const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
   const [isPaymentMethodsModalVisible, setIsPaymentMethodsModalVisible] =
     useState(false);
-
-  /* Animation refs */
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   /* Profile card scroll animation refs */
   const profileCardTranslateY = useRef(new Animated.Value(0)).current;
@@ -64,54 +61,6 @@ const ProfileScreen = () => {
   const scrollDirection = useRef<"up" | "down">("down");
   const isScrolling = useRef(false);
   const [hasScrolled, setHasScrolled] = useState(false);
-
-  /**
-   * Handles the service history toggle with animation
-   */
-  const handleServiceHistoryToggle = () => {
-    const newVisible = !isServiceHistoryVisible;
-    setIsServiceHistoryVisible(newVisible);
-
-    if (newVisible) {
-      // Animate in - pull down effect
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: false,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: false,
-        }),
-      ]).start();
-    } else {
-      // Animate out - pull up effect
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: false,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 0.95,
-          duration: 400,
-          useNativeDriver: false,
-        }),
-      ]).start();
-    }
-  };
 
   /**
    * Handle scroll events to animate profile card visibility
@@ -210,9 +159,6 @@ const ProfileScreen = () => {
    */
   useEffect(() => {
     return () => {
-      slideAnim.setValue(0);
-      opacityAnim.setValue(0);
-      scaleAnim.setValue(0.95);
       profileCardTranslateY.setValue(0);
       profileCardOpacity.setValue(1);
       logoutButtonTranslateY.setValue(0);
@@ -247,6 +193,38 @@ const ProfileScreen = () => {
     setIsPaymentMethodsModalVisible(true);
   };
 
+  /**
+   * Handle pull-to-refresh functionality
+   */
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      // Refetch all profile-related data
+      await Promise.all([
+        refetchUserProfile(),
+        refetchAddresses(),
+        refetchServiceHistory(),
+      ]);
+    } catch (error) {
+      console.error("Error refreshing profile data:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetchUserProfile, refetchAddresses, refetchServiceHistory]);
+
+  /**
+   * Create refresh control
+   */
+  const refreshControl = (
+    <RefreshControl
+      refreshing={isRefreshing}
+      onRefresh={handleRefresh}
+      tintColor={iconColor}
+      colors={[iconColor]}
+      progressBackgroundColor={backgroundColor}
+    />
+  );
+
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <ScrollView
@@ -259,6 +237,7 @@ const ProfileScreen = () => {
         nestedScrollEnabled={true}
         bounces={true}
         alwaysBounceVertical={false}
+        refreshControl={refreshControl}
       >
         {/* Profile Card - Always in normal flow */}
         <ProfileCard
@@ -293,74 +272,6 @@ const ProfileScreen = () => {
               />
             ))}
           </ScrollView>
-        </View>
-
-        {/* Display the toggle for the service history */}
-        <View style={styles.dropdownContainer}>
-            <Pressable
-              style={[styles.downdownbutton, { borderColor: borderColor }]}
-              onPress={handleServiceHistoryToggle}
-            >
-              <StyledText children="Service History" variant="labelLarge" />
-              <Ionicons
-                name={isServiceHistoryVisible ? "chevron-up" : "chevron-down"}
-                size={15}
-                color={iconColor}
-              />
-            </Pressable>
-
-          <Animated.View
-            style={[
-              styles.serviceHistoryContainer,
-              {
-                maxHeight: slideAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 2000], // Increased height to accommodate more content
-                }),
-                opacity: opacityAnim,
-                transform: [
-                  {
-                    scale: scaleAnim,
-                  },
-                ],
-                overflow: "hidden", // Ensure content doesn't overflow during animation
-              },
-            ]}
-          >
-            {isLoadingServiceHistory ? (
-              <StyledText
-                children="Loading service history..."
-                variant="bodyMedium"
-              />
-            ) : errorServiceHistory ? (
-              <View style={{ padding: 10 }}>
-                <StyledText
-                  children={`Error loading service history: ${JSON.stringify(
-                    errorServiceHistory
-                  )}`}
-                  variant="bodyMedium"
-                />
-                <StyledButton
-                  title="Retry"
-                  onPress={() => {
-                    if (typeof refetchServiceHistory === "function") {
-                      refetchServiceHistory();
-                    }
-                  }}
-                  variant="small"
-                />
-              </View>
-            ) : serviceHistory && serviceHistory.length > 0 ? (
-              serviceHistory.map((history, index) => (
-                <ServiceHistoryComponent key={index} {...history} />
-              ))
-            ) : (
-              <StyledText
-                children="No service history found"
-                variant="bodyMedium"
-              />
-            )}
-          </Animated.View>
         </View>
       </ScrollView>
 
@@ -435,25 +346,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 50,
-    minHeight: "100%", 
+    minHeight: "100%",
   },
 
   settingsButtonText: {
     fontSize: 16,
     fontWeight: "bold",
-  },
-  dropdownContainer: {
-    padding: 5,
-    paddingHorizontal: 10,
-  },
-  downdownbutton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 5,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderRadius: 5,
   },
   addressHeader: {
     flexDirection: "row",
@@ -462,24 +360,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10,
   },
-  serviceHistoryHeaderContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  serviceHistoryContainer: {
-    paddingTop: 5,
-    paddingBottom: 10,
-    marginTop: 5,
-    flex: 1,
-    minHeight: 0,
-  },
   settingsContainer: {
     padding: 10,
     paddingHorizontal: 10,
-    backgroundColor: "transparent", 
+    backgroundColor: "transparent",
   },
   animatedSettingsContainer: {
     position: "absolute",
@@ -488,6 +372,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1000,
     elevation: 1000, // For Android
-    backgroundColor: "transparent", 
+    backgroundColor: "transparent",
   },
 });
