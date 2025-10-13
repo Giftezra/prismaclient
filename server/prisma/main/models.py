@@ -61,11 +61,7 @@ class User(AbstractUser):
         return f"{self.name} - {self.email}"
 
     def create_referral_code(self):
-<<<<<<< HEAD
         return ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-=======
-        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
->>>>>>> develop
 
     def save(self, *args, **kwargs):
         self.username = self.email
@@ -73,11 +69,6 @@ class User(AbstractUser):
         
         # Generate referral code for new users
         if is_new_user and not self.referral_code:
-<<<<<<< HEAD
-            import random
-            import string
-=======
->>>>>>> develop
             self.referral_code = self.create_referral_code()
         
         super().save(*args, **kwargs)

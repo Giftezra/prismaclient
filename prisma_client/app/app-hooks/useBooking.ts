@@ -1701,11 +1701,7 @@ const useBooking = () => {
       /* if payment is successful, create the booking */
       const booking: ReturnBookingProps = await createBooking(bookingReference);
 
-<<<<<<< HEAD
-      if (booking.detailer && booking.job) {
-=======
       if (booking.success) {
->>>>>>> develop
         console.log("Booking data from detailer app stack: ", booking);
         const response = await bookAppointment({
           date: selectedDate?.toISOString().split("T")[0] || "",
@@ -1743,11 +1739,7 @@ const useBooking = () => {
           setIsConfirmationModalVisible(true);
         }
       }
-<<<<<<< HEAD
-    } catch (error:any) {
-=======
     } catch (error: any) {
->>>>>>> develop
       let message = "";
       if (error?.data?.error) {
         message = error.data.error;
