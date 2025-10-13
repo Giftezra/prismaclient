@@ -15,6 +15,10 @@ export interface SignUpScreenProps {
   phone: string;
   password: string;
   referred_code?: string;
+<<<<<<< HEAD
+=======
+  isFleetOwner?: boolean;
+>>>>>>> develop
 }
 
 export interface LoginScreenProps {

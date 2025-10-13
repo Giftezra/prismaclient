@@ -402,3 +402,54 @@ def send_promotion_expiration():
         
     except Exception as e:
         return f"Failed to send promotion expiration notifications: {str(e)}"
+
+
+@shared_task
+def check_loyalty_decay():
+    """Reset loyalty for users inactive for 60+ days"""
+    from django.utils import timezone
+    from datetime import timedelta
+    from main.models import LoyaltyProgram, Notification
+    
+    sixty_days_ago = timezone.now().date() - timedelta(days=60)
+    
+    try:
+        # Find users with last booking > 60 days ago
+        inactive_loyalties = LoyaltyProgram.objects.filter(
+            last_booking_date__lt=sixty_days_ago,
+            completed_bookings__gt=0
+        ).select_related('user')
+        
+        reset_count = 0
+        for loyalty in inactive_loyalties:
+            user = loyalty.user
+            old_tier = loyalty.current_tier
+            
+            # Reset loyalty
+            loyalty.completed_bookings = 0
+            loyalty.current_tier = 'bronze'
+            loyalty.save()
+            reset_count += 1
+            
+            # Send notification to user about loyalty reset
+            if user.allow_push_notifications and user.notification_token:
+                send_push_notification.delay(
+                    user.id,
+                    "Loyalty Tier Reset",
+                    f"Your loyalty tier has been reset to Bronze due to 60 days of inactivity. Book a service to start earning points again!",
+                    "loyalty_reset"
+                )
+            
+            # Create in-app notification
+            Notification.objects.create(
+                user=user,
+                title="Loyalty Tier Reset",
+                message=f"Your loyalty tier has been reset from {old_tier.title()} to Bronze due to 60 days of inactivity. Book a service to start earning points again!",
+                type='info',
+                status='info'
+            )
+        
+        return f"Reset {reset_count} inactive loyalty accounts"
+        
+    except Exception as e:
+        return f"Failed to check loyalty decay: {str(e)}"

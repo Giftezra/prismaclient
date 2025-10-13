@@ -41,7 +41,7 @@ export interface BookedAppointmentProps {
   vehicle: MyVehiclesProps;
   valet_type: ValetTypeProps;
   service_type: ServiceTypeProps;
-  detailer: DetailerProfileProps;
+  detailer?: DetailerProfileProps; 
   address: MyAddressProps;
   status?: string;
   total_amount: number;
@@ -49,6 +49,7 @@ export interface BookedAppointmentProps {
   start_time?: string;
   duration?: number;
   special_instructions?: string;
+  applied_free_quick_sparkle?: boolean;
 }
 export default interface BookingState {
   selected_service_type: ServiceTypeProps | null;

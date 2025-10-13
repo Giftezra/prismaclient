@@ -3,6 +3,7 @@ import axiosBaseQuery from "@/app/store/baseQuery";
 import {
   MyAddressProps,
   MyServiceHistoryProps,
+  UserProfileProps,
 } from "@/app/interfaces/ProfileInterfaces";
 
 const profileApi = createApi({
@@ -114,6 +115,20 @@ const profileApi = createApi({
         data: { update },
       }),
     }),
+
+
+    /**
+     * Get the user's profile.
+     * on the server side, we will simply return the user's profile.
+     */
+    getUserProfile: builder.query<UserProfileProps, void>({
+      query: () => ({
+        url: "/api/v1/profile/get_profile/",
+        method: "GET",
+      }),
+      transformResponse: (response: { profile: UserProfileProps }) =>
+        response.profile,
+    }),
     
   }),
 });
@@ -127,5 +142,6 @@ export const {
   useUpdatePushNotificationTokenMutation,
   useUpdateEmailNotificationTokenMutation,
   useUpdateMarketingEmailTokenMutation,
+  useGetUserProfileQuery,
 } = profileApi;
 export default profileApi;

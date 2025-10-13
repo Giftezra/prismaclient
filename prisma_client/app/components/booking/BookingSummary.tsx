@@ -539,12 +539,20 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 },
               ]}
             >
-              <StyledText
-                variant="titleMedium"
-                style={[styles.totalLabel, { color: textColor }]}
-              >
-                Total Amount:
-              </StyledText>
+              <View style={styles.totalLeft}>
+                <StyledText
+                  variant="titleMedium"
+                  style={[styles.totalLabel, { color: textColor }]}
+                >
+                  Total Amount:
+                </StyledText>
+                <StyledText
+                  variant="bodySmall"
+                  style={[styles.vatText, { color: textColor, opacity: 0.7 }]}
+                >
+                  VAT inc
+                </StyledText>
+              </View>
               <StyledText
                 variant="titleLarge"
                 style={[styles.totalValue, { color: buttonColor }]}
@@ -646,11 +654,18 @@ const styles = StyleSheet.create({
     borderTopColor: "#E5E5E5",
     marginTop: 8,
   },
+  totalLeft: {
+    flex: 1,
+  },
   totalLabel: {
     fontWeight: "600",
   },
   totalValue: {
     fontWeight: "bold",
+  },
+  vatText: {
+    marginTop: 2,
+    fontSize: 12,
   },
   loyaltyRow: {
     flexDirection: "row",

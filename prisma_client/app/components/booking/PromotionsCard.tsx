@@ -10,16 +10,11 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 const PromotionsCard = (promotion: PromotionsProps) => {
   const borderColor = useThemeColor({}, "borders");
   const cardColor = useThemeColor({}, "cards");
-
+  const backgroundColor = useThemeColor({}, "background");
   if (!promotion) {
     return (
       <View style={styles.emptyContainer}>
-        <LinearGradient
-          colors={["#f8f9fa", "#e9ecef"]}
-          style={styles.emptyCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <View style={styles.emptyCard}>
           <Ionicons name="gift-outline" size={48} color="#6c757d" />
           <StyledText variant="labelLarge" style={styles.emptyTitle}>
             No Promotion Available
@@ -27,56 +22,41 @@ const PromotionsCard = (promotion: PromotionsProps) => {
           <StyledText variant="bodyMedium" style={styles.emptyText}>
             Check back later for exciting offers and discounts!
           </StyledText>
-        </LinearGradient>
+        </View>
       </View>
     );
   }
 
   return (
     <Pressable style={styles.container}>
-      <View style={styles.promotionCard}>
-        <LinearGradient
-          colors={
-            promotion.is_active
-              ? [cardColor, "#ee5a52"]
-              : ["#6c757d", cardColor]
-          }
-          style={styles.cardGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 4, y: 3 }}
-        >
-          {/* Top Row: Percentage, Title, Active Status */}
-          <View style={styles.topRow}>
-            <View style={[styles.discountBadge, { borderColor }]}>
-              <StyledText variant="labelMedium" style={styles.discountText}>
-                {promotion.discount_percentage}% OFF
+      <View style={[styles.promotionCard, { backgroundColor:'black' }]}>
+        <View style={styles.topRow}>
+          <View style={styles.discountBadge}>
+            <StyledText variant="labelMedium" style={styles.discountText}>
+              {promotion.discount_percentage}% OFF
+            </StyledText>
+          </View>
+
+          <StyledText variant="titleMedium" style={styles.promotionTitle}>
+            {promotion.title}
+          </StyledText>
+
+          {promotion.is_active && (
+            <View style={styles.activeBadge}>
+              <Ionicons name="checkmark-circle" size={14} color="white" />
+              <StyledText variant="bodySmall" style={styles.activeText}>
+                Active
               </StyledText>
             </View>
+          )}
+        </View>
 
-            <StyledText variant="titleMedium" style={styles.promotionTitle}>
-              {promotion.title}
-            </StyledText>
-
-            {promotion.is_active && (
-              <View style={styles.activeBadge}>
-                <Ionicons name="checkmark-circle" size={14} color="white" />
-                <StyledText variant="bodySmall" style={styles.activeText}>
-                  Active
-                </StyledText>
-              </View>
-            )}
-          </View>
-
-          {/* Bottom Row: Expiration Date */}
-          <View style={styles.bottomRow}>
-            <StyledText variant="bodySmall" style={styles.validityText}>
-              Expires: {formatDate(promotion.valid_until)}
-            </StyledText>
-            <StyledText variant="bodySmall" style={styles.validityText}>
-              Click to apply
-            </StyledText>
-          </View>
-        </LinearGradient>
+        {/* Bottom Row: Expiration Date */}
+        <View style={styles.bottomRow}>
+          <StyledText variant="bodySmall" style={styles.validityText}>
+            Expires: {formatDate(promotion.valid_until)}
+          </StyledText>
+        </View>
       </View>
     </Pressable>
   );
@@ -108,6 +88,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 5,
   },
   discountBadge: {
     paddingHorizontal: 8,

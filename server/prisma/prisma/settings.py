@@ -16,9 +16,15 @@ SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
 
 
+<<<<<<< HEAD
 ALLOWED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com']    
 CSRF_TRUSTED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com']
 CORS_ALLOWED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com']  
+=======
+ALLOWED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://9581c9497927.ngrok-free.app" ]    
+CSRF_TRUSTED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://9581c9497927.ngrok-free.app" ]
+CORS_ALLOWED_ORIGINS = ['https://prismavalet.com', 'https://www.prismavalet.com', "https://9581c9497927.ngrok-free.app"]  
+>>>>>>> develop
 CORS_ALLOW_CREDENTIALS = True
 ALLOWED_HOSTS=[os.getenv('ALLOWED_HOSTS'), 'localhost', '127.0.0.1']
 
@@ -189,6 +195,10 @@ CELERY_BEAT_SCHEDULE = {
     'send-promotion-expiration': {
         'task': 'main.tasks.send_promotion_expiration',
         'schedule': crontab(hour=6, minute=0) # Run at 6:00 AM every day
+    },
+    'check-loyalty-decay': {
+        'task': 'main.tasks.check_loyalty_decay',
+        'schedule': crontab(hour=3, minute=0)  # Run at 3:00 AM every day
     },
 }
 

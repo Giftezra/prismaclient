@@ -282,23 +282,11 @@ const UpcomingBookingScreen = () => {
       showsVerticalScrollIndicator={false}
     >
       {/* Status Card */}
-      <LinearGradientComponent
-        style={[styles.statusCard]}
-        color1={backgroundColor}
-        color2={textColor}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 5 }}
-      >
+      <View style={[styles.statusCard]}>
         <View style={styles.statusHeader}>
-          <LinearGradientComponent
-            style={[styles.statusBadge, { borderColor: borderColor }]}
-            color1={primaryColor}
-            color2={textColor}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 2, y: 1 }}
-          >
-            <StyledText variant="labelMedium">{appointment?.status}</StyledText>
-          </LinearGradientComponent>
+          <View style={[styles.statusBadge, { borderColor: borderColor }]}>
+            <StyledText variant="labelMedium">{appointment?.status?.replace("_", " ").toUpperCase()}</StyledText>
+          </View>
 
           <StyledText
             variant="titleMedium"
@@ -363,16 +351,10 @@ const UpcomingBookingScreen = () => {
             </View>
           </View>
         </View>
-      </LinearGradientComponent>
+      </View>
 
       {/* Vehicle Information */}
-      <LinearGradientComponent
-        style={[styles.section]}
-        color1={backgroundColor}
-        color2={textColor}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 5 }}
-      >
+      <View style={[styles.section]}>
         <View style={styles.sectionHeader}>
           <Ionicons name="car" size={24} color={iconColor} />
           <StyledText
@@ -412,16 +394,10 @@ const UpcomingBookingScreen = () => {
             </StyledText>
           </View>
         </View>
-      </LinearGradientComponent>
+      </View>
 
       {/* Service Details */}
-      <LinearGradientComponent
-        style={[styles.section]}
-        color1={backgroundColor}
-        color2={textColor}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 5 }}
-      >
+      <View style={[styles.section]}>
         <View style={styles.sectionHeader}>
           <Ionicons name="construct" size={24} color={iconColor} />
           <StyledText
@@ -528,16 +504,10 @@ const UpcomingBookingScreen = () => {
             ))}
           </View>
         )}
-      </LinearGradientComponent>
+      </View>
 
       {/* Detailer Information */}
-      <LinearGradientComponent
-        style={[styles.section]}
-        color1={backgroundColor}
-        color2={textColor}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 5 }}
-      >
+      <View style={[styles.section]}>
         <View style={styles.sectionHeader}>
           <Ionicons name="person" size={24} color={iconColor} />
           <StyledText
@@ -582,16 +552,10 @@ const UpcomingBookingScreen = () => {
             </TouchableOpacity>
           )}
         </View>
-      </LinearGradientComponent>
+      </View>
 
       {/* Location */}
-      <LinearGradientComponent
-        style={[styles.section]}
-        color1={backgroundColor}
-        color2={textColor}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 5 }}
-      >
+      <View style={[styles.section]}>
         <View style={styles.sectionHeader}>
           <Ionicons name="location" size={24} color={iconColor} />
           <StyledText
@@ -625,7 +589,7 @@ const UpcomingBookingScreen = () => {
             </StyledText>
           </View>
         </View>
-      </LinearGradientComponent>
+      </View>
 
       {/* Special Instructions */}
       {appointment.special_instructions && (
@@ -800,11 +764,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     padding: 10,
     marginBottom: 10,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   statusHeader: {
     flexDirection: "row",
@@ -819,10 +778,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 5,
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
   },
   statusText: {
     color: "white",
@@ -853,10 +808,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     padding: 10,
     marginBottom: 5,
-    elevation: 2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   sectionHeader: {
     flexDirection: "row",

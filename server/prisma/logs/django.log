@@ -52,4 +52,1788 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
     raise DisallowedHost(msg)
 django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'client.localhost'. You may need to add 'client.localhost' to ALLOWED_HOSTS.
+<<<<<<< HEAD
 INFO 2025-10-13 02:47:38,379 autoreload 1241 134839531395968 Watching for file changes with StatReloader
+=======
+INFO 2025-10-12 21:07:56,412 cli 1 139618626321280 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:07:56,417 server 1 139618626321280 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 21:07:56,418 server 1 139618626321280 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:07:56,420 server 1 139618626321280 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 21:08:57,449 server 1 139618626321280 Killed 0 pending application instances
+INFO 2025-10-12 21:10:48,454 cli 1 133927040256896 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:10:48,456 server 1 133927040256896 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 21:10:48,456 server 1 133927040256896 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:10:48,459 server 1 133927040256896 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 21:12:20,975 server 1 133927040256896 Killed 0 pending application instances
+INFO 2025-10-12 21:27:03,912 cli 1 133864391949184 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:27:03,914 server 1 133864391949184 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 21:27:03,915 server 1 133864391949184 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:27:03,917 server 1 133864391949184 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 21:37:33,401 autoreload 7 124653605112704 Watching for file changes with StatReloader
+INFO 2025-10-12 21:41:38,255 autoreload 7 124653605112704 /app/prisma/settings.py changed, reloading.
+INFO 2025-10-12 21:41:40,072 autoreload 58 138320635313024 Watching for file changes with StatReloader
+INFO 2025-10-12 21:41:41,907 server 58 138320530110144 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 21:41:41,908 server 58 138320530110144 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:41:41,909 server 58 138320530110144 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 21:43:46,966 autoreload 7 128033086360448 Watching for file changes with StatReloader
+INFO 2025-10-12 21:43:48,522 server 7 128032979457728 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 21:43:48,522 server 7 128032979457728 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:43:48,523 server 7 128032979457728 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 21:45:38,830 autoreload 7 137130512178048 Watching for file changes with StatReloader
+INFO 2025-10-12 21:45:40,492 server 7 137130406835904 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 21:45:40,493 server 7 137130406835904 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:45:40,494 server 7 137130406835904 Listening on TCP address 0.0.0.0:8000
+WARNING 2025-10-12 21:46:11,318 log 7 137130293585600 Not Found: /
+WARNING 2025-10-12 21:46:11,320 runserver 7 137130406835904 HTTP GET / 404 [0.03, 172.18.0.11:37018]
+INFO 2025-10-12 21:46:23,561 runserver 7 137130406835904 HTTP GET /admin 301 [0.01, 172.18.0.11:59266]
+INFO 2025-10-12 21:46:23,681 runserver 7 137130406835904 HTTP GET /admin/ 302 [0.02, 172.18.0.11:59278]
+INFO 2025-10-12 21:46:23,808 runserver 7 137130406835904 HTTP GET /admin/login/?next=/admin/ 200 [0.04, 172.18.0.11:59286]
+WARNING 2025-10-12 21:46:35,390 log 7 137130301978304 Forbidden (Origin checking failed - https://9581c9497927.ngrok-free.app does not match any trusted origins.): /admin/login/
+WARNING 2025-10-12 21:46:35,392 runserver 7 137130406835904 HTTP POST /admin/login/?next=/admin/ 403 [0.01, 172.18.0.11:36380]
+INFO 2025-10-12 21:47:56,166 autoreload 7 137130512178048 /app/prisma/settings.py changed, reloading.
+INFO 2025-10-12 21:47:57,656 autoreload 39 124637258865536 Watching for file changes with StatReloader
+INFO 2025-10-12 21:47:59,135 server 39 124637152450240 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 21:47:59,136 server 39 124637152450240 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:47:59,137 server 39 124637152450240 Listening on TCP address 0.0.0.0:8000
+WARNING 2025-10-12 21:48:03,818 log 39 124637048469184 Forbidden (Origin checking failed - https://9581c9497927.ngrok-free.app does not match any trusted origins.): /admin/login/
+WARNING 2025-10-12 21:48:03,822 runserver 39 124637152450240 HTTP POST /admin/login/?next=/admin/ 403 [0.01, 172.18.0.11:57694]
+WARNING 2025-10-12 21:48:08,358 log 39 124637048469184 Forbidden (Origin checking failed - https://9581c9497927.ngrok-free.app does not match any trusted origins.): /admin/login/
+WARNING 2025-10-12 21:48:08,360 runserver 39 124637152450240 HTTP POST /admin/login/?next=/admin/ 403 [0.01, 172.18.0.11:57708]
+INFO 2025-10-12 21:48:22,967 autoreload 39 124637258865536 /app/prisma/settings.py changed, reloading.
+INFO 2025-10-12 21:51:05,692 autoreload 7 133312454310784 Watching for file changes with StatReloader
+INFO 2025-10-12 21:51:29,976 autoreload 7 133312454310784 /app/prisma/settings.py changed, reloading.
+INFO 2025-10-12 21:51:32,385 autoreload 15 137236611799936 Watching for file changes with StatReloader
+INFO 2025-10-12 21:51:34,191 server 15 137236505073344 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 21:51:34,191 server 15 137236505073344 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 21:51:34,192 server 15 137236505073344 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 21:51:40,668 runserver 15 137236505073344 HTTP POST /admin/login/?next=/admin/ 302 [1.10, 172.18.0.8:41100]
+INFO 2025-10-12 21:51:41,646 runserver 15 137236505073344 HTTP GET /admin/ 200 [0.90, 172.18.0.8:41104]
+WARNING 2025-10-12 21:57:50,330 log 15 137236389553856 Unauthorized: /api/v1/dashboard/get_upcoming_appointments/
+WARNING 2025-10-12 21:57:50,331 runserver 15 137236505073344 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 401 [0.03, 172.18.0.8:54258]
+WARNING 2025-10-12 21:57:50,364 log 15 137236389553856 Unauthorized: /api/v1/dashboard/get_recent_services/
+WARNING 2025-10-12 21:57:50,365 log 15 137236389553856 Unauthorized: /api/v1/notifications/get_notifications/
+WARNING 2025-10-12 21:57:50,366 log 15 137236016264896 Unauthorized: /api/v1/garage/get_vehicles/
+WARNING 2025-10-12 21:57:50,367 runserver 15 137236505073344 HTTP GET /api/v1/dashboard/get_recent_services/ 401 [0.02, 172.18.0.8:54290]
+WARNING 2025-10-12 21:57:50,368 runserver 15 137236505073344 HTTP GET /api/v1/notifications/get_notifications/ 401 [0.03, 172.18.0.8:54272]
+WARNING 2025-10-12 21:57:50,371 log 15 137236389553856 Unauthorized: /api/v1/dashboard/get_user_stats/
+WARNING 2025-10-12 21:57:50,371 runserver 15 137236505073344 HTTP GET /api/v1/garage/get_vehicles/ 401 [0.03, 172.18.0.8:54288]
+WARNING 2025-10-12 21:57:50,374 runserver 15 137236505073344 HTTP GET /api/v1/dashboard/get_user_stats/ 401 [0.03, 172.18.0.8:54296]
+WARNING 2025-10-12 21:57:50,482 log 15 137236016264896 Unauthorized: /api/v1/notifications/save_notification_token/
+WARNING 2025-10-12 21:57:50,483 runserver 15 137236505073344 HTTP PATCH /api/v1/notifications/save_notification_token/ 401 [0.01, 172.18.0.8:54300]
+INFO 2025-10-12 21:57:51,736 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.19, 172.18.0.8:54332]
+INFO 2025-10-12 21:57:51,842 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.30, 172.18.0.8:54324]
+INFO 2025-10-12 21:57:51,848 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.23, 172.18.0.8:54348]
+INFO 2025-10-12 21:57:51,860 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.32, 172.18.0.8:54310]
+INFO 2025-10-12 21:57:51,869 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.33, 172.18.0.8:54306]
+WARNING 2025-10-12 21:57:52,406 log 15 137236389553856 Unauthorized: /api/v1/authentication/refresh/
+WARNING 2025-10-12 21:57:52,407 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 401 [0.44, 172.18.0.8:54364]
+INFO 2025-10-12 21:57:52,573 runserver 15 137236505073344 HTTP GET /api/v1/notifications/get_notifications/ 200 [0.50, 172.18.0.8:54376]
+INFO 2025-10-12 21:57:52,582 runserver 15 137236505073344 HTTP GET /api/v1/dashboard/get_recent_services/ 200 [0.55, 172.18.0.8:54374]
+INFO 2025-10-12 21:57:52,625 runserver 15 137236505073344 HTTP GET /api/v1/garage/get_vehicles/ 200 [0.51, 172.18.0.8:54392]
+INFO 2025-10-12 21:57:52,680 runserver 15 137236505073344 HTTP GET /api/v1/dashboard/get_user_stats/ 200 [0.57, 172.18.0.8:54396]
+INFO 2025-10-12 21:57:53,130 runserver 15 137236505073344 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 200 [0.56, 172.18.0.8:54406]
+WARNING 2025-10-12 22:04:08,140 log 15 137236016264896 Unauthorized: /api/v1/booking/get_service_type/
+WARNING 2025-10-12 22:04:08,142 runserver 15 137236505073344 HTTP GET /api/v1/booking/get_service_type/ 401 [0.02, 172.18.0.8:33372]
+WARNING 2025-10-12 22:04:08,143 log 15 137236389553856 Unauthorized: /api/v1/booking/get_add_ons/
+WARNING 2025-10-12 22:04:08,144 log 15 137236389553856 Unauthorized: /api/v1/booking/get_valet_type/
+WARNING 2025-10-12 22:04:08,144 log 15 137236016264896 Unauthorized: /api/v1/profile/get_addresses/
+WARNING 2025-10-12 22:04:08,145 runserver 15 137236505073344 HTTP GET /api/v1/booking/get_add_ons/ 401 [0.02, 172.18.0.8:33410]
+WARNING 2025-10-12 22:04:08,146 runserver 15 137236505073344 HTTP GET /api/v1/booking/get_valet_type/ 401 [0.02, 172.18.0.8:33370]
+WARNING 2025-10-12 22:04:08,147 runserver 15 137236505073344 HTTP GET /api/v1/profile/get_addresses/ 401 [0.02, 172.18.0.8:33400]
+WARNING 2025-10-12 22:04:08,149 log 15 137235999479488 Unauthorized: /api/v1/booking/get_promotions/
+WARNING 2025-10-12 22:04:08,150 runserver 15 137236505073344 HTTP GET /api/v1/booking/get_promotions/ 401 [0.02, 172.18.0.8:33424]
+INFO 2025-10-12 22:04:09,404 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.03, 172.18.0.8:33458]
+INFO 2025-10-12 22:04:09,541 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.17, 172.18.0.8:33450]
+INFO 2025-10-12 22:04:09,546 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.25, 172.18.0.8:33426]
+INFO 2025-10-12 22:04:09,548 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.18, 172.18.0.8:33456]
+INFO 2025-10-12 22:04:09,553 runserver 15 137236505073344 HTTP POST /api/v1/authentication/refresh/ 200 [1.21, 172.18.0.8:33436]
+INFO 2025-10-12 22:04:10,127 runserver 15 137236505073344 HTTP GET /api/v1/booking/get_promotions/ 200 [0.53, 172.18.0.8:33462]
+INFO 2025-10-12 22:04:10,234 runserver 15 137236505073344 HTTP GET /api/v1/booking/get_valet_type/ 200 [0.51, 172.18.0.8:33474]
+INFO 2025-10-12 22:04:10,307 runserver 15 137236505073344 HTTP GET /api/v1/booking/get_service_type/ 200 [0.46, 172.18.0.8:33486]
+INFO 2025-10-12 22:04:10,358 runserver 15 137236505073344 HTTP GET /api/v1/booking/get_add_ons/ 200 [0.49, 172.18.0.8:33490]
+INFO 2025-10-12 22:04:10,369 runserver 15 137236505073344 HTTP GET /api/v1/profile/get_addresses/ 200 [0.52, 172.18.0.8:33476]
+INFO 2025-10-12 22:04:15,705 runserver 15 137236505073344 HTTP GET /api/v1/profile/get_profile/ 200 [0.55, 172.18.0.8:33494]
+INFO 2025-10-12 22:04:20,728 runserver 15 137236505073344 HTTP GET /api/v1/profile/get_service_history/ 200 [5.55, 172.18.0.8:33506]
+INFO 2025-10-12 22:09:02,339 autoreload 15 137236611799936 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:09:06,704 autoreload 261 124062630382464 Watching for file changes with StatReloader
+INFO 2025-10-12 22:09:08,998 server 261 124062523365056 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:09:08,999 server 261 124062523365056 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:09:09,000 server 261 124062523365056 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:09:13,591 autoreload 261 124062630382464 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:09:16,662 autoreload 269 127593412410240 Watching for file changes with StatReloader
+INFO 2025-10-12 22:09:18,671 server 269 127593306298048 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:09:18,672 server 269 127593306298048 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:09:18,673 server 269 127593306298048 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:09:25,615 autoreload 269 127593412410240 /app/main/signals.py changed, reloading.
+INFO 2025-10-12 22:09:27,659 autoreload 271 137258554325888 Watching for file changes with StatReloader
+INFO 2025-10-12 22:09:29,353 server 271 137258447574720 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:09:29,353 server 271 137258447574720 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:09:29,354 server 271 137258447574720 Listening on TCP address 0.0.0.0:8000
+WARNING 2025-10-12 22:09:40,047 log 271 137258318415552 Unauthorized: /api/v1/profile/get_service_history/
+WARNING 2025-10-12 22:09:40,047 log 271 137258310022848 Unauthorized: /api/v1/profile/get_addresses/
+WARNING 2025-10-12 22:09:40,048 log 271 137257960863424 Unauthorized: /api/v1/profile/get_profile/
+WARNING 2025-10-12 22:09:40,049 runserver 271 137258447574720 HTTP GET /api/v1/profile/get_service_history/ 401 [0.05, 172.18.0.8:36892]
+WARNING 2025-10-12 22:09:40,052 runserver 271 137258447574720 HTTP GET /api/v1/profile/get_addresses/ 401 [0.07, 172.18.0.8:36888]
+WARNING 2025-10-12 22:09:40,054 runserver 271 137258447574720 HTTP GET /api/v1/profile/get_profile/ 401 [0.06, 172.18.0.8:36902]
+WARNING 2025-10-12 22:09:40,561 log 271 137258318415552 Unauthorized: /api/v1/booking/get_add_ons/
+WARNING 2025-10-12 22:09:40,562 runserver 271 137258447574720 HTTP GET /api/v1/booking/get_add_ons/ 401 [0.01, 172.18.0.8:36924]
+WARNING 2025-10-12 22:09:40,580 log 271 137257960863424 Unauthorized: /api/v1/booking/get_promotions/
+WARNING 2025-10-12 22:09:40,581 runserver 271 137258447574720 HTTP GET /api/v1/booking/get_promotions/ 401 [0.01, 172.18.0.8:36932]
+WARNING 2025-10-12 22:09:40,682 log 271 137258318415552 Unauthorized: /api/v1/booking/get_service_type/
+WARNING 2025-10-12 22:09:40,684 runserver 271 137258447574720 HTTP GET /api/v1/booking/get_service_type/ 401 [0.01, 172.18.0.8:36944]
+WARNING 2025-10-12 22:09:40,771 log 271 137257960863424 Unauthorized: /api/v1/booking/get_valet_type/
+WARNING 2025-10-12 22:09:40,773 runserver 271 137258447574720 HTTP GET /api/v1/booking/get_valet_type/ 401 [0.01, 172.18.0.8:36948]
+INFO 2025-10-12 22:09:40,797 autoreload 271 137258554325888 /app/main/views/authentication.py changed, reloading.
+ERROR 2025-10-12 22:09:41,364 server 271 137258447574720 Exception inside application: cannot schedule new futures after shutdown
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 257, in _get_response_async
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 136, in __acall__
+    response = response or await self.get_response(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 44, in inner
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 136, in __acall__
+    response = response or await self.get_response(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 44, in inner
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 136, in __acall__
+    response = response or await self.get_response(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 44, in inner
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 136, in __acall__
+    response = response or await self.get_response(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 44, in inner
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 136, in __acall__
+    response = response or await self.get_response(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 44, in inner
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 136, in __acall__
+    response = response or await self.get_response(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 44, in inner
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 136, in __acall__
+    response = response or await self.get_response(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 44, in inner
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/corsheaders/middleware.py", line 64, in __acall__
+    response = await result
+               ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 44, in inner
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/staticfiles/handlers.py", line 101, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/channels/routing.py", line 48, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/asgi.py", line 162, in __call__
+    await self.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/asgi.py", line 208, in handle
+    task.result()
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/asgi.py", line 185, in process_request
+    response = await self.run_get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/asgi.py", line 244, in run_get_response
+    response = await self.get_response_async(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 162, in get_response_async
+    response = await self._middleware_chain(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 44, in inner
+    response = await sync_to_async(
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+ERROR 2025-10-12 22:09:41,378 runserver 271 137258447574720 HTTP POST /api/v1/authentication/refresh/ 500 [1.15, 172.18.0.8:36914]
+ERROR 2025-10-12 22:09:41,379 server 271 137258447574720 Exception inside application: cannot schedule new futures after interpreter shutdown
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/staticfiles/handlers.py", line 101, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/channels/routing.py", line 48, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/asgi.py", line 162, in __call__
+    await self.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/asgi.py", line 175, in handle
+    await signals.request_started.asend(sender=self.__class__, scope=scope)
+  File "/usr/local/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 251, in asend
+    responses, async_responses = await asyncio.gather(
+                                 ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 169, in submit
+    raise RuntimeError('cannot schedule new futures after '
+RuntimeError: cannot schedule new futures after interpreter shutdown
+ERROR 2025-10-12 22:09:41,382 runserver 271 137258447574720 HTTP POST /api/v1/authentication/refresh/ 500 [0.58, 172.18.0.8:36952]
+ERROR 2025-10-12 22:09:41,383 server 271 137258447574720 Exception inside application: cannot schedule new futures after interpreter shutdown
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/staticfiles/handlers.py", line 101, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/channels/routing.py", line 48, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/asgi.py", line 162, in __call__
+    await self.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/asgi.py", line 175, in handle
+    await signals.request_started.asend(sender=self.__class__, scope=scope)
+  File "/usr/local/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 251, in asend
+    responses, async_responses = await asyncio.gather(
+                                 ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 489, in __call__
+    exec_coro = loop.run_in_executor(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 830, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 169, in submit
+    raise RuntimeError('cannot schedule new futures after '
+RuntimeError: cannot schedule new futures after interpreter shutdown
+ERROR 2025-10-12 22:09:41,385 runserver 271 137258447574720 HTTP POST /api/v1/authentication/refresh/ 500 [0.49, 172.18.0.8:36962]
+ERROR 2025-10-12 22:09:41,525 log 271 137258318415552 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+ERROR 2025-10-12 22:09:41,719 log 271 137257960863424 Internal Server Error: /api/v1/authentication/refresh/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/views.py", line 46, in post
+    serializer.is_valid(raise_exception=True)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 225, in is_valid
+    self._validated_data = self.run_validation(self.initial_data)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/serializers.py", line 447, in run_validation
+    value = self.validate(value)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework_simplejwt/serializers.py", line 116, in validate
+    user := get_user_model().objects.get(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+INFO 2025-10-12 22:09:44,685 autoreload 292 139493661784960 Watching for file changes with StatReloader
+INFO 2025-10-12 22:09:46,721 server 292 139493555476160 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:09:46,722 server 292 139493555476160 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:09:46,723 server 292 139493555476160 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:09:50,024 autoreload 292 139493661784960 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-12 22:09:52,189 autoreload 294 125942133635968 Watching for file changes with StatReloader
+INFO 2025-10-12 22:09:53,749 server 294 125942026639040 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:09:53,750 server 294 125942026639040 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:09:53,751 server 294 125942026639040 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:10:02,707 autoreload 294 125942133635968 /app/main/serializer.py changed, reloading.
+INFO 2025-10-12 22:10:05,012 autoreload 296 125047057914752 Watching for file changes with StatReloader
+INFO 2025-10-12 22:10:06,924 server 296 125046952556224 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:10:06,925 server 296 125046952556224 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:10:06,926 server 296 125046952556224 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:11:33,453 autoreload 296 125047057914752 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:11:36,825 autoreload 316 128827903511424 Watching for file changes with StatReloader
+INFO 2025-10-12 22:11:39,149 server 316 128827796920000 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:11:39,149 server 316 128827796920000 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:11:39,150 server 316 128827796920000 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:11:52,432 autoreload 316 128827903511424 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-12 22:11:54,260 autoreload 324 137014652631936 Watching for file changes with StatReloader
+INFO 2025-10-12 22:11:56,662 autoreload 324 137014652631936 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:11:58,160 autoreload 326 124183461944192 Watching for file changes with StatReloader
+INFO 2025-10-12 22:11:59,441 autoreload 326 124183461944192 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:12:00,703 autoreload 328 134952323947392 Watching for file changes with StatReloader
+INFO 2025-10-12 22:15:55,952 autoreload 328 134952323947392 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:15:57,303 autoreload 378 130294687415168 Watching for file changes with StatReloader
+INFO 2025-10-12 22:15:58,487 server 378 130294580680384 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:15:58,488 server 378 130294580680384 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:15:58,489 server 378 130294580680384 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:16:02,814 autoreload 378 130294687415168 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:16:04,453 autoreload 380 137757758172032 Watching for file changes with StatReloader
+INFO 2025-10-12 22:16:06,136 server 380 137757651539648 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:16:06,137 server 380 137757651539648 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:16:06,138 server 380 137757651539648 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:16:09,437 autoreload 380 137757758172032 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:16:10,950 autoreload 388 124875434580864 Watching for file changes with StatReloader
+INFO 2025-10-12 22:16:12,310 server 388 124875328100032 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:16:12,310 server 388 124875328100032 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:16:12,311 server 388 124875328100032 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:16:14,383 autoreload 388 124875434580864 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:16:16,397 autoreload 390 135050926132096 Watching for file changes with StatReloader
+INFO 2025-10-12 22:16:18,100 server 390 135050819704512 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:16:18,101 server 390 135050819704512 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:16:18,102 server 390 135050819704512 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:37:28,081 autoreload 390 135050926132096 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:37:30,640 autoreload 646 127024148417408 Watching for file changes with StatReloader
+INFO 2025-10-12 22:37:32,874 server 646 127024041727680 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:37:32,875 server 646 127024041727680 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:37:32,876 server 646 127024041727680 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:38:27,302 autoreload 646 127024148417408 /app/main/models.py changed, reloading.
+INFO 2025-10-12 22:38:30,582 autoreload 660 130988315437952 Watching for file changes with StatReloader
+INFO 2025-10-12 22:38:32,888 server 660 130988208461504 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:38:32,889 server 660 130988208461504 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:38:32,890 server 660 130988208461504 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:38:33,903 autoreload 660 130988315437952 /app/main/signals.py changed, reloading.
+INFO 2025-10-12 22:38:35,855 autoreload 662 134981813910400 Watching for file changes with StatReloader
+INFO 2025-10-12 22:38:37,319 server 662 134981707011776 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:38:37,320 server 662 134981707011776 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:38:37,321 server 662 134981707011776 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:38:59,744 autoreload 662 134981813910400 /app/main/tasks.py changed, reloading.
+INFO 2025-10-12 22:39:01,885 autoreload 670 124497881000832 Watching for file changes with StatReloader
+INFO 2025-10-12 22:39:03,495 server 670 124497775556288 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:39:03,495 server 670 124497775556288 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:39:03,496 server 670 124497775556288 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:39:08,007 autoreload 670 124497881000832 /app/prisma/settings.py changed, reloading.
+INFO 2025-10-12 22:39:09,997 autoreload 672 138264161921920 Watching for file changes with StatReloader
+INFO 2025-10-12 22:39:11,578 server 672 138264055027392 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:39:11,579 server 672 138264055027392 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:39:11,580 server 672 138264055027392 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 22:39:32,961 autoreload 672 138264161921920 /app/main/tasks.py changed, reloading.
+INFO 2025-10-12 22:39:35,104 autoreload 680 128141736049536 Watching for file changes with StatReloader
+INFO 2025-10-12 22:39:36,684 server 680 128141629757120 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 22:39:36,685 server 680 128141629757120 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 22:39:36,686 server 680 128141629757120 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:20:05,712 autoreload 680 128141736049536 /app/prisma/settings.py changed, reloading.
+INFO 2025-10-12 23:20:08,597 autoreload 797 139328385575808 Watching for file changes with StatReloader
+INFO 2025-10-12 23:20:10,578 server 797 139328278927040 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:20:10,579 server 797 139328278927040 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:20:10,580 server 797 139328278927040 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:20:21,332 autoreload 797 139328385575808 /app/main/tasks.py changed, reloading.
+INFO 2025-10-12 23:20:22,877 autoreload 799 130386313276288 Watching for file changes with StatReloader
+INFO 2025-10-12 23:20:24,151 server 799 130386206299840 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:20:24,151 server 799 130386206299840 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:20:24,152 server 799 130386206299840 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:20:39,475 autoreload 799 130386313276288 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:20:41,201 autoreload 807 128032241073024 Watching for file changes with StatReloader
+INFO 2025-10-12 23:20:42,524 server 807 128032134305472 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:20:42,525 server 807 128032134305472 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:20:42,526 server 807 128032134305472 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:22:01,427 autoreload 807 128032241073024 /app/main/signals.py changed, reloading.
+INFO 2025-10-12 23:22:03,792 autoreload 827 124655238695808 Watching for file changes with StatReloader
+INFO 2025-10-12 23:22:05,686 server 827 124655133259456 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:22:05,686 server 827 124655133259456 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:22:05,687 server 827 124655133259456 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:22:33,894 autoreload 827 124655238695808 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:22:35,754 autoreload 835 128980310408064 Watching for file changes with StatReloader
+INFO 2025-10-12 23:22:37,097 server 835 128980205172416 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:22:37,097 server 835 128980205172416 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:22:37,098 server 835 128980205172416 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:22:38,017 autoreload 835 128980310408064 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:22:39,607 autoreload 837 132555168017280 Watching for file changes with StatReloader
+INFO 2025-10-12 23:22:41,210 server 837 132555060975296 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:22:41,210 server 837 132555060975296 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:22:41,211 server 837 132555060975296 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:22:43,137 autoreload 837 132555168017280 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:22:45,372 autoreload 839 128581288401792 Watching for file changes with StatReloader
+INFO 2025-10-12 23:22:47,122 server 839 128581181281984 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:22:47,123 server 839 128581181281984 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:22:47,124 server 839 128581181281984 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:22:50,246 autoreload 839 128581288401792 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:22:52,282 autoreload 841 132270105865088 Watching for file changes with StatReloader
+INFO 2025-10-12 23:22:53,903 server 841 132269999298240 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:22:53,904 server 841 132269999298240 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:22:53,905 server 841 132269999298240 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:22:57,178 autoreload 841 132270105865088 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:22:59,097 autoreload 843 123655696317312 Watching for file changes with StatReloader
+INFO 2025-10-12 23:23:01,687 server 843 123655589893824 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:23:01,688 server 843 123655589893824 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:23:01,690 server 843 123655589893824 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:23:04,573 autoreload 843 123655696317312 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:23:06,504 autoreload 851 126394391518080 Watching for file changes with StatReloader
+INFO 2025-10-12 23:23:09,258 server 851 126394284807872 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:23:09,258 server 851 126394284807872 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:23:09,260 server 851 126394284807872 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:23:15,825 autoreload 851 126394391518080 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:23:17,661 autoreload 853 139708890950528 Watching for file changes with StatReloader
+INFO 2025-10-12 23:23:20,084 server 853 139708784088768 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:23:20,085 server 853 139708784088768 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:23:20,085 server 853 139708784088768 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:23:20,263 autoreload 853 139708890950528 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:23:22,056 autoreload 855 131354535041920 Watching for file changes with StatReloader
+INFO 2025-10-12 23:23:23,571 server 855 131354428872384 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:23:23,572 server 855 131354428872384 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:23:23,574 server 855 131354428872384 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:23:41,101 autoreload 855 131354535041920 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:23:42,728 autoreload 863 128485758761856 Watching for file changes with StatReloader
+INFO 2025-10-12 23:23:43,981 server 863 128485651814080 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:23:43,981 server 863 128485651814080 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:23:43,982 server 863 128485651814080 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:23:45,073 autoreload 863 128485758761856 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:23:46,758 autoreload 865 123538517764992 Watching for file changes with StatReloader
+INFO 2025-10-12 23:23:48,260 server 865 123538412402368 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:23:48,260 server 865 123538412402368 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:23:48,261 server 865 123538412402368 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:23:51,466 autoreload 865 123538517764992 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:23:53,212 autoreload 867 130871559949184 Watching for file changes with StatReloader
+INFO 2025-10-12 23:23:54,542 server 867 130871454594752 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:23:54,542 server 867 130871454594752 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:23:54,543 server 867 130871454594752 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:24:37,416 autoreload 867 130871559949184 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:24:39,065 autoreload 881 132286801202048 Watching for file changes with StatReloader
+INFO 2025-10-12 23:24:41,593 autoreload 881 132286801202048 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:24:43,466 autoreload 883 131488568015744 Watching for file changes with StatReloader
+INFO 2025-10-12 23:24:45,673 server 883 131488461002432 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:24:45,674 server 883 131488461002432 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:24:45,675 server 883 131488461002432 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:25:06,497 autoreload 883 131488568015744 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:25:08,258 autoreload 891 124855664941952 Watching for file changes with StatReloader
+INFO 2025-10-12 23:25:11,812 autoreload 891 124855664941952 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:25:13,657 autoreload 893 131102581566336 Watching for file changes with StatReloader
+INFO 2025-10-12 23:25:18,579 autoreload 893 131102581566336 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:25:20,491 autoreload 895 126467030350720 Watching for file changes with StatReloader
+INFO 2025-10-12 23:25:21,850 server 895 126466923861696 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:25:21,851 server 895 126466923861696 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:25:21,852 server 895 126466923861696 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:25:31,528 autoreload 895 126467030350720 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:25:33,173 autoreload 903 124051462364032 Watching for file changes with StatReloader
+INFO 2025-10-12 23:25:35,983 autoreload 903 124051462364032 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:25:38,105 autoreload 905 138041358896000 Watching for file changes with StatReloader
+INFO 2025-10-12 23:25:40,763 autoreload 905 138041358896000 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:25:42,416 autoreload 907 127173130156928 Watching for file changes with StatReloader
+INFO 2025-10-12 23:25:43,778 server 907 127173023405760 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:25:43,778 server 907 127173023405760 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:25:43,779 server 907 127173023405760 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:29:06,017 autoreload 907 127173130156928 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:29:07,663 autoreload 951 137489308171136 Watching for file changes with StatReloader
+INFO 2025-10-12 23:29:15,053 autoreload 951 137489308171136 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:29:16,795 autoreload 953 126641447873408 Watching for file changes with StatReloader
+INFO 2025-10-12 23:29:20,091 autoreload 953 126641447873408 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:29:21,422 autoreload 955 128507787627392 Watching for file changes with StatReloader
+INFO 2025-10-12 23:29:22,692 autoreload 955 128507787627392 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:29:23,879 autoreload 957 134125026261888 Watching for file changes with StatReloader
+INFO 2025-10-12 23:29:25,135 autoreload 957 134125026261888 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:29:26,202 autoreload 959 139627909794688 Watching for file changes with StatReloader
+INFO 2025-10-12 23:29:29,483 autoreload 959 139627909794688 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:29:31,157 autoreload 961 130573907610496 Watching for file changes with StatReloader
+INFO 2025-10-12 23:29:32,836 server 961 130573800740544 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:29:32,838 server 961 130573800740544 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:29:32,839 server 961 130573800740544 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:29:41,799 autoreload 961 130573907610496 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:29:43,655 autoreload 969 139235946740608 Watching for file changes with StatReloader
+INFO 2025-10-12 23:29:45,208 server 969 139235840661184 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:29:45,208 server 969 139235840661184 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:29:45,210 server 969 139235840661184 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:31:06,983 autoreload 969 139235946740608 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:31:09,577 autoreload 989 124355094956928 Watching for file changes with StatReloader
+INFO 2025-10-12 23:31:12,791 autoreload 989 124355094956928 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:31:15,434 autoreload 991 128549482744704 Watching for file changes with StatReloader
+INFO 2025-10-12 23:31:17,666 server 991 128549375874752 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:31:17,667 server 991 128549375874752 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:31:17,668 server 991 128549375874752 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:31:37,792 autoreload 991 128549482744704 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:31:40,583 autoreload 999 131644184652672 Watching for file changes with StatReloader
+INFO 2025-10-12 23:31:42,494 server 999 131644078069440 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:31:42,495 server 999 131644078069440 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:31:42,496 server 999 131644078069440 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:31:48,389 autoreload 999 131644184652672 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:31:51,412 autoreload 1001 128656068389760 Watching for file changes with StatReloader
+INFO 2025-10-12 23:31:53,545 server 1001 128655961528000 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:31:53,546 server 1001 128655961528000 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:31:53,547 server 1001 128655961528000 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:32:02,606 autoreload 1001 128656068389760 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:32:05,031 autoreload 1003 135943489264512 Watching for file changes with StatReloader
+INFO 2025-10-12 23:32:07,836 server 1003 135943382275776 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:32:07,837 server 1003 135943382275776 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:32:07,839 server 1003 135943382275776 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:32:10,383 autoreload 1003 135943489264512 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:32:12,908 autoreload 1011 139967301876608 Watching for file changes with StatReloader
+INFO 2025-10-12 23:32:14,625 server 1011 139967195158208 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:32:14,625 server 1011 139967195158208 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:32:14,627 server 1011 139967195158208 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:32:24,897 autoreload 1011 139967301876608 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:32:27,382 autoreload 1013 134488047422336 Watching for file changes with StatReloader
+INFO 2025-10-12 23:32:29,017 server 1013 134487940961984 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:32:29,018 server 1013 134487940961984 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:32:29,019 server 1013 134487940961984 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:32:42,677 autoreload 1013 134488047422336 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:32:45,691 autoreload 1021 126911406005120 Watching for file changes with StatReloader
+INFO 2025-10-12 23:32:49,873 server 1021 126911299884736 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:32:49,874 server 1021 126911299884736 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:32:49,875 server 1021 126911299884736 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:32:57,492 autoreload 1021 126911406005120 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:33:00,280 autoreload 1023 125415476878208 Watching for file changes with StatReloader
+INFO 2025-10-12 23:33:02,161 server 1023 125415369905856 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:33:02,161 server 1023 125415369905856 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:33:02,162 server 1023 125415369905856 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:33:03,539 autoreload 1023 125415476878208 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:33:06,377 autoreload 1025 128269148289920 Watching for file changes with StatReloader
+INFO 2025-10-12 23:33:08,594 server 1025 128269041178304 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:33:08,595 server 1025 128269041178304 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:33:08,596 server 1025 128269041178304 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:33:09,974 autoreload 1025 128269148289920 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:33:12,848 autoreload 1033 124972614384512 Watching for file changes with StatReloader
+INFO 2025-10-12 23:33:14,660 server 1033 124972508026560 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:33:14,661 server 1033 124972508026560 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:33:14,662 server 1033 124972508026560 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:33:17,063 autoreload 1033 124972614384512 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:33:19,753 autoreload 1035 135734426876800 Watching for file changes with StatReloader
+INFO 2025-10-12 23:33:21,439 server 1035 135734320338624 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:33:21,439 server 1035 135734320338624 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:33:21,441 server 1035 135734320338624 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:33:24,792 autoreload 1035 135734426876800 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:33:27,399 autoreload 1037 129984307391360 Watching for file changes with StatReloader
+INFO 2025-10-12 23:33:29,830 server 1037 129984202012352 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:33:29,831 server 1037 129984202012352 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:33:29,832 server 1037 129984202012352 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:34:28,069 autoreload 1037 129984307391360 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:34:30,599 autoreload 1051 123617864248192 Watching for file changes with StatReloader
+INFO 2025-10-12 23:34:35,854 autoreload 1051 123617864248192 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:34:38,544 autoreload 1059 133462004599680 Watching for file changes with StatReloader
+INFO 2025-10-12 23:34:40,361 server 1059 133461897811648 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:34:40,362 server 1059 133461897811648 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:34:40,364 server 1059 133461897811648 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:35:41,481 autoreload 1059 133462004599680 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:35:44,126 autoreload 1073 137258182368128 Watching for file changes with StatReloader
+INFO 2025-10-12 23:35:46,275 server 1073 137258075330240 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:35:46,277 server 1073 137258075330240 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:35:46,279 server 1073 137258075330240 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:36:35,729 autoreload 1073 137258182368128 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:36:37,921 autoreload 1087 139873656654720 Watching for file changes with StatReloader
+INFO 2025-10-12 23:36:39,422 server 1087 139873549981376 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:36:39,423 server 1087 139873549981376 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:36:39,424 server 1087 139873549981376 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:39:21,515 autoreload 1087 139873656654720 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:39:23,523 autoreload 1120 126512185293696 Watching for file changes with StatReloader
+INFO 2025-10-12 23:39:25,074 server 1120 126512078689984 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:39:25,074 server 1120 126512078689984 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:39:25,075 server 1120 126512078689984 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:39:53,716 autoreload 1120 126512185293696 /app/main/models.py changed, reloading.
+INFO 2025-10-12 23:39:55,542 autoreload 1128 140223835163520 Watching for file changes with StatReloader
+INFO 2025-10-12 23:39:57,220 server 1128 140223728228032 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:39:57,221 server 1128 140223728228032 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:39:57,221 server 1128 140223728228032 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:40:17,070 autoreload 1128 140223835163520 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:40:19,063 autoreload 1136 138840977251200 Watching for file changes with StatReloader
+INFO 2025-10-12 23:40:20,596 server 1136 138840870393536 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:40:20,596 server 1136 138840870393536 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:40:20,597 server 1136 138840870393536 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:40:22,624 autoreload 1136 138840977251200 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:40:24,503 autoreload 1138 128985433172864 Watching for file changes with StatReloader
+INFO 2025-10-12 23:40:28,376 autoreload 1138 128985433172864 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:40:29,888 autoreload 1140 135173387668352 Watching for file changes with StatReloader
+INFO 2025-10-12 23:40:31,636 server 1140 135173280798400 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:40:31,636 server 1140 135173280798400 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:40:31,637 server 1140 135173280798400 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:40:37,797 autoreload 1140 135173387668352 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:40:39,566 autoreload 1148 137950865410944 Watching for file changes with StatReloader
+INFO 2025-10-12 23:40:41,004 server 1148 137950758344384 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:40:41,005 server 1148 137950758344384 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:40:41,005 server 1148 137950758344384 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:40:43,127 autoreload 1148 137950865410944 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:40:45,173 autoreload 1150 124260556692352 Watching for file changes with StatReloader
+INFO 2025-10-12 23:40:47,005 server 1150 124260451350208 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:40:47,006 server 1150 124260451350208 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:40:47,007 server 1150 124260451350208 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:42:06,058 autoreload 1150 124260556692352 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:42:08,285 autoreload 1164 136690385279872 Watching for file changes with StatReloader
+INFO 2025-10-12 23:42:10,009 server 1164 136690278766272 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:42:10,010 server 1164 136690278766272 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:42:10,012 server 1164 136690278766272 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-12 23:43:48,269 autoreload 1164 136690385279872 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-12 23:43:50,635 autoreload 1191 124742232546176 Watching for file changes with StatReloader
+INFO 2025-10-12 23:43:52,357 server 1191 124742127318720 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-12 23:43:52,358 server 1191 124742127318720 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-12 23:43:52,359 server 1191 124742127318720 Listening on TCP address 0.0.0.0:8000
+ERROR 2025-10-12 23:46:23,903 log 1191 124742014068416 Internal Server Error: /admin/main/servicetype/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 234, in inner
+    if not self.has_permission(request):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 207, in has_permission
+    return request.user.is_active and request.user.is_staff
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 251, in inner
+    self._setup()
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 404, in _setup
+    self._wrapped = self._setupfunc()
+                    ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 40, in <lambda>
+    request.user = SimpleLazyObject(lambda: get_user(request))
+                                            ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 20, in get_user
+    request._cached_user = auth.get_user(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/__init__.py", line 311, in get_user
+    user = backend.get_user(user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/backends.py", line 232, in get_user
+    user = UserModel._default_manager.get(pk=user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+ERROR 2025-10-12 23:46:23,909 runserver 1191 124742127318720 HTTP GET /admin/main/servicetype/ 500 [1.44, 172.18.0.8:55234]
+ERROR 2025-10-12 23:51:39,528 log 1191 124742014068416 Internal Server Error: /admin/main/user/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 234, in inner
+    if not self.has_permission(request):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 207, in has_permission
+    return request.user.is_active and request.user.is_staff
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 251, in inner
+    self._setup()
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 404, in _setup
+    self._wrapped = self._setupfunc()
+                    ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 40, in <lambda>
+    request.user = SimpleLazyObject(lambda: get_user(request))
+                                            ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 20, in get_user
+    request._cached_user = auth.get_user(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/__init__.py", line 311, in get_user
+    user = backend.get_user(user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/backends.py", line 232, in get_user
+    user = UserModel._default_manager.get(pk=user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+ERROR 2025-10-12 23:51:39,532 runserver 1191 124742127318720 HTTP GET /admin/main/user/ 500 [1.12, 172.18.0.8:35272]
+ERROR 2025-10-12 23:53:59,888 log 1191 124742014068416 Internal Server Error: /admin/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 265, in wrapper
+    return self.admin_view(view, cacheable)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 234, in inner
+    if not self.has_permission(request):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 207, in has_permission
+    return request.user.is_active and request.user.is_staff
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 251, in inner
+    self._setup()
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 404, in _setup
+    self._wrapped = self._setupfunc()
+                    ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 40, in <lambda>
+    request.user = SimpleLazyObject(lambda: get_user(request))
+                                            ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 20, in get_user
+    request._cached_user = auth.get_user(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/__init__.py", line 311, in get_user
+    user = backend.get_user(user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/backends.py", line 232, in get_user
+    user = UserModel._default_manager.get(pk=user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+ERROR 2025-10-12 23:53:59,892 runserver 1191 124742127318720 HTTP GET /admin/ 500 [1.04, 172.18.0.8:44796]
+ERROR 2025-10-12 23:55:18,231 log 1191 124742014068416 Internal Server Error: /admin/login/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 418, in login
+    if request.method == "GET" and self.has_permission(request):
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 207, in has_permission
+    return request.user.is_active and request.user.is_staff
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 251, in inner
+    self._setup()
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 404, in _setup
+    self._wrapped = self._setupfunc()
+                    ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 40, in <lambda>
+    request.user = SimpleLazyObject(lambda: get_user(request))
+                                            ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 20, in get_user
+    request._cached_user = auth.get_user(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/__init__.py", line 311, in get_user
+    user = backend.get_user(user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/backends.py", line 232, in get_user
+    user = UserModel._default_manager.get(pk=user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+ERROR 2025-10-12 23:55:18,235 runserver 1191 124742127318720 HTTP GET /admin/login/?next=/admin/ 500 [0.99, 172.18.0.8:37598]
+ERROR 2025-10-12 23:56:42,082 log 1191 124742014068416 Internal Server Error: /admin/login/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 418, in login
+    if request.method == "GET" and self.has_permission(request):
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 207, in has_permission
+    return request.user.is_active and request.user.is_staff
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 251, in inner
+    self._setup()
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 404, in _setup
+    self._wrapped = self._setupfunc()
+                    ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 40, in <lambda>
+    request.user = SimpleLazyObject(lambda: get_user(request))
+                                            ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/middleware.py", line 20, in get_user
+    request._cached_user = auth.get_user(request)
+                           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/__init__.py", line 311, in get_user
+    user = backend.get_user(user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/backends.py", line 232, in get_user
+    user = UserModel._default_manager.get(pk=user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 629, in get
+    num = len(clone)
+          ^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 366, in __len__
+    self._fetch_all()
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column main_user.is_fleet_owner does not exist
+LINE 1: ...ain_user"."is_staff", "main_user"."is_superuser", "main_user...
+                                                             ^
+
+ERROR 2025-10-12 23:56:42,086 runserver 1191 124742127318720 HTTP GET /admin/login/?next=/admin/ 500 [0.97, 172.18.0.8:49670]
+INFO 2025-10-13 00:07:17,755 runserver 1191 124742127318720 HTTP GET /admin/login/?next=/admin/ 302 [0.55, 172.18.0.8:55990]
+INFO 2025-10-13 00:07:18,456 runserver 1191 124742127318720 HTTP GET /admin/ 200 [0.61, 172.18.0.8:55998]
+INFO 2025-10-13 00:07:23,993 runserver 1191 124742127318720 HTTP GET /admin/main/user/ 200 [0.75, 172.18.0.8:56012]
+INFO 2025-10-13 00:07:24,717 runserver 1191 124742127318720 HTTP GET /admin/jsi18n/ 200 [0.53, 172.18.0.8:56028]
+INFO 2025-10-13 00:07:36,021 runserver 1191 124742127318720 HTTP GET /admin/main/user/2/change/ 200 [7.59, 172.18.0.8:36098]
+INFO 2025-10-13 00:07:36,698 runserver 1191 124742127318720 HTTP GET /admin/jsi18n/ 200 [0.52, 172.18.0.8:36744]
+INFO 2025-10-13 00:07:47,249 runserver 1191 124742127318720 HTTP GET /admin/main/user/ 200 [0.68, 172.18.0.8:55616]
+INFO 2025-10-13 00:08:01,582 runserver 1191 124742127318720 HTTP POST /admin/main/user/ 200 [4.39, 172.18.0.8:60288]
+ERROR 2025-10-13 00:08:47,419 log 1191 124742014068416 Internal Server Error: /admin/main/user/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.NotNullViolation: null value in column "vehicle_id" of relation "main_bookedappointment" violates not-null constraint
+DETAIL:  Failing row contains (11, APT1759022357162, 2025-09-28, 2025-09-30, cancelled, 35.00, 19:00:00, 60, Be cautious with the seat , 2025-09-28 01:19:25.900859+00, 2025-09-28 01:35:17.022633+00, f, null, null, null, 1, 2, 11, 1, 1, null).
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 2081, in changelist_view
+    response = self.response_action(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1686, in response_action
+    response = func(self, request, queryset)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/actions.py", line 49, in delete_selected
+    modeladmin.delete_queryset(request, queryset)
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1324, in delete_queryset
+    queryset.delete()
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1199, in delete
+    num_deleted, num_deleted_per_model = collector.delete()
+                                         ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/deletion.py", line 485, in delete
+    combined_updates.update(**{field.name: value})
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1261, in update
+    rows = query.get_compiler(self.db).execute_sql(ROW_COUNT)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 2060, in execute_sql
+    row_count = super().execute_sql(result_type)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: null value in column "vehicle_id" of relation "main_bookedappointment" violates not-null constraint
+DETAIL:  Failing row contains (11, APT1759022357162, 2025-09-28, 2025-09-30, cancelled, 35.00, 19:00:00, 60, Be cautious with the seat , 2025-09-28 01:19:25.900859+00, 2025-09-28 01:35:17.022633+00, f, null, null, null, 1, 2, 11, 1, 1, null).
+
+ERROR 2025-10-13 00:08:47,425 runserver 1191 124742127318720 HTTP POST /admin/main/user/ 500 [42.34, 172.18.0.8:59930]
+INFO 2025-10-13 00:13:37,559 runserver 1191 124742127318720 HTTP POST /admin/main/user/ 302 [5.83, 172.18.0.8:41320]
+INFO 2025-10-13 00:13:38,817 runserver 1191 124742127318720 HTTP GET /admin/main/user/ 200 [1.16, 172.18.0.8:34626]
+INFO 2025-10-13 00:13:39,462 runserver 1191 124742127318720 HTTP GET /admin/jsi18n/ 200 [0.52, 172.18.0.8:34630]
+INFO 2025-10-13 00:13:45,716 runserver 1191 124742127318720 HTTP GET /admin/main/bookedappointment/ 200 [0.83, 172.18.0.8:34634]
+INFO 2025-10-13 00:13:46,314 runserver 1191 124742127318720 HTTP GET /admin/jsi18n/ 200 [0.50, 172.18.0.8:34646]
+INFO 2025-10-13 00:20:35,406 autoreload 1191 124742232546176 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 00:20:38,373 autoreload 1729 125478308707200 Watching for file changes with StatReloader
+INFO 2025-10-13 00:20:40,710 server 1729 125478201628352 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 00:20:40,711 server 1729 125478201628352 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 00:20:40,712 server 1729 125478201628352 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 00:21:33,849 runserver 1729 125478201628352 HTTP GET /admin/main/servicetype/ 200 [0.94, 172.18.0.8:39414]
+INFO 2025-10-13 00:21:34,481 runserver 1729 125478201628352 HTTP GET /admin/jsi18n/ 200 [0.50, 172.18.0.8:39426]
+INFO 2025-10-13 01:14:29,479 autoreload 7 128310156254080 Watching for file changes with StatReloader
+INFO 2025-10-13 01:15:11,539 autoreload 7 137154228796288 Watching for file changes with StatReloader
+INFO 2025-10-13 01:17:11,511 autoreload 7 137154228796288 /app/main/migrations/0007_referral_alter_detailerprofile_options_and_more.py changed, reloading.
+INFO 2025-10-13 01:17:13,787 autoreload 33 140273048521600 Watching for file changes with StatReloader
+INFO 2025-10-13 01:28:57,170 autoreload 33 140273048521600 /app/main/migrations/0001_initial.py changed, reloading.
+INFO 2025-10-13 01:28:59,221 autoreload 212 135724865477504 Watching for file changes with StatReloader
+INFO 2025-10-13 01:29:01,052 server 212 135724758374080 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:29:01,053 server 212 135724758374080 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:29:01,056 server 212 135724758374080 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:39:34,611 autoreload 212 135724865477504 /app/main/models.py changed, reloading.
+INFO 2025-10-13 01:39:38,326 autoreload 347 127441736080256 Watching for file changes with StatReloader
+INFO 2025-10-13 01:39:41,967 server 347 127441629779648 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:39:41,969 server 347 127441629779648 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:39:41,972 server 347 127441629779648 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:07,067 autoreload 347 127441736080256 /app/main/models.py changed, reloading.
+INFO 2025-10-13 01:40:09,433 autoreload 355 125049933769600 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:11,229 server 355 125049826875072 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:11,230 server 355 125049826875072 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:11,231 server 355 125049826875072 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:13,758 autoreload 355 125049933769600 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:40:16,314 autoreload 357 128713464814464 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:18,185 server 357 128713359357632 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:18,186 server 357 128713359357632 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:18,188 server 357 128713359357632 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:39,184 autoreload 357 128713464814464 /app/main/tasks.py changed, reloading.
+INFO 2025-10-13 01:40:41,455 autoreload 365 130583927876480 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:43,343 server 365 130583820932800 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:43,345 server 365 130583820932800 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:43,347 server 365 130583820932800 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:45,588 autoreload 365 130583927876480 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:40:47,877 autoreload 367 138021838027648 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:49,741 server 367 138021731210944 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:49,742 server 367 138021731210944 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:49,744 server 367 138021731210944 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:51,948 autoreload 367 138021838027648 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:40:54,313 autoreload 369 132721987152768 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:56,685 server 369 132721881028288 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:56,686 server 369 132721881028288 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:56,688 server 369 132721881028288 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:41:13,293 autoreload 369 132721987152768 /app/main/tasks.py changed, reloading.
+INFO 2025-10-13 01:41:15,861 autoreload 377 124401765370752 Watching for file changes with StatReloader
+INFO 2025-10-13 01:41:17,535 server 377 124401659057856 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:41:17,536 server 377 124401659057856 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:41:17,537 server 377 124401659057856 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:41:26,123 autoreload 377 124401765370752 /app/main/tasks.py changed, reloading.
+INFO 2025-10-13 01:41:28,492 autoreload 385 126146313501568 Watching for file changes with StatReloader
+INFO 2025-10-13 01:41:30,379 server 385 126146206406336 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:41:30,380 server 385 126146206406336 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:41:30,382 server 385 126146206406336 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:41:36,600 autoreload 385 126146313501568 /app/main/tasks.py changed, reloading.
+INFO 2025-10-13 01:41:38,889 autoreload 387 134430311590784 Watching for file changes with StatReloader
+INFO 2025-10-13 01:42:16,279 autoreload 387 134430311590784 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:42:18,772 autoreload 395 129189069159296 Watching for file changes with StatReloader
+INFO 2025-10-13 01:44:52,616 autoreload 395 129189069159296 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:44:55,098 autoreload 428 126599956974464 Watching for file changes with StatReloader
+INFO 2025-10-13 01:45:04,497 autoreload 428 126599956974464 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:45:06,835 autoreload 436 128372907854720 Watching for file changes with StatReloader
+INFO 2025-10-13 01:45:08,720 server 436 128372800919232 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:45:08,721 server 436 128372800919232 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:45:08,723 server 436 128372800919232 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:45:19,327 autoreload 436 128372907854720 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:45:21,766 autoreload 438 123707906378624 Watching for file changes with StatReloader
+INFO 2025-10-13 01:45:23,615 server 438 123707799541440 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:45:23,617 server 438 123707799541440 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:45:23,620 server 438 123707799541440 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:50:31,902 autoreload 438 123707906378624 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:50:34,384 autoreload 519 136523376462720 Watching for file changes with StatReloader
+INFO 2025-10-13 01:50:36,274 server 519 136523269969600 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:50:36,275 server 519 136523269969600 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:50:36,277 server 519 136523269969600 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:55:12,532 autoreload 519 136523376462720 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:55:14,828 autoreload 575 125817864797056 Watching for file changes with StatReloader
+INFO 2025-10-13 01:55:16,710 server 575 125817757800128 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:55:16,710 server 575 125817757800128 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:55:16,712 server 575 125817757800128 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:55:21,384 autoreload 575 125817864797056 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:55:24,214 autoreload 577 130527492381568 Watching for file changes with StatReloader
+INFO 2025-10-13 01:55:26,412 server 577 130527385523904 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:55:26,416 server 577 130527385523904 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:55:26,419 server 577 130527385523904 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:09:55,196 runserver 577 130527385523904 HTTP GET /api/v1/terms/get_terms/ 200 [0.54, 172.18.0.11:34900]
+INFO 2025-10-13 02:10:29,230 runserver 577 130527385523904 HTTP GET /admin/main/termsandconditions/ 200 [1.45, 172.18.0.11:44494]
+INFO 2025-10-13 02:10:30,754 runserver 577 130527385523904 HTTP GET /admin/jsi18n/ 200 [1.25, 172.18.0.11:47216]
+INFO 2025-10-13 02:10:34,597 runserver 577 130527385523904 HTTP GET /admin/main/termsandconditions/1/change/ 200 [0.99, 172.18.0.11:47218]
+INFO 2025-10-13 02:10:35,441 runserver 577 130527385523904 HTTP GET /admin/jsi18n/ 200 [0.69, 172.18.0.11:47224]
+WARNING 2025-10-13 02:17:06,567 server 577 130527385523904 Application instance <Task pending name='Task-21' coro=<ASGIStaticFilesHandler.__call__() running at /usr/local/lib/python3.11/site-packages/django/contrib/staticfiles/handlers.py:101> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]>> for connection <WebRequest at 0x76b6c41d32d0 method=POST uri=/api/v1/onboard/create_new_account/ clientproto=HTTP/1.1> took too long to shut down and was killed.
+WARNING 2025-10-13 02:17:30,060 log 577 130527265810112 Bad Request: /api/v1/onboard/create_new_account/
+WARNING 2025-10-13 02:17:30,062 runserver 577 130527385523904 HTTP POST /api/v1/onboard/create_new_account/ 400 [0.71, 172.18.0.11:47038]
+INFO 2025-10-13 02:18:09,552 runserver 577 130527385523904 HTTP GET /admin/main/user/ 200 [0.81, 172.18.0.11:42802]
+INFO 2025-10-13 02:18:10,239 runserver 577 130527385523904 HTTP GET /admin/jsi18n/ 200 [0.54, 172.18.0.11:42816]
+INFO 2025-10-13 02:18:19,141 runserver 577 130527385523904 HTTP POST /admin/main/user/ 200 [1.69, 172.18.0.11:42818]
+INFO 2025-10-13 02:18:24,224 runserver 577 130527385523904 HTTP POST /admin/main/user/ 302 [2.71, 172.18.0.11:49306]
+INFO 2025-10-13 02:18:25,012 runserver 577 130527385523904 HTTP GET /admin/main/user/ 200 [0.70, 172.18.0.11:49308]
+INFO 2025-10-13 02:18:25,659 runserver 577 130527385523904 HTTP GET /admin/jsi18n/ 200 [0.51, 172.18.0.11:49316]
+INFO 2025-10-13 02:20:02,086 autoreload 577 130527492381568 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-13 02:20:05,838 autoreload 883 139423251811200 Watching for file changes with StatReloader
+INFO 2025-10-13 02:20:08,330 server 883 139423145694912 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:20:08,331 server 883 139423145694912 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:20:08,334 server 883 139423145694912 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:21:02,730 autoreload 883 139423251811200 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-13 02:21:05,027 autoreload 897 140023766170496 Watching for file changes with StatReloader
+INFO 2025-10-13 02:21:08,823 server 897 140023660803776 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:21:08,825 server 897 140023660803776 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:21:08,831 server 897 140023660803776 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:21:19,827 autoreload 897 140023766170496 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-13 02:21:22,110 autoreload 905 123451022146432 Watching for file changes with StatReloader
+INFO 2025-10-13 02:21:24,089 server 905 123450915198656 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:21:24,091 server 905 123450915198656 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:21:24,094 server 905 123450915198656 Listening on TCP address 0.0.0.0:8000
+WARNING 2025-10-13 02:21:29,518 log 905 123450866955968 Bad Request: /api/v1/onboard/create_new_account/
+WARNING 2025-10-13 02:21:29,519 runserver 905 123450915198656 HTTP POST /api/v1/onboard/create_new_account/ 400 [1.22, 172.18.0.11:46172]
+INFO 2025-10-13 02:21:45,388 runserver 905 123450915198656 HTTP GET /admin/main/user/ 200 [0.86, 172.18.0.11:59348]
+INFO 2025-10-13 02:21:46,093 runserver 905 123450915198656 HTTP GET /admin/jsi18n/ 200 [0.54, 172.18.0.11:59358]
+INFO 2025-10-13 02:22:00,186 runserver 905 123450915198656 HTTP POST /admin/main/user/ 200 [1.58, 172.18.0.11:35172]
+INFO 2025-10-13 02:22:13,066 runserver 905 123450915198656 HTTP POST /admin/main/user/ 302 [2.67, 172.18.0.11:38996]
+INFO 2025-10-13 02:22:13,877 runserver 905 123450915198656 HTTP GET /admin/main/user/ 200 [0.72, 172.18.0.11:39002]
+INFO 2025-10-13 02:22:14,544 runserver 905 123450915198656 HTTP GET /admin/jsi18n/ 200 [0.51, 172.18.0.11:46556]
+WARNING 2025-10-13 02:22:43,571 log 905 123450866955968 Bad Request: /api/v1/onboard/create_new_account/
+WARNING 2025-10-13 02:22:43,573 runserver 905 123450915198656 HTTP POST /api/v1/onboard/create_new_account/ 400 [1.07, 172.18.0.11:43628]
+INFO 2025-10-13 02:33:43,550 autoreload 905 123451022146432 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-13 02:33:47,202 autoreload 1064 133869054131072 Watching for file changes with StatReloader
+INFO 2025-10-13 02:33:49,627 server 1064 133868947674816 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:33:49,627 server 1064 133868947674816 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:33:49,628 server 1064 133868947674816 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:35:58,058 autoreload 1064 133869054131072 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:36:01,639 autoreload 1091 136806147644288 Watching for file changes with StatReloader
+INFO 2025-10-13 02:36:04,054 server 1091 136806042433216 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:36:04,055 server 1091 136806042433216 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:36:04,058 server 1091 136806042433216 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:39:48,840 autoreload 1091 136806147644288 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:39:52,059 autoreload 1142 137771221605248 Watching for file changes with StatReloader
+INFO 2025-10-13 02:39:53,817 server 1142 137771116132032 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:39:53,818 server 1142 137771116132032 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:39:53,820 server 1142 137771116132032 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:39:56,428 autoreload 1142 137771221605248 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:39:58,572 autoreload 1144 131791139318656 Watching for file changes with StatReloader
+INFO 2025-10-13 02:40:00,361 server 1144 131791032850112 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:40:00,370 server 1144 131791032850112 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:40:00,375 server 1144 131791032850112 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:40:06,513 autoreload 1144 131791139318656 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:40:08,863 autoreload 1146 137226236263296 Watching for file changes with StatReloader
+INFO 2025-10-13 02:40:10,559 server 1146 137226129413824 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:40:10,560 server 1146 137226129413824 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:40:10,562 server 1146 137226129413824 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:40:25,536 autoreload 1146 137226236263296 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:40:27,941 autoreload 1154 139967769074560 Watching for file changes with StatReloader
+INFO 2025-10-13 02:40:29,538 server 1154 139967662823104 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:40:29,539 server 1154 139967662823104 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:40:29,540 server 1154 139967662823104 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:40:39,113 autoreload 1154 139967769074560 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:40:41,134 autoreload 1156 132198644452224 Watching for file changes with StatReloader
+>>>>>>> develop

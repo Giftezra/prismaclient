@@ -9,6 +9,7 @@ import {
   Animated,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  RefreshControl,
 } from "react-native";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import ProfileCard from "@/app/components/profile/ProfileCard";
@@ -24,7 +25,17 @@ import { useAuthContext } from "@/app/contexts/AuthContextProvider";
 import ModalServices from "@/app/utils/ModalServices";
 
 const ProfileScreen = () => {
-  const { userProfile, addresses, saveNewAddress } = useProfile();
+  const {
+    userProfile,
+    addresses,
+    saveNewAddress,
+    refetchUserProfile,
+    refetchAddresses,
+    refetchServiceHistory,
+    isLoadingUserProfile,
+    isLoadingAddresses,
+    isLoadingServiceHistory,
+  } = useProfile();
   const { handleLogout } = useAuthContext();
 
   /* Import the theme colors */
@@ -35,6 +46,7 @@ const ProfileScreen = () => {
   const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
   const [isPaymentMethodsModalVisible, setIsPaymentMethodsModalVisible] =
     useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   /* Profile card scroll animation refs */
   const profileCardTranslateY = useRef(new Animated.Value(0)).current;
@@ -181,6 +193,38 @@ const ProfileScreen = () => {
     setIsPaymentMethodsModalVisible(true);
   };
 
+  /**
+   * Handle pull-to-refresh functionality
+   */
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      // Refetch all profile-related data
+      await Promise.all([
+        refetchUserProfile(),
+        refetchAddresses(),
+        refetchServiceHistory(),
+      ]);
+    } catch (error) {
+      console.error("Error refreshing profile data:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetchUserProfile, refetchAddresses, refetchServiceHistory]);
+
+  /**
+   * Create refresh control
+   */
+  const refreshControl = (
+    <RefreshControl
+      refreshing={isRefreshing}
+      onRefresh={handleRefresh}
+      tintColor={iconColor}
+      colors={[iconColor]}
+      progressBackgroundColor={backgroundColor}
+    />
+  );
+
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <ScrollView
@@ -193,6 +237,7 @@ const ProfileScreen = () => {
         nestedScrollEnabled={true}
         bounces={true}
         alwaysBounceVertical={false}
+        refreshControl={refreshControl}
       >
         {/* Profile Card - Always in normal flow */}
         <ProfileCard

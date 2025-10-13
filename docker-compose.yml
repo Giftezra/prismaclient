@@ -59,33 +59,21 @@ services:
     networks:
       - prisma_shared_net
 
-  npm:
-    image: jc21/nginx-proxy-manager:latest
+  nginx:
+    image: nginx:alpine
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - "80:80"
-      - "81:81"
-      - "443:443"
-    env_file:
-      - .env
     volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/html/static:/usr/share/nginx/html/static:ro
     depends_on:
       - client_server
-      - prisma_redis
-      - client_celery_worker
-      - npm_db
     networks:
       - prisma_shared_net
-
-  npm_db:
-    image: "jc21/mariadb-aria:latest"
-    restart: unless-stopped
-    env_file:
-      - .env
-    volumes:
-      - ./mysql:/var/lib/MySQL
 
   job_acceptance_subscriber:
     build:

@@ -21,6 +21,7 @@ import {
   useRescheduleBookingMutation,
   useFetchPromotionsQuery,
   useMarkPromotionAsUsedMutation,
+  useCheckFreeWashQuery,
 } from "@/app/store/api/bookingApi";
 import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "@/app/contexts/AlertContext";
@@ -94,6 +95,11 @@ const useBooking = () => {
   const [rescheduleBooking, { isLoading: isLoadingRescheduleBooking }] =
     useRescheduleBookingMutation();
   const [markPromotionAsUsed] = useMarkPromotionAsUsedMutation();
+
+  // Lazy query for checking free wash - only called when needed
+  const { refetch: checkFreeWash } = useCheckFreeWashQuery(undefined, {
+    skip: true,
+  });
 
   const { setAlertConfig, setIsVisible } = useAlertContext();
   const { showSnackbarWithConfig, showSnackbar } = useSnackbar();
@@ -1217,17 +1223,91 @@ const useBooking = () => {
   }, [selectedServiceType, isSUV, selectedAddons]);
 
   /**
+   * Calculate final price with option to exclude service base price (for free washes)
+   *
+   * This method provides a unified price calculation that can optionally exclude
+   * the base service price when a free Quick Sparkle is applied. All discounts
+   * and surcharges are calculated based on the actual amount being charged.
+   *
+   * @param excludeServicePrice - If true, sets service base price to 0 (free wash)
+   * @returns The final price after all calculations
+   *
+   * @example
+   * // Normal booking
+   * const price = calculateFinalPrice(false);  // £35.88
+   *
+   * // Free Quick Sparkle (only charge addons)
+   * const price = calculateFinalPrice(true);   // £13.45
+   */
+  const calculateFinalPrice = useCallback(
+    (excludeServicePrice: boolean = false): number => {
+      // Step 1: Calculate base amounts
+      const basePrice = excludeServicePrice
+        ? 0
+        : selectedServiceType?.price || 0;
+
+      // Step 2: Calculate addon costs (with 4+ addon discount)
+      let addonCosts = 0;
+      if (selectedAddons.length >= 4) {
+        const cheapestAddon = selectedAddons.reduce((min, addon) =>
+          addon.price < min.price ? addon : min
+        );
+        addonCosts =
+          selectedAddons.reduce((total, addon) => total + addon.price, 0) -
+          cheapestAddon.price;
+      } else {
+        addonCosts = selectedAddons.reduce(
+          (total, addon) => total + addon.price,
+          0
+        );
+      }
+
+      // Step 3: Calculate subtotal
+      const subtotal = basePrice + addonCosts;
+
+      // Step 4: Add SUV surcharge (NO surcharge when free wash is applied)
+      const suvSurcharge = excludeServicePrice
+        ? 0
+        : isSUV
+        ? subtotal * 0.15
+        : 0;
+
+      // Step 5: Total before loyalty/promotion discounts
+      const totalBeforeDiscounts = subtotal + suvSurcharge;
+
+      // Step 6: Calculate loyalty discount (applied to current total)
+      const loyaltyDiscount = user?.loyalty_benefits?.discount
+        ? totalBeforeDiscounts * (user.loyalty_benefits.discount / 100)
+        : 0;
+
+      // Step 7: Calculate promotion discount (applied to current total)
+      const promotionDiscount =
+        promotions?.is_active && promotions?.discount_percentage
+          ? totalBeforeDiscounts * (promotions.discount_percentage / 100)
+          : 0;
+
+      // Step 8: Final price
+      return totalBeforeDiscounts - loyaltyDiscount - promotionDiscount;
+    },
+    [
+      selectedServiceType,
+      selectedAddons,
+      isSUV,
+      user?.loyalty_benefits,
+      promotions,
+    ]
+  );
+
+  /**
    * Gets the final price after all discounts (loyalty + promotion)
    *
+   * @deprecated Use calculateFinalPrice(false) instead for consistency
    * @returns The final price after all applicable discounts
    */
   const getFinalPrice = useCallback((): number => {
-    const originalPrice = getOriginalPrice();
-    const loyaltyDiscount = getLoyaltyDiscount();
-    const promotionDiscount = getPromotionDiscount();
-
-    return originalPrice - loyaltyDiscount - promotionDiscount;
-  }, [getOriginalPrice, getLoyaltyDiscount, getPromotionDiscount]);
+    // Use the new unified method for consistency
+    return calculateFinalPrice(false);
+  }, [calculateFinalPrice]);
 
   /**
    * Gets the total cost of selected addons
@@ -1242,8 +1322,8 @@ const useBooking = () => {
    * const addonCost = getAddonPrice(); // Returns 25 if two addons cost 10 and 15
    */
   const getAddonPrice = useCallback((): number => {
-    // if the user select three addons, remove the cheapest addon price
-    if (selectedAddons.length >= 3) {
+    // if the user select four or more addons, remove the cheapest addon price
+    if (selectedAddons.length >= 4) {
       const cheapestAddon = selectedAddons.reduce((min, addon) =>
         addon.price < min.price ? addon : min
       );
@@ -1577,8 +1657,37 @@ const useBooking = () => {
       // Generate a booking reference
       const bookingReference = `APT${Date.now()}`;
 
-      // First, handle payment
-      const finalPrice = getFinalPrice();
+      // Check if this is a Quick Sparkle and user can use free wash
+      const isQuickSparkle = selectedServiceType?.name === "The Quick Sparkle";
+      const canUseFreeWash =
+        isQuickSparkle && user?.loyalty_tier === "platinum";
+      let finalPrice = getFinalPrice();
+      let applyFreeQuickSparkle = false;
+
+      if (canUseFreeWash && isQuickSparkle) {
+        try {
+          // Use RTK Query to check free wash availability
+          const checkResult = await checkFreeWash();
+
+          if (checkResult.data && checkResult.data.can_use_free_wash) {
+            // Calculate price excluding service base price and SUV surcharge
+            // Only charge for addons with discounts applied
+            finalPrice = calculateFinalPrice(true);
+            applyFreeQuickSparkle = true;
+
+            // Show user they're getting free wash
+            showSnackbarWithConfig({
+              message: `Free Quick Sparkle applied! You have ${checkResult.data.remaining_quick_sparkles} left this month.`,
+              type: "success",
+              duration: 3000,
+            });
+          }
+        } catch (error) {
+          console.error("Free wash check failed:", error);
+        }
+      }
+
+      // Handle payment with adjusted price
       const paymentResult = await openPaymentSheet(
         finalPrice,
         "Prisma Valet",
@@ -1592,22 +1701,26 @@ const useBooking = () => {
       /* if payment is successful, create the booking */
       const booking: ReturnBookingProps = await createBooking(bookingReference);
 
+<<<<<<< HEAD
       if (booking.detailer && booking.job) {
+=======
+      if (booking.success) {
+>>>>>>> develop
         console.log("Booking data from detailer app stack: ", booking);
         const response = await bookAppointment({
           date: selectedDate?.toISOString().split("T")[0] || "",
           vehicle: selectedVehicle!,
           valet_type: selectedValetType!,
           service_type: selectedServiceType!,
-          detailer: booking.detailer,
           address: selectedAddress!,
           status: "pending",
-          total_amount: getFinalPrice(),
+          total_amount: finalPrice,
           addons: selectedAddons,
           start_time: selectedDate ? formatLocalTime(selectedDate) : "",
           duration: getEstimatedDuration(),
           special_instructions: specialInstructions,
-          booking_reference: booking.job.booking_reference,
+          booking_reference: bookingReference,
+          applied_free_quick_sparkle: applyFreeQuickSparkle,
         }).unwrap();
 
         /* If the appointment is created successfully, show the confirmation modal */
@@ -1618,7 +1731,7 @@ const useBooking = () => {
             try {
               await markPromotionAsUsed({
                 promotion_id: promotions.id,
-                booking_reference: booking.job.booking_reference,
+                booking_reference: bookingReference,
               }).unwrap();
             } catch (error) {
               console.error("Failed to mark promotion as used:", error);
@@ -1630,7 +1743,11 @@ const useBooking = () => {
           setIsConfirmationModalVisible(true);
         }
       }
+<<<<<<< HEAD
     } catch (error:any) {
+=======
+    } catch (error: any) {
+>>>>>>> develop
       let message = "";
       if (error?.data?.error) {
         message = error.data.error;

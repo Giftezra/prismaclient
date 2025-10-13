@@ -74,6 +74,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'name': user.name,
                 'email': user.email,
                 'phone': user.phone,
+                'is_fleet_owner': user.is_fleet_owner,
                 'address': {
                     'address': address.address if address else None,
                     'city': address.city if address else None,

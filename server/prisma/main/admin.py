@@ -2,7 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from django.utils import timezone
-from .models import User, Vehicles, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification, LoyaltyProgram, Promotions, PaymentTransaction, RefundRecord, TermsAndConditions
+from .models import User, Vehicles, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification, LoyaltyProgram, Promotions, PaymentTransaction, RefundRecord, TermsAndConditions, Referral
 
 
 admin.site.site_header = "Prisma Valet Admin"
@@ -190,4 +190,11 @@ class RefundRecordAdmin(admin.ModelAdmin):
 class TermsAndConditionsAdmin(admin.ModelAdmin):
     list_display = ('version', 'last_updated')
     ordering = ('-last_updated',)
+
+@admin.register(Referral)
+class ReferralAdmin(admin.ModelAdmin):
+    list_display = ('referrer', 'referred', 'created_at')
+    list_filter = ('created_at')
+    search_fields = ('referrer__name', 'referred__name')
+    readonly_fields = ('created_at', 'updated_at')
     

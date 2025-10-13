@@ -4,7 +4,11 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
+<<<<<<< HEAD
   Dimensions,     
+=======
+  Dimensions,
+>>>>>>> develop
   Pressable,
   Modal,
   TouchableOpacity,
@@ -84,7 +88,10 @@ const OnboardingScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
+<<<<<<< HEAD
 
+=======
+>>>>>>> develop
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -249,6 +256,42 @@ const OnboardingScreen = () => {
                 </StyledText>
               </View>
 
+<<<<<<< HEAD
+=======
+              {/* Fleet Owner Checkbox */}
+              <View style={styles.fleetOwnerContainer}>
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() =>
+                    handleSignUpData("isFleetOwner", !signUpData?.isFleetOwner)
+                  }
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      {
+                        borderColor: borderColor,
+                        backgroundColor: signUpData?.isFleetOwner
+                          ? buttonColor
+                          : "transparent",
+                      },
+                    ]}
+                  >
+                    {signUpData?.isFleetOwner && (
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <StyledText
+                      style={[styles.fleetOwnerText, { color: textColor }]}
+                    >
+                      I am a fleet owner
+                    </StyledText>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+>>>>>>> develop
               {/* Terms and Conditions Checkbox */}
               <View style={styles.termsContainer}>
                 <TouchableOpacity
@@ -401,6 +444,17 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     opacity: 0.7,
   },
+<<<<<<< HEAD
+=======
+  fleetOwnerContainer: {
+    marginBottom: 20,
+  },
+  fleetOwnerText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "500",
+  },
+>>>>>>> develop
   termsContainer: {
     marginBottom: 24,
   },

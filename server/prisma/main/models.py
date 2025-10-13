@@ -45,6 +45,10 @@ class User(AbstractUser):
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)                                           
     has_signup_promotions = models.BooleanField(default=True)
     has_booking_promotions = models.BooleanField(default=False)
+
+    referral_code = models.CharField(max_length=8, blank=True, null=True)
+    referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -57,7 +61,11 @@ class User(AbstractUser):
         return f"{self.name} - {self.email}"
 
     def create_referral_code(self):
+<<<<<<< HEAD
         return ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+=======
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+>>>>>>> develop
 
     def save(self, *args, **kwargs):
         self.username = self.email
@@ -65,8 +73,11 @@ class User(AbstractUser):
         
         # Generate referral code for new users
         if is_new_user and not self.referral_code:
+<<<<<<< HEAD
             import random
             import string
+=======
+>>>>>>> develop
             self.referral_code = self.create_referral_code()
         
         super().save(*args, **kwargs)
@@ -106,6 +117,19 @@ class Referral(models.Model):
         
         
          
+
+
+class Referral(models.Model):
+    referrer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referrer')
+    referred = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referred')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.referrer.name} - {self.referred.name}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 
 class Address(models.Model):
@@ -496,6 +520,7 @@ class TermsAndConditions(models.Model):
 
     def __str__(self):
         return f"Terms and Conditions - {self.version}"
+
 
 class PasswordResetToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

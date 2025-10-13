@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
-from main.models import Address, BookedAppointment
+from main.models import Address, BookedAppointment, User
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -17,6 +17,7 @@ class ProfileView(APIView):
         'update_push_notification_token': 'update_push_notification_token',
         'update_email_notification_token': 'update_email_notification_token',
         'update_marketing_email_token': 'update_marketing_email_token',
+        'get_profile': 'get_profile',
     }
 
     def get(self, request, *args, **kwargs):
@@ -333,4 +334,39 @@ class ProfileView(APIView):
             
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    def get_profile(self, request):
+        try:
+            # Get the user's profile
+            user = request.user
             
+            # Get user's address if exists
+            address = Address.objects.filter(user=user).first()
+            
+            # Get user's loyalty program if exists
+            from main.models import LoyaltyProgram
+            loyalty = LoyaltyProgram.objects.filter(user=user).first()
+            loyalty_benefits = loyalty.get_tier_benefits() if loyalty else None
+            
+            user_profile = {
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'phone': user.phone,
+                'address': {
+                    'address': address.address if address else '',
+                    'post_code': address.post_code if address else '',
+                    'city': address.city if address else '',
+                    'country': address.country if address else '',
+                },
+                'push_notification_token': user.allow_push_notifications,
+                'email_notification_token': user.allow_email_notifications,
+                'marketing_email_token': user.allow_marketing_emails,
+                'loyalty_tier': loyalty.current_tier if loyalty else '',
+                'loyalty_benefits': loyalty_benefits,
+                'referral_code': user.referral_code if user.referral_code else '',
+            }
+            return Response({'profile': user_profile}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -37,6 +37,7 @@ class AuthenticationView(CreateAPIView):
 
     
     def register(self, request):
+<<<<<<< HEAD
         """ Register a new user by using the data sent from the client.
             The data is sent in the body of the request.
             The data is in the format of {
@@ -52,6 +53,16 @@ class AuthenticationView(CreateAPIView):
         try:
             data = request.data.get('credentials')
             referral_code = data.get('referred_code', None)
+=======
+        try:
+            data = request.data.get('credentials')
+            referral_code = data.get('referred_code', None)
+            is_fleet_owner = data.get('isFleetOwner', False)
+
+            print(data)
+            print(referral_code)
+            print(is_fleet_owner)
+>>>>>>> develop
             
             # Handle referral if code provided
             referred_by = None
@@ -70,6 +81,7 @@ class AuthenticationView(CreateAPIView):
                 password=data['password']
             )
             
+<<<<<<< HEAD
             # Set referral relationship if valid code was provided
             if referred_by:
                 user.referred_by = referred_by
@@ -78,6 +90,16 @@ class AuthenticationView(CreateAPIView):
             send_welcome_email.delay(user.email)
             sleep(60)
             send_promotional_email.delay(user.email, user.name)
+=======
+            # Set fleet owner status and referral relationship
+            user.is_fleet_owner = is_fleet_owner
+            if referred_by:
+                user.referred_by = referred_by
+            user.save()
+            # Send the welcome and promotional emails to the user even if they have not allowed them as this is a new user
+            send_welcome_email.delay(user.email)
+            send_promotional_email.apply_async(args=[user.email, user.name], countdown=60)
+>>>>>>> develop
             
             # Generate tokens for the newly created user
             refresh = RefreshToken.for_user(user)
@@ -95,6 +117,7 @@ class AuthenticationView(CreateAPIView):
                     'name': user.name,
                     'email': user.email,
                     'phone': user.phone,
+                    'is_fleet_owner': user.is_fleet_owner,
                     'address': {
                         'address': address.address if address else None,
                         'city': address.city if address else None,

@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from main.models import BookedAppointment,ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicles, Promotions, PaymentTransaction, RefundRecord, User
+from main.models import BookedAppointment,ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicles, Promotions, PaymentTransaction, RefundRecord, User, LoyaltyProgram
 import stripe
 from django.conf import settings
 from datetime import datetime
@@ -30,6 +30,7 @@ class BookingView(APIView):
         'create_payment_sheet' : 'create_payment_sheet',
         'get_payment_methods' : 'get_payment_methods',
         'delete_payment_method' : 'delete_payment_method',
+        'check_free_wash' : 'check_free_wash',
     }
     
     """ Here we will override the crud methods and define the methods that would route the url to the appropriate function """
@@ -442,6 +443,7 @@ class BookingView(APIView):
             booking_data = request.data.get('booking_data', request.data)
             logger.info(f"Booking data extracted: {booking_data}")
 
+<<<<<<< HEAD
             # Create detailer profile
             try:
                 logger.info("Creating detailer profile...")
@@ -483,6 +485,11 @@ class BookingView(APIView):
                         
             except Exception as e:
                 raise e
+=======
+            # Detailer will be assigned later via Redis/detailer app
+            # No longer creating detailer profile at booking time
+            logger.info("Booking will be created without detailer assignment (pending status)")
+>>>>>>> develop
             
             # Get existing objects by ID
             try:
@@ -538,7 +545,24 @@ class BookingView(APIView):
                 logger.error(f"Error converting start time: {str(e)}")
                 raise e
             
+<<<<<<< HEAD
             # Create the booking in the database
+=======
+            # Check if free Quick Sparkle should be applied
+            applied_free_wash = booking_data.get('applied_free_quick_sparkle', False)
+            if applied_free_wash and service_type.name == 'Quick Sparkle':
+                try:
+                    loyalty = LoyaltyProgram.objects.get(user=request.user)
+                    if loyalty.can_use_free_quick_sparkle():
+                        loyalty.use_free_quick_sparkle()
+                        logger.info(f"Free Quick Sparkle applied for user {request.user.id}")
+                    else:
+                        logger.warning(f"User {request.user.id} tried to use free wash but limit reached")
+                except LoyaltyProgram.DoesNotExist:
+                    logger.error(f"Loyalty program not found for user {request.user.id}")
+            
+            # Create the booking in the database without detailer
+>>>>>>> develop
             try:
                 logger.info("Creating BookedAppointment...")
                 appointment = BookedAppointment.objects.create(
@@ -547,7 +571,11 @@ class BookingView(APIView):
                     vehicle = vehicle,
                     valet_type = valet_type,
                     service_type = service_type,
+<<<<<<< HEAD
                     detailer = detailer,
+=======
+                    detailer = None,
+>>>>>>> develop
                     address = address,
                     status = booking_data.get('status'),
                     total_amount = booking_data.get('total_amount'),
@@ -586,9 +614,15 @@ class BookingView(APIView):
                 logger.info("Sending push notification...")
                 send_push_notification.delay(
                     request.user.id,
+<<<<<<< HEAD
                     "Booking Assigned! 🎉",
                     f"Your valet service has been assigned to one of our detailers for {appointment.appointment_date} at {appointment.start_time}. Please wait for confirmation.",
                     "booking_assigned"
+=======
+                    "Booking Received! 🎉",
+                    f"Your booking for {appointment.appointment_date} at {appointment.start_time} has been received. Waiting for detailer confirmation!",
+                    "booking_pending"
+>>>>>>> develop
                 )
                 logger.info("Push notification sent successfully")
             except Exception as e:
@@ -596,6 +630,10 @@ class BookingView(APIView):
                 # Don't fail the entire booking for notification errors
 
             logger.info(f"Booking appointment creation completed successfully: {appointment.id}")
+<<<<<<< HEAD
+=======
+            logger.info(f"Waiting for detailer app to confirm via Redis (job_acceptance channel)")
+>>>>>>> develop
             return Response({'appointment_id': str(appointment.id)}, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -775,3 +813,36 @@ class BookingView(APIView):
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def check_free_wash(self, request):
+        """Check if user can use a free basic wash this month"""
+        try:
+            user = request.user
+            loyalty = LoyaltyProgram.objects.get(user=user)
+            
+            can_use = loyalty.can_use_free_quick_sparkle()
+            remaining_quick_sparkles = loyalty.get_remaining_free_quick_sparkles()
+            
+            # Calculate days until reset
+            if loyalty.free_quick_sparkle_reset_date:
+                from datetime import timedelta
+                reset_date = loyalty.free_quick_sparkle_reset_date + timedelta(days=30)
+                days_until_reset = (reset_date - timezone.now().date()).days
+            else:
+                days_until_reset = 30
+            
+            return Response({
+                'can_use_free_wash': can_use,
+                'remaining_quick_sparkles': remaining_quick_sparkles,
+                'total_monthly_limit': loyalty.get_free_wash_limit(),
+                'resets_in_days': days_until_reset
+            }, status=status.HTTP_200_OK)
+            
+        except LoyaltyProgram.DoesNotExist:
+            return Response({
+                'error': 'Loyalty program not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

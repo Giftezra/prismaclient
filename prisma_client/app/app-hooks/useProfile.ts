@@ -13,6 +13,7 @@ import {
   useUpdatePushNotificationTokenMutation,
   useUpdateEmailNotificationTokenMutation,
   useUpdateMarketingEmailTokenMutation,
+  useGetUserProfileQuery,
 } from "../store/api/profileApi";
 import {
   setNewAddress,
@@ -82,7 +83,12 @@ const useProfile = () => {
       error: errorUpdateMarketingEmailToken,
     },
   ] = useUpdateMarketingEmailTokenMutation();
-
+  const {
+    data: profile,
+    isLoading: isLoadingUserProfile,
+    error: errorUserProfile,
+    refetch: refetchUserProfile,
+  } = useGetUserProfileQuery();
   /**
    * Update push notification setting on the server
    * @param value - The new boolean value for push notifications
@@ -516,6 +522,7 @@ const useProfile = () => {
     isLoadingUpdateAddress,
     isLoadingAddresses,
     isLoadingServiceHistory,
+    isLoadingUserProfile,
     isLoadingUpdatePushNotificationToken,
     isLoadingUpdateEmailNotificationToken,
     isLoadingUpdateMarketingEmailToken,
@@ -524,11 +531,13 @@ const useProfile = () => {
     errorUpdateAddress,
     errorAddresses,
     errorServiceHistory,
+    errorUserProfile,
     errorUpdatePushNotificationToken,
     errorUpdateEmailNotificationToken,
     errorUpdateMarketingEmailToken,
     refetchAddresses,
     refetchServiceHistory,
+    refetchUserProfile,
   };
 };
 

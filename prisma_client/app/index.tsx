@@ -86,8 +86,8 @@ export default function WelcomeScreen() {
           >
             <View style={styles.heroContent}>
               <View style={styles.logoContainer}>
-                <StyledText variant="titleLarge">Prisma Car Wash</StyledText>
-                <StyledText variant="bodyMedium">
+                <StyledText variant="displayMedium">Prisma Valet</StyledText>
+                <StyledText variant="bodyMedium" style={{ fontSize: 12 }}>
                   Professional Car Care at Your Doorstep
                 </StyledText>
               </View>
@@ -313,7 +313,10 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     height: height * 0.7,
-    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+    alignContent: "center",
+
   },
   heroGradient: {
     flex: 1,
@@ -329,6 +332,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
     marginBottom: 32,
+    gap: 5,
   },
   logoCircle: {
     width: 80,
@@ -373,6 +377,8 @@ const styles = StyleSheet.create({
     gap: 16,
     flexWrap: "wrap",
     justifyContent: "center",
+    marginTop: 20,
+    alignItems: "center",
   },
   primaryButton: {
     minWidth: 140,
