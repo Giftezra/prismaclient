@@ -52,3 +52,4 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 202, in get_host
     raise DisallowedHost(msg)
 django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'client.localhost'. You may need to add 'client.localhost' to ALLOWED_HOSTS.
+INFO 2025-10-13 02:47:38,379 autoreload 1241 134839531395968 Watching for file changes with StatReloader
