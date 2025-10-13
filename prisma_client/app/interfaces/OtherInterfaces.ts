@@ -6,11 +6,5 @@ export default interface DetailerProfileProps {
 }
 
 export interface ReturnBookingProps {
-  detailer: DetailerProfileProps;
-  job: {
-    booking_reference: string;
-    appointment_date: string;
-    appointment_time: string;
-    address: string;
-  };
+  success: boolean;
 }

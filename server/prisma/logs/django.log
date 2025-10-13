@@ -1682,3 +1682,154 @@ INFO 2025-10-13 00:20:40,711 server 1729 125478201628352 Configuring endpoint tc
 INFO 2025-10-13 00:20:40,712 server 1729 125478201628352 Listening on TCP address 0.0.0.0:8000
 INFO 2025-10-13 00:21:33,849 runserver 1729 125478201628352 HTTP GET /admin/main/servicetype/ 200 [0.94, 172.18.0.8:39414]
 INFO 2025-10-13 00:21:34,481 runserver 1729 125478201628352 HTTP GET /admin/jsi18n/ 200 [0.50, 172.18.0.8:39426]
+INFO 2025-10-13 01:14:29,479 autoreload 7 128310156254080 Watching for file changes with StatReloader
+INFO 2025-10-13 01:15:11,539 autoreload 7 137154228796288 Watching for file changes with StatReloader
+INFO 2025-10-13 01:17:11,511 autoreload 7 137154228796288 /app/main/migrations/0007_referral_alter_detailerprofile_options_and_more.py changed, reloading.
+INFO 2025-10-13 01:17:13,787 autoreload 33 140273048521600 Watching for file changes with StatReloader
+INFO 2025-10-13 01:28:57,170 autoreload 33 140273048521600 /app/main/migrations/0001_initial.py changed, reloading.
+INFO 2025-10-13 01:28:59,221 autoreload 212 135724865477504 Watching for file changes with StatReloader
+INFO 2025-10-13 01:29:01,052 server 212 135724758374080 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:29:01,053 server 212 135724758374080 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:29:01,056 server 212 135724758374080 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:39:34,611 autoreload 212 135724865477504 /app/main/models.py changed, reloading.
+INFO 2025-10-13 01:39:38,326 autoreload 347 127441736080256 Watching for file changes with StatReloader
+INFO 2025-10-13 01:39:41,967 server 347 127441629779648 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:39:41,969 server 347 127441629779648 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:39:41,972 server 347 127441629779648 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:07,067 autoreload 347 127441736080256 /app/main/models.py changed, reloading.
+INFO 2025-10-13 01:40:09,433 autoreload 355 125049933769600 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:11,229 server 355 125049826875072 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:11,230 server 355 125049826875072 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:11,231 server 355 125049826875072 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:13,758 autoreload 355 125049933769600 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:40:16,314 autoreload 357 128713464814464 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:18,185 server 357 128713359357632 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:18,186 server 357 128713359357632 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:18,188 server 357 128713359357632 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:39,184 autoreload 357 128713464814464 /app/main/tasks.py changed, reloading.
+INFO 2025-10-13 01:40:41,455 autoreload 365 130583927876480 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:43,343 server 365 130583820932800 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:43,345 server 365 130583820932800 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:43,347 server 365 130583820932800 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:45,588 autoreload 365 130583927876480 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:40:47,877 autoreload 367 138021838027648 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:49,741 server 367 138021731210944 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:49,742 server 367 138021731210944 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:49,744 server 367 138021731210944 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:40:51,948 autoreload 367 138021838027648 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:40:54,313 autoreload 369 132721987152768 Watching for file changes with StatReloader
+INFO 2025-10-13 01:40:56,685 server 369 132721881028288 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:40:56,686 server 369 132721881028288 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:40:56,688 server 369 132721881028288 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:41:13,293 autoreload 369 132721987152768 /app/main/tasks.py changed, reloading.
+INFO 2025-10-13 01:41:15,861 autoreload 377 124401765370752 Watching for file changes with StatReloader
+INFO 2025-10-13 01:41:17,535 server 377 124401659057856 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:41:17,536 server 377 124401659057856 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:41:17,537 server 377 124401659057856 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:41:26,123 autoreload 377 124401765370752 /app/main/tasks.py changed, reloading.
+INFO 2025-10-13 01:41:28,492 autoreload 385 126146313501568 Watching for file changes with StatReloader
+INFO 2025-10-13 01:41:30,379 server 385 126146206406336 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:41:30,380 server 385 126146206406336 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:41:30,382 server 385 126146206406336 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:41:36,600 autoreload 385 126146313501568 /app/main/tasks.py changed, reloading.
+INFO 2025-10-13 01:41:38,889 autoreload 387 134430311590784 Watching for file changes with StatReloader
+INFO 2025-10-13 01:42:16,279 autoreload 387 134430311590784 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:42:18,772 autoreload 395 129189069159296 Watching for file changes with StatReloader
+INFO 2025-10-13 01:44:52,616 autoreload 395 129189069159296 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:44:55,098 autoreload 428 126599956974464 Watching for file changes with StatReloader
+INFO 2025-10-13 01:45:04,497 autoreload 428 126599956974464 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:45:06,835 autoreload 436 128372907854720 Watching for file changes with StatReloader
+INFO 2025-10-13 01:45:08,720 server 436 128372800919232 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:45:08,721 server 436 128372800919232 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:45:08,723 server 436 128372800919232 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:45:19,327 autoreload 436 128372907854720 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:45:21,766 autoreload 438 123707906378624 Watching for file changes with StatReloader
+INFO 2025-10-13 01:45:23,615 server 438 123707799541440 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:45:23,617 server 438 123707799541440 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:45:23,620 server 438 123707799541440 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:50:31,902 autoreload 438 123707906378624 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:50:34,384 autoreload 519 136523376462720 Watching for file changes with StatReloader
+INFO 2025-10-13 01:50:36,274 server 519 136523269969600 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:50:36,275 server 519 136523269969600 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:50:36,277 server 519 136523269969600 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:55:12,532 autoreload 519 136523376462720 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:55:14,828 autoreload 575 125817864797056 Watching for file changes with StatReloader
+INFO 2025-10-13 01:55:16,710 server 575 125817757800128 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:55:16,710 server 575 125817757800128 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:55:16,712 server 575 125817757800128 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 01:55:21,384 autoreload 575 125817864797056 /app/main/views/booking.py changed, reloading.
+INFO 2025-10-13 01:55:24,214 autoreload 577 130527492381568 Watching for file changes with StatReloader
+INFO 2025-10-13 01:55:26,412 server 577 130527385523904 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 01:55:26,416 server 577 130527385523904 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 01:55:26,419 server 577 130527385523904 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:09:55,196 runserver 577 130527385523904 HTTP GET /api/v1/terms/get_terms/ 200 [0.54, 172.18.0.11:34900]
+INFO 2025-10-13 02:10:29,230 runserver 577 130527385523904 HTTP GET /admin/main/termsandconditions/ 200 [1.45, 172.18.0.11:44494]
+INFO 2025-10-13 02:10:30,754 runserver 577 130527385523904 HTTP GET /admin/jsi18n/ 200 [1.25, 172.18.0.11:47216]
+INFO 2025-10-13 02:10:34,597 runserver 577 130527385523904 HTTP GET /admin/main/termsandconditions/1/change/ 200 [0.99, 172.18.0.11:47218]
+INFO 2025-10-13 02:10:35,441 runserver 577 130527385523904 HTTP GET /admin/jsi18n/ 200 [0.69, 172.18.0.11:47224]
+WARNING 2025-10-13 02:17:06,567 server 577 130527385523904 Application instance <Task pending name='Task-21' coro=<ASGIStaticFilesHandler.__call__() running at /usr/local/lib/python3.11/site-packages/django/contrib/staticfiles/handlers.py:101> wait_for=<_GatheringFuture pending cb=[Task.task_wakeup()]>> for connection <WebRequest at 0x76b6c41d32d0 method=POST uri=/api/v1/onboard/create_new_account/ clientproto=HTTP/1.1> took too long to shut down and was killed.
+WARNING 2025-10-13 02:17:30,060 log 577 130527265810112 Bad Request: /api/v1/onboard/create_new_account/
+WARNING 2025-10-13 02:17:30,062 runserver 577 130527385523904 HTTP POST /api/v1/onboard/create_new_account/ 400 [0.71, 172.18.0.11:47038]
+INFO 2025-10-13 02:18:09,552 runserver 577 130527385523904 HTTP GET /admin/main/user/ 200 [0.81, 172.18.0.11:42802]
+INFO 2025-10-13 02:18:10,239 runserver 577 130527385523904 HTTP GET /admin/jsi18n/ 200 [0.54, 172.18.0.11:42816]
+INFO 2025-10-13 02:18:19,141 runserver 577 130527385523904 HTTP POST /admin/main/user/ 200 [1.69, 172.18.0.11:42818]
+INFO 2025-10-13 02:18:24,224 runserver 577 130527385523904 HTTP POST /admin/main/user/ 302 [2.71, 172.18.0.11:49306]
+INFO 2025-10-13 02:18:25,012 runserver 577 130527385523904 HTTP GET /admin/main/user/ 200 [0.70, 172.18.0.11:49308]
+INFO 2025-10-13 02:18:25,659 runserver 577 130527385523904 HTTP GET /admin/jsi18n/ 200 [0.51, 172.18.0.11:49316]
+INFO 2025-10-13 02:20:02,086 autoreload 577 130527492381568 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-13 02:20:05,838 autoreload 883 139423251811200 Watching for file changes with StatReloader
+INFO 2025-10-13 02:20:08,330 server 883 139423145694912 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:20:08,331 server 883 139423145694912 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:20:08,334 server 883 139423145694912 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:21:02,730 autoreload 883 139423251811200 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-13 02:21:05,027 autoreload 897 140023766170496 Watching for file changes with StatReloader
+INFO 2025-10-13 02:21:08,823 server 897 140023660803776 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:21:08,825 server 897 140023660803776 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:21:08,831 server 897 140023660803776 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:21:19,827 autoreload 897 140023766170496 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-13 02:21:22,110 autoreload 905 123451022146432 Watching for file changes with StatReloader
+INFO 2025-10-13 02:21:24,089 server 905 123450915198656 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:21:24,091 server 905 123450915198656 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:21:24,094 server 905 123450915198656 Listening on TCP address 0.0.0.0:8000
+WARNING 2025-10-13 02:21:29,518 log 905 123450866955968 Bad Request: /api/v1/onboard/create_new_account/
+WARNING 2025-10-13 02:21:29,519 runserver 905 123450915198656 HTTP POST /api/v1/onboard/create_new_account/ 400 [1.22, 172.18.0.11:46172]
+INFO 2025-10-13 02:21:45,388 runserver 905 123450915198656 HTTP GET /admin/main/user/ 200 [0.86, 172.18.0.11:59348]
+INFO 2025-10-13 02:21:46,093 runserver 905 123450915198656 HTTP GET /admin/jsi18n/ 200 [0.54, 172.18.0.11:59358]
+INFO 2025-10-13 02:22:00,186 runserver 905 123450915198656 HTTP POST /admin/main/user/ 200 [1.58, 172.18.0.11:35172]
+INFO 2025-10-13 02:22:13,066 runserver 905 123450915198656 HTTP POST /admin/main/user/ 302 [2.67, 172.18.0.11:38996]
+INFO 2025-10-13 02:22:13,877 runserver 905 123450915198656 HTTP GET /admin/main/user/ 200 [0.72, 172.18.0.11:39002]
+INFO 2025-10-13 02:22:14,544 runserver 905 123450915198656 HTTP GET /admin/jsi18n/ 200 [0.51, 172.18.0.11:46556]
+WARNING 2025-10-13 02:22:43,571 log 905 123450866955968 Bad Request: /api/v1/onboard/create_new_account/
+WARNING 2025-10-13 02:22:43,573 runserver 905 123450915198656 HTTP POST /api/v1/onboard/create_new_account/ 400 [1.07, 172.18.0.11:43628]
+INFO 2025-10-13 02:33:43,550 autoreload 905 123451022146432 /app/main/views/authentication.py changed, reloading.
+INFO 2025-10-13 02:33:47,202 autoreload 1064 133869054131072 Watching for file changes with StatReloader
+INFO 2025-10-13 02:33:49,627 server 1064 133868947674816 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:33:49,627 server 1064 133868947674816 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:33:49,628 server 1064 133868947674816 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:35:58,058 autoreload 1064 133869054131072 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:36:01,639 autoreload 1091 136806147644288 Watching for file changes with StatReloader
+INFO 2025-10-13 02:36:04,054 server 1091 136806042433216 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:36:04,055 server 1091 136806042433216 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:36:04,058 server 1091 136806042433216 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:39:48,840 autoreload 1091 136806147644288 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:39:52,059 autoreload 1142 137771221605248 Watching for file changes with StatReloader
+INFO 2025-10-13 02:39:53,817 server 1142 137771116132032 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:39:53,818 server 1142 137771116132032 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:39:53,820 server 1142 137771116132032 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:39:56,428 autoreload 1142 137771221605248 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:39:58,572 autoreload 1144 131791139318656 Watching for file changes with StatReloader
+INFO 2025-10-13 02:40:00,361 server 1144 131791032850112 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:40:00,370 server 1144 131791032850112 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:40:00,375 server 1144 131791032850112 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:40:06,513 autoreload 1144 131791139318656 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:40:08,863 autoreload 1146 137226236263296 Watching for file changes with StatReloader
+INFO 2025-10-13 02:40:10,559 server 1146 137226129413824 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:40:10,560 server 1146 137226129413824 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:40:10,562 server 1146 137226129413824 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:40:25,536 autoreload 1146 137226236263296 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:40:27,941 autoreload 1154 139967769074560 Watching for file changes with StatReloader
+INFO 2025-10-13 02:40:29,538 server 1154 139967662823104 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-10-13 02:40:29,539 server 1154 139967662823104 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-10-13 02:40:29,540 server 1154 139967662823104 Listening on TCP address 0.0.0.0:8000
+INFO 2025-10-13 02:40:39,113 autoreload 1154 139967769074560 /app/main/models.py changed, reloading.
+INFO 2025-10-13 02:40:41,134 autoreload 1156 132198644452224 Watching for file changes with StatReloader

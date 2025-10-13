@@ -443,47 +443,9 @@ class BookingView(APIView):
             booking_data = request.data.get('booking_data', request.data)
             logger.info(f"Booking data extracted: {booking_data}")
 
-            # Create detailer profile
-            try:
-                logger.info("Creating detailer profile...")
-                detailer_data = booking_data.get('detailer', {})
-                
-                # Validate required fields
-                if not detailer_data.get('name') or not detailer_data.get('phone'):
-                    logger.error("Missing required detailer fields: name or phone")
-                    return Response({'error': 'Detailer name and phone are required'}, 
-                                  status=status.HTTP_400_BAD_REQUEST)
-                
-                # Normalize data for comparison
-                detailer_name = detailer_data.get('name').strip()
-                detailer_phone = detailer_data.get('phone').strip()
-                detailer_rating = detailer_data.get('rating', 0.0)
-                
-                # Check if this detailer already exists (case-insensitive name match)
-                detailer = DetailerProfile.objects.filter(
-                    name__iexact=detailer_name, 
-                    phone=detailer_phone
-                ).first()
-                
-                if not detailer:
-                    # Create new detailer
-                    detailer = DetailerProfile.objects.create(
-                        name=detailer_name,
-                        phone=detailer_phone,
-                        rating=detailer_rating,
-                    )
-                    logger.info(f"Detailer created successfully: {detailer.id} - {detailer.name}")
-                else:
-                    # Update rating if provided and different
-                    if detailer_rating and detailer_rating != detailer.rating:
-                        detailer.rating = detailer_rating
-                        detailer.save()
-                        logger.info(f"Detailer rating updated: {detailer.id} - {detailer.name} (rating: {detailer.rating})")
-                    else:
-                        logger.info(f"Detailer already exists: {detailer.id} - {detailer.name}")
-                        
-            except Exception as e:
-                raise e
+            # Detailer will be assigned later via Redis/detailer app
+            # No longer creating detailer profile at booking time
+            logger.info("Booking will be created without detailer assignment (pending status)")
             
             # Get existing objects by ID
             try:
@@ -552,7 +514,7 @@ class BookingView(APIView):
                 except LoyaltyProgram.DoesNotExist:
                     logger.error(f"Loyalty program not found for user {request.user.id}")
             
-            # Create the booking in the database
+            # Create the booking in the database without detailer
             try:
                 logger.info("Creating BookedAppointment...")
                 appointment = BookedAppointment.objects.create(
@@ -561,7 +523,7 @@ class BookingView(APIView):
                     vehicle = vehicle,
                     valet_type = valet_type,
                     service_type = service_type,
-                    detailer = detailer,
+                    detailer = None,
                     address = address,
                     status = booking_data.get('status'),
                     total_amount = booking_data.get('total_amount'),
@@ -600,9 +562,9 @@ class BookingView(APIView):
                 logger.info("Sending push notification...")
                 send_push_notification.delay(
                     request.user.id,
-                    "Booking Assigned! 🎉",
-                    f"Your valet service has been assigned to one of our detailers for {appointment.appointment_date} at {appointment.start_time}. Please wait for confirmation.",
-                    "booking_assigned"
+                    "Booking Received! 🎉",
+                    f"Your booking for {appointment.appointment_date} at {appointment.start_time} has been received. Waiting for detailer confirmation!",
+                    "booking_pending"
                 )
                 logger.info("Push notification sent successfully")
             except Exception as e:
@@ -610,6 +572,7 @@ class BookingView(APIView):
                 # Don't fail the entire booking for notification errors
 
             logger.info(f"Booking appointment creation completed successfully: {appointment.id}")
+            logger.info(f"Waiting for detailer app to confirm via Redis (job_acceptance channel)")
             return Response({'appointment_id': str(appointment.id)}, status=status.HTTP_200_OK)
             
         except Exception as e:

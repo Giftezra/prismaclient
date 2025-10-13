@@ -20,15 +20,10 @@ const OngoingServiceCard: React.FC<{
   const userFriendlyStatus = useMemo(() => {
     return appointment?.status?.replace("_", " ");
   }, [appointment?.status]);
-  
 
   if (!appointment) {
     return (
-      <View
-        style={[
-          styles.ongoingCard,
-        ]}
-      >
+      <View style={[styles.ongoingCard]}>
         <View style={styles.ongoingHeader}>
           <Ionicons name="time" size={20} color={iconColor} />
           <StyledText style={styles.ongoingTitle} children="Ongoing Service" />
@@ -67,15 +62,17 @@ const OngoingServiceCard: React.FC<{
           <View>
             <StyledText
               variant="titleMedium"
-              children={appointment.detailer.name}
+              children={appointment.detailer?.name || "Assigning detailer..."}
             />
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={12} color="#FFD700" />
-              <StyledText
-                variant="bodyMedium"
-                children={appointment.detailer.rating}
-              />
-            </View>
+            {appointment.detailer && (
+              <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={12} color="#FFD700" />
+                <StyledText
+                  variant="bodyMedium"
+                  children={appointment.detailer.rating}
+                />
+              </View>
+            )}
           </View>
         </View>
 

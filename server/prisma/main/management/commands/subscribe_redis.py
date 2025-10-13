@@ -37,9 +37,17 @@ class Command(BaseCommand):
                 
                 # Handle quoted JSON string or plain string
                 try:
-                    booking_reference = json.loads(raw)
+                    data = json.loads(raw)
+                    # Check if it's a dict with booking_reference or just a string
+                    if isinstance(data, dict):
+                        booking_reference = data.get('booking_reference', data)
+                        detailer_data = data.get('detailer', {})
+                    else:
+                        booking_reference = str(data).strip().strip('"').strip("'")
+                        detailer_data = {}
                 except Exception:
                     booking_reference = str(raw).strip().strip('"').strip("'")
+                    detailer_data = {}
                 
                 self.stdout.write(f"Received on {channel}: {booking_reference}")
                 
@@ -47,12 +55,41 @@ class Command(BaseCommand):
                     booking = BookedAppointment.objects.get(booking_reference=booking_reference)
                     
                     if channel == 'job_acceptance':
+                        # Handle detailer assignment if detailer data is provided
+                        if detailer_data and detailer_data.get('phone'):
+                            from main.models import DetailerProfile
+                            
+                            detailer_name = detailer_data.get('name', '').strip()
+                            detailer_phone = detailer_data.get('phone', '').strip()
+                            detailer_rating = detailer_data.get('rating', 0.0)
+                            
+                            # Get or create detailer profile (with deduplication)
+                            detailer, created = DetailerProfile.objects.get_or_create(
+                                phone=detailer_phone,
+                                defaults={
+                                    'name': detailer_name,
+                                    'rating': detailer_rating
+                                }
+                            )
+                            
+                            if not created and detailer_rating and detailer_rating != detailer.rating:
+                                # Update rating if different
+                                detailer.rating = detailer_rating
+                                detailer.save()
+                                self.stdout.write(f"Detailer rating updated: {detailer.name} (rating: {detailer.rating})")
+                            else:
+                                self.stdout.write(f"Detailer {'created' if created else 'found'}: {detailer.name}")
+                            
+                            # Assign detailer to booking
+                            booking.detailer = detailer
+                            self.stdout.write(f"Detailer {detailer.name} assigned to booking {booking_reference}")
+                        
                         booking.status = 'confirmed'
                         booking.save()
                         self.stdout.write(f"Updated booking {booking_reference} to confirmed")
                         
-                        # Chjeck if the user has email notifications enabled
-                        if booking.user.allow_email_notifications:
+                        # Check if the user has email notifications enabled
+                        if booking.user.allow_email_notifications and booking.detailer:
                             send_booking_confirmation_email.delay(
                                 booking.user.email,
                                 booking.user.name,
@@ -72,7 +109,7 @@ class Command(BaseCommand):
                         send_push_notification.delay(
                             booking.user.id,
                             "Booking Confirmed! 🎉",
-                            f"Your valet service is confirmed for {booking.appointment_date} at {booking.start_time}",
+                            f"Your valet service is confirmed for {booking.appointment_date} at {booking.start_time}. Your detailer is {booking.detailer.name}",
                             {
                                 "type": "booking_confirmed",
                                 "booking_reference": booking.booking_reference,
@@ -88,7 +125,7 @@ class Command(BaseCommand):
                             'Booking Confirmed',
                             'booking_confirmed',
                             'success',
-                            'Your booking has been confirmed! Your detailer will be with you at the specified time.'
+                            f'Your booking has been confirmed! Your detailer will be with you at the specified time. Your detailer is {booking.detailer.name}'
                         )
                         
                     elif channel == 'job_started':

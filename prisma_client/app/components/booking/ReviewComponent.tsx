@@ -80,7 +80,7 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
 
     setIsSubmitting(true);
     try {
-    // First, process tip payment if tip amount is greater than 
+      // First, process tip payment if tip amount is greater than
       if (parseFloat(tipAmount) > 0) {
         setIsProcessingPayment(true);
         const paymentSuccess = await processTipPayment(
@@ -214,12 +214,14 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
             >
               {recentService.service_type} • {formatDate(recentService.date)}
             </StyledText>
-            <StyledText
-              variant="bodySmall"
-              style={[styles.detailerName, { color: textColor }]}
-            >
-              with {recentService.detailer.name}
-            </StyledText>
+            {recentService.detailer && (
+              <StyledText
+                variant="bodySmall"
+                style={[styles.detailerName, { color: textColor }]}
+              >
+                with {recentService.detailer.name}
+              </StyledText>
+            )}
           </View>
         </View>
       )}
@@ -373,7 +375,10 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
           variant="bodyMedium"
           style={[styles.confirmationSubtitle, { color: textColor }]}
         >
-          Your review has been sent to {recentService?.detailer.name}
+          Your review has been sent
+          {recentService?.detailer?.name
+            ? ` to ${recentService.detailer.name}`
+            : ""}
         </StyledText>
       </View>
     </Animated.View>

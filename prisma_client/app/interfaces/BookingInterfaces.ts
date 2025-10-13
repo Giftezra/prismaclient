@@ -41,7 +41,7 @@ export interface BookedAppointmentProps {
   vehicle: MyVehiclesProps;
   valet_type: ValetTypeProps;
   service_type: ServiceTypeProps;
-  detailer: DetailerProfileProps;
+  detailer?: DetailerProfileProps; 
   address: MyAddressProps;
   status?: string;
   total_amount: number;

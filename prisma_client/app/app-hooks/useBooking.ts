@@ -1701,14 +1701,13 @@ const useBooking = () => {
       /* if payment is successful, create the booking */
       const booking: ReturnBookingProps = await createBooking(bookingReference);
 
-      if (booking.detailer && booking.job) {
+      if (booking.success) {
         console.log("Booking data from detailer app stack: ", booking);
         const response = await bookAppointment({
           date: selectedDate?.toISOString().split("T")[0] || "",
           vehicle: selectedVehicle!,
           valet_type: selectedValetType!,
           service_type: selectedServiceType!,
-          detailer: booking.detailer,
           address: selectedAddress!,
           status: "pending",
           total_amount: finalPrice,
@@ -1716,7 +1715,7 @@ const useBooking = () => {
           start_time: selectedDate ? formatLocalTime(selectedDate) : "",
           duration: getEstimatedDuration(),
           special_instructions: specialInstructions,
-          booking_reference: booking.job.booking_reference,
+          booking_reference: bookingReference,
           applied_free_quick_sparkle: applyFreeQuickSparkle,
         }).unwrap();
 
@@ -1728,7 +1727,7 @@ const useBooking = () => {
             try {
               await markPromotionAsUsed({
                 promotion_id: promotions.id,
-                booking_reference: booking.job.booking_reference,
+                booking_reference: bookingReference,
               }).unwrap();
             } catch (error) {
               console.error("Failed to mark promotion as used:", error);

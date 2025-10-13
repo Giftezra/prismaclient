@@ -6,6 +6,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
+import random
+import string
 
 
 
@@ -41,6 +43,10 @@ class User(AbstractUser):
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     has_signup_promotions = models.BooleanField(default=True)
     has_booking_promotions = models.BooleanField(default=False)
+
+    referral_code = models.CharField(max_length=8, blank=True, null=True)
+    referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -52,9 +58,17 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.name} - {self.email}"
 
+    def create_referral_code(self):
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
     def save(self, *args, **kwargs):
         self.username = self.email
         is_new_user = self.pk is None
+        
+        # Generate referral code for new users
+        if is_new_user and not self.referral_code:
+            self.referral_code = self.create_referral_code()
+        
         super().save(*args, **kwargs)
 
         # Create a sign up promotions for new users
@@ -73,6 +87,19 @@ class User(AbstractUser):
         # Create a loyalty program for new users
         if is_new_user:
             LoyaltyProgram.objects.create(user=self)
+
+
+class Referral(models.Model):
+    referrer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referrer')
+    referred = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referred')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.referrer.name} - {self.referred.name}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 
 class Address(models.Model):
@@ -160,11 +187,11 @@ class BookedAppointment(models.Model):
     ]
     booking_reference = models.CharField(max_length=255, editable=False, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    vehicle = models.ForeignKey(Vehicles, on_delete=models.CASCADE)
+    vehicle = models.ForeignKey(Vehicles, on_delete=models.SET_NULL, null=True, blank=True)
     valet_type = models.ForeignKey(ValetType, on_delete=models.CASCADE)
     service_type = models.ForeignKey(ServiceType, on_delete=models.CASCADE)
     add_ons = models.ManyToManyField(AddOns, blank=True)
-    detailer = models.ForeignKey(DetailerProfile, on_delete=models.CASCADE)
+    detailer = models.ForeignKey(DetailerProfile, on_delete=models.SET_NULL, null=True, blank=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     booking_date = models.DateField(auto_now_add=True) 
     appointment_date = models.DateField()

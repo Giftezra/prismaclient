@@ -37,23 +37,14 @@ class AuthenticationView(CreateAPIView):
 
     
     def register(self, request):
-        """ Register a new user by using the data sent from the client.
-            The data is sent in the body of the request.
-            The data is in the format of {
-                "credentials": {
-                    "name": "John Doe",
-                    "email": "john.doe@example.com",
-                    "phone": "1234567890",
-                    "password": "password",
-                    "referralCode": "ABC123",  # Optional
-                    "isFleetOwner": false  # Optional, defaults to false
-                }
-            }
-        """
         try:
             data = request.data.get('credentials')
             referral_code = data.get('referred_code', None)
             is_fleet_owner = data.get('isFleetOwner', False)
+
+            print(data)
+            print(referral_code)
+            print(is_fleet_owner)
             
             # Handle referral if code provided
             referred_by = None
@@ -79,8 +70,7 @@ class AuthenticationView(CreateAPIView):
             user.save()
             # Send the welcome and promotional emails to the user even if they have not allowed them as this is a new user
             send_welcome_email.delay(user.email)
-            sleep(60)
-            send_promotional_email.delay(user.email, user.name)
+            send_promotional_email.apply_async(args=[user.email, user.name], countdown=60)
             
             # Generate tokens for the newly created user
             refresh = RefreshToken.for_user(user)

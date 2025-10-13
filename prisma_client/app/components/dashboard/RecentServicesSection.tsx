@@ -103,7 +103,7 @@ const ServiceCard: React.FC<{
           <StyledText
             style={[styles.serviceDetailerName, { color: textColor }]}
             variant="bodyMedium"
-            children={booking.detailer.name}
+            children={booking.detailer?.name || "No detailer assigned"}
           />
           {booking.is_reviewed && booking.rating > 0 && (
             <View style={styles.ratingContainer}>
@@ -132,7 +132,9 @@ const RecentServicesSection: React.FC<RecentServicesSectionProps> = ({
   };
 
   const renderEmptyState = () => (
-    <View style={[styles.emptyStateContainer, { backgroundColor:backgroundColor}]}>
+    <View
+      style={[styles.emptyStateContainer, { backgroundColor: backgroundColor }]}
+    >
       <Ionicons
         name="car-outline"
         size={45}
