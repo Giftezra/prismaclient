@@ -37,6 +37,7 @@ class User(AbstractUser):
     referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    is_fleet_owner = models.BooleanField(default=False)
     notification_token = models.CharField(max_length=255, blank=True, null=True)
     allow_marketing_emails = models.BooleanField(default=False)
     allow_push_notifications = models.BooleanField(default=True)
@@ -196,7 +197,7 @@ class BookedAppointment(models.Model):
     valet_type = models.ForeignKey(ValetType, on_delete=models.CASCADE)
     service_type = models.ForeignKey(ServiceType, on_delete=models.CASCADE)
     add_ons = models.ManyToManyField(AddOns, blank=True)
-    detailer = models.ForeignKey(DetailerProfile, on_delete=models.CASCADE)
+    detailer = models.ForeignKey(DetailerProfile, on_delete=models.SET_NULL, null=True, blank=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     booking_date = models.DateField(auto_now_add=True) 
     appointment_date = models.DateField()
@@ -308,18 +309,77 @@ class LoyaltyProgram(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     current_tier = models.CharField(max_length=50, choices=TIER_CHOICES, default='bronze')
     completed_bookings = models.IntegerField(default=0)
+    last_booking_date = models.DateField(null=True, blank=True)
+    free_quick_sparkle_used = models.IntegerField(default=0)
+    free_quick_sparkle_reset_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     # Create the tier benefit method to track what discounts a user gets based on their current tier
     def get_tier_benefits(self):
-        benefits = {
-            'bronze': {'discount':0, 'free_service':[]},
-            'silver': {'discount':5, 'free_service':['Air freshner']},
-            'gold': {'discount':10, 'free_service':['Air freshner','Window cleaned']},
-            'platinum': {'discount':15, 'free_service':['Air freshner','Window cleaned','Interior protection', 'Basic wash']},
-        }
+        # Check if user is a fleet owner
+        if self.user.is_fleet_owner:
+            # Fleet owner benefits - different discounts, benefits TBD
+            benefits = {
+                'bronze': {'discount': 0, 'free_service': []},
+                'silver': {'discount': 5, 'free_service': ['Air freshner', 'One easy bill per month']}, 
+                'gold': {'discount': 8, 'free_service': ['Air freshner', 'One easy bill per month', 'Digital health check']},   
+                'platinum': {'discount': 10, 'free_service': ['Air freshner', 'One easy bill per month', 'Digital health check', 'Interior protection', '3 Free Quick sparkle per month']},
+            }
+        else:
+            # Regular user benefits
+            benefits = {
+                'bronze': {'discount': 0, 'free_service': []},
+                'silver': {'discount': 5, 'free_service': ['Air freshner']},
+                'gold': {'discount': 8, 'free_service': ['Air freshner', 'Digital health check']},
+                'platinum': {'discount': 12, 'free_service': ['Air freshner','Interior protection', '1 Free Quick sparkle per month', 'Digital health check']},
+            }
         return benefits.get(self.current_tier, benefits['bronze'])
+    
+    def get_free_wash_limit(self):
+        """Get the monthly free wash limit based on tier and user type"""
+        if self.current_tier != 'platinum':
+            return 0
+        
+        if self.user.is_fleet_owner:
+            return 3
+        else:
+            return 1 
+    
+    def can_use_free_quick_sparkle(self):
+        """Check if user can use a free basic wash"""
+        # Only platinum tier gets free washes
+        if self.current_tier != 'platinum':
+            return False
+        
+        today = timezone.now().date()
+        
+        # Reset counter if 30 days have passed since last reset
+        if self.free_quick_sparkle_reset_date:
+            days_since_reset = (today - self.free_quick_sparkle_reset_date).days
+            if days_since_reset >= 30:
+                self.free_quick_sparkle_used = 0
+                self.free_quick_sparkle_reset_date = today
+                self.save()
+        else:
+            # First time using this feature
+            self.free_quick_sparkle_reset_date = today
+            self.save()
+        
+        # Check if user has washes remaining
+        limit = self.get_free_wash_limit()
+        return self.free_quick_sparkle_used < limit
+    
+    def use_free_quick_sparkle(self):
+        """Increment the free wash counter after using one"""
+        self.free_quick_sparkle_used += 1
+        self.save()
+        
+    def get_remaining_free_quick_sparkles(self):
+        """Get the number of remaining free washes for this month"""
+        limit = self.get_free_wash_limit()
+        remaining = limit - self.free_quick_sparkle_used
+        return max(0, remaining)
 
 
 class JobChatRoom(models.Model):
