@@ -105,7 +105,9 @@ class ProfileView(APIView):
                 'address': new_address.address,
                 'post_code': new_address.post_code,
                 'city': new_address.city,
-                'country': new_address.country
+                'country': new_address.country,
+                'latitude': new_address.latitude,
+                'longitude': new_address.longitude
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -208,7 +210,9 @@ class ProfileView(APIView):
                     'address': address.address,
                     'post_code': address.post_code,
                     'city': address.city,
-                    'country': address.country
+                    'country': address.country,
+                    'latitude': address.latitude,
+                    'longitude': address.longitude
                 })
             return Response({'addresses': addresses_list}, status=status.HTTP_200_OK)
         

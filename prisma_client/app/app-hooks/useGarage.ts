@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform, InteractionManager } from "react-native";
 import {
   MyVehiclesProps,
   MyVehicleStatsProps,
@@ -20,6 +20,7 @@ import { useSnackbar } from "../contexts/SnackbarContext";
 import axios from "axios";
 import { API_CONFIG } from "@/constants/Config";
 import * as SecureStore from "expo-secure-store";
+import * as ExpoImagePicker from "expo-image-picker";
 /**
  * Custom hook for managing garage-related functionality including vehicle management.
  *
@@ -92,6 +93,7 @@ const useGarage = () => {
   /* import the alert context which will be used to render an alert */
   const { setAlertConfig, setIsVisible } = useAlertContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
 
   const handleVehicleStatsSelection = useCallback(
     (vehicleId: string) => {
@@ -122,11 +124,187 @@ const useGarage = () => {
   };
 
   /**
+   * Creates file metadata for React Native file uploads.
+   * In React Native, we don't convert to File objects - we use the URI directly with metadata.
+   * This metadata will be used when creating FormData for upload.
+   *
+   * For web, falls back to fetch and blob conversion.
+   *
+   * @param {string} uri - The local URI of the file
+   * @param {string} filename - The desired filename
+   * @param {string} mimeType - The MIME type of the file
+   * @returns {Promise<Object>} File metadata object compatible with React Native FormData
+   */
+  const uriToFile = async (
+    uri: string,
+    filename: string,
+    mimeType: string = "image/jpeg"
+  ): Promise<any> => {
+    // For React Native, return file metadata directly
+    if (Platform.OS !== "web") {
+      return {
+        uri: Platform.OS === "android" ? uri : uri.replace("file://", ""),
+        name: filename,
+        type: mimeType,
+      };
+    }
+
+    // For web, use the old fetch/blob approach
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    return new File([blob], filename, { type: blob.type });
+  };
+
+  /**
+   * Shows the image selection modal to allow users to choose between camera and gallery.
+   */
+  const showImageSelectionModal = () => {
+    setIsImageModalVisible(true);
+  };
+
+  /**
+   * Hides the image selection modal.
+   */
+  const hideImageSelectionModal = () => {
+    setIsImageModalVisible(false);
+  };
+
+  /**
+   * Processes a selected image by converting it to a File object and storing it in state.
+   * Creates a timestamped filename and stores both the URI (for display) and File object (for upload).
+   *
+   * @param {string} imageUri - The URI of the selected image
+   * @throws {Error} If image conversion fails
+   */
+  const handleImageSelection = async (imageUri: string) => {
+    try {
+      // Generate a filename based on timestamp
+      const timestamp = Date.now();
+      const filename = `image_${timestamp}.jpg`;
+
+      // Convert URI to File object or file metadata (for React Native)
+      const imageFile = await uriToFile(imageUri, filename, "image/jpeg");
+
+      // Store both the URI (for display) and File object (for upload)
+      // Create an object with URI, File, and type for React Native FormData
+      const imageData = {
+        uri: imageUri,
+        file: imageFile,
+        filename: filename,
+        type: "image/jpeg", // Store MIME type
+      };
+
+      // Update Redux state with the image
+      collectNewVehicleData("image", imageData);
+
+      // Close the modal after successful selection
+      hideImageSelectionModal();
+    } catch (error) {
+      console.error("Error converting image URI to File:", error);
+      showSnackbarWithConfig({
+        message: "Failed to process image. Please try again.",
+        type: "error",
+        duration: 3000,
+      });
+    }
+  };
+
+  /**
+   * Handles camera image capture using Expo ImagePicker.
+   * Requests camera permissions and launches the camera interface.
+   * Processes the captured image through handleImageSelection.
+   * Closes the modal after the picker completes to fix Android ActivityResultLauncher issue.
+   *
+   * @throws {Error} If camera permissions are denied
+   */
+  const handleCameraSelection = async () => {
+    // Request camera permissions first
+    const { status } = await ExpoImagePicker.requestCameraPermissionsAsync();
+
+    if (status !== "granted") {
+      hideImageSelectionModal();
+      alert("Sorry, we need camera permissions to make this work!");
+      return;
+    }
+
+    // Use InteractionManager to ensure all interactions are complete before launching picker
+    // This ensures ActivityResultLauncher is properly registered
+    InteractionManager.runAfterInteractions(async () => {
+      try {
+        let result = await ExpoImagePicker.launchCameraAsync({
+          mediaTypes: ["images"],
+          aspect: [4, 3],
+          quality: 1,
+        });
+
+        // Close modal after picker completes
+        hideImageSelectionModal();
+
+        if (!result.canceled) {
+          const image = result.assets[0].uri;
+          await handleImageSelection(image);
+        }
+      } catch (error) {
+        hideImageSelectionModal();
+        console.error("Error launching camera:", error);
+      }
+    });
+  };
+
+  /**
+   * Handles image selection from the device's media library using Expo ImagePicker.
+   * Requests media library permissions and launches the image picker interface.
+   * Processes the selected image through handleImageSelection.
+   * Closes the modal after the picker completes to fix Android ActivityResultLauncher issue.
+   *
+   * @throws {Error} If media library permissions are denied
+   */
+  const handleFileSelection = useCallback(async (): Promise<void> => {
+    // Request media library permissions first
+    const { status } =
+      await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      hideImageSelectionModal();
+      showSnackbarWithConfig({
+        message: "Sorry, we need media library permissions to make this work!",
+        type: "error",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Use InteractionManager to ensure all interactions are complete before launching picker
+    // This ensures ActivityResultLauncher is properly registered
+    InteractionManager.runAfterInteractions(async () => {
+      try {
+        let result = await ExpoImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          aspect: [4, 3],
+          quality: 1,
+        });
+
+        // Close modal after picker completes
+        hideImageSelectionModal();
+
+        if (!result.canceled) {
+          const image = result.assets[0].uri;
+          await handleImageSelection(image);
+        }
+      } catch (error) {
+        hideImageSelectionModal();
+        console.error("Error launching image library:", error);
+      }
+    });
+  }, [showSnackbarWithConfig, handleImageSelection, hideImageSelectionModal]);
+
+  /**
    * Prepares FormData object for vehicle upload to the API.
    * Converts all vehicle fields to the format expected by the server.
    *
    * Handles:
    * - Basic vehicle fields (make, model, year, color, licence)
+   * - Image file (extracts File object from stored image data)
    * - Proper FormData structure for multipart/form-data requests
    *
    * @returns {Promise<FormData | null>} A Promise that resolves to FormData object or null if no vehicle data
@@ -139,6 +317,17 @@ const useGarage = () => {
     if (newVehicle.year) formData.append("year", newVehicle.year.toString());
     if (newVehicle.color) formData.append("color", newVehicle.color);
     if (newVehicle.licence) formData.append("licence", newVehicle.licence);
+
+    // Add image - React Native FormData requires uri, name, and type
+    if (newVehicle.image && newVehicle.image.uri) {
+      const imageFormData = {
+        uri: newVehicle.image.uri,
+        name: newVehicle.image.filename || "image.jpg",
+        type: newVehicle.image.type || "image/jpeg",
+      };
+      console.log("Adding image to FormData:", imageFormData);
+      formData.append("image", imageFormData as any);
+    }
 
     return formData;
   };
@@ -191,12 +380,7 @@ const useGarage = () => {
     }
 
     try {
-      /* Prepare the formData for the server submission
-       * If the formData is not prepared, throw an error
-       * if the formData is valid, call the addNewVehicle mutation
-       */
       const formData = await prepareVehicleFormData();
-
       if (formData) {
         const response = await addNewVehicle(formData).unwrap();
         console.log("Vehicle submission response:", response);
@@ -366,6 +550,12 @@ const useGarage = () => {
     handleViewDetailsPress,
     refetchVehicleStats,
     refetchVehicles,
+    // Image selection functions
+    isImageModalVisible,
+    showImageSelectionModal,
+    hideImageSelectionModal,
+    handleCameraSelection,
+    handleFileSelection,
   };
 };
 

@@ -165,15 +165,38 @@ const createBookingApi = createApi({
      * }
      */
     fetchPaymentSheetDetails: builder.mutation<
-      PaymentSheetResponse,
+      PaymentSheetResponse & { paymentIntentId: string },
       { amount: number; booking_reference: string }
     >({
       query: (data) => ({
-        url: "/api/v1/booking/create_payment_sheet/",
+        url: "/api/v1/payment/create_payment_sheet/",
         method: "POST",
         data: {
           amount: data.amount,
           booking_reference: data.booking_reference,
+        },
+      }),
+    }),
+
+    /**
+     * Confirm payment intent has been processed via webhook
+     * ARGS : { payment_intent_id: string }
+     * RESPONSE : { confirmed: boolean, payment_intent_id: string, transaction_id?: string, booking_reference?: string }
+     */
+    confirmPaymentIntent: builder.mutation<
+      {
+        confirmed: boolean;
+        payment_intent_id: string;
+        transaction_id?: string;
+        booking_reference?: string;
+      },
+      { payment_intent_id: string }
+    >({
+      query: (data) => ({
+        url: "/api/v1/payment/confirm_payment_intent/",
+        method: "POST",
+        data: {
+          payment_intent_id: data.payment_intent_id,
         },
       }),
     }),
@@ -271,6 +294,38 @@ const createBookingApi = createApi({
         method: "GET",
       }),
     }),
+
+    /**
+     * Fetch all before/after images for a specific booking
+     * ARGS : { booking_id: string }
+     * RESPONSE : {
+     *   booking_reference: string
+     *   before_images: Array<{ id: number; image_url: string; created_at: string }>
+     *   after_images: Array<{ id: number; image_url: string; created_at: string }>
+     * }
+     */
+    fetchBookingImages: builder.query<
+      {
+        booking_reference: string;
+        before_images: Array<{
+          id: number;
+          image_url: string;
+          created_at: string;
+        }>;
+        after_images: Array<{
+          id: number;
+          image_url: string;
+          created_at: string;
+        }>;
+      },
+      { booking_id: string }
+    >({
+      query: ({ booking_id }) => ({
+        url: `/api/v1/booking/get_booking_images/`,
+        method: "GET",
+        params: { booking_id },
+      }),
+    }),
   }),
 });
 export const {
@@ -286,5 +341,7 @@ export const {
   useGetPaymentMethodsQuery,
   useDeletePaymentMethodMutation,
   useCheckFreeWashQuery,
+  useConfirmPaymentIntentMutation,
+  useFetchBookingImagesQuery,
 } = createBookingApi;
 export default createBookingApi;

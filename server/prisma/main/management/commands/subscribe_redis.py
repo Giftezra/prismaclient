@@ -1,11 +1,12 @@
 from django.core.management.base import BaseCommand
 import redis
-from main.models import BookedAppointment, Notification, User, Address
+from main.models import BookedAppointment, BookedAppointmentImage, Notification, User, Address
 from main.tasks import send_booking_confirmation_email, send_push_notification
 from main.services.NotificationServices import NotificationService  # Import your service
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import json
+import logging
 import logging
 
 logger = logging.getLogger(__name__)
@@ -58,14 +59,22 @@ class Command(BaseCommand):
                         # Handle detailer assignment if detailer data is provided
                         if detailer_data and detailer_data.get('phone'):
                             from main.models import DetailerProfile
+                            from main.util.phone_utils import normalize_phone
                             
                             detailer_name = detailer_data.get('name', '').strip()
                             detailer_phone = detailer_data.get('phone', '').strip()
                             detailer_rating = detailer_data.get('rating', 0.0)
                             
-                            # Get or create detailer profile (with deduplication)
+                            # Normalize phone number to prevent duplicates
+                            normalized_phone = normalize_phone(detailer_phone)
+                            
+                            if not normalized_phone:
+                                self.stderr.write(f"Invalid phone number for detailer: {detailer_name}")
+                                continue
+                            
+                            # Get or create detailer profile (with deduplication using normalized phone)
                             detailer, created = DetailerProfile.objects.get_or_create(
-                                phone=detailer_phone,
+                                phone=normalized_phone,
                                 defaults={
                                     'name': detailer_name,
                                     'rating': detailer_rating
@@ -78,7 +87,7 @@ class Command(BaseCommand):
                                 detailer.save()
                                 self.stdout.write(f"Detailer rating updated: {detailer.name} (rating: {detailer.rating})")
                             else:
-                                self.stdout.write(f"Detailer {'created' if created else 'found'}: {detailer.name}")
+                                self.stdout.write(f"Detailer {'created' if created else 'found'}: {detailer.name} (phone: {normalized_phone})")
                             
                             # Assign detailer to booking
                             booking.detailer = detailer
@@ -129,10 +138,36 @@ class Command(BaseCommand):
                         )
                         
                     elif channel == 'job_started':
+                        # Parse message data (now includes before_images)
+                        if isinstance(data, str):
+                            try:
+                                message_data = json.loads(data)
+                                booking_reference = message_data.get('booking_reference', data)
+                                before_images = message_data.get('before_images', [])
+                            except json.JSONDecodeError:
+                                # Fallback to old format (just booking reference)
+                                booking_reference = data
+                                before_images = []
+                        else:
+                            booking_reference = data.get('booking_reference', str(data))
+                            before_images = data.get('before_images', [])
+                        
                         # Update status to in_progress
                         booking.status = 'in_progress'
                         booking.save()
                         self.stdout.write(f"Updated booking {booking_reference} to in_progress")
+
+                        # Save before images
+                        for img_data in before_images:
+                            try:
+                                BookedAppointmentImage.objects.create(
+                                    booking=booking,
+                                    image_type='before',
+                                    image_url=img_data['image_url']
+                                )
+                                self.stdout.write(f"Saved before image for booking {booking_reference}")
+                            except Exception as e:
+                                self.stderr.write(f"Error saving before image: {e}")
 
                         # Send push notification (NEW)
                         send_push_notification.delay(
@@ -157,10 +192,37 @@ class Command(BaseCommand):
                         )
 
                     elif channel == 'job_completed':
+                        # Parse message data (includes after_images)
+                        # Note: before_images are saved when job_started is received
+                        if isinstance(data, str):
+                            try:
+                                message_data = json.loads(data)
+                                booking_reference = message_data.get('booking_reference', data)
+                                after_images = message_data.get('after_images', [])
+                            except json.JSONDecodeError:
+                                # Fallback to old format (just booking reference)
+                                booking_reference = data
+                                after_images = []
+                        else:
+                            booking_reference = data.get('booking_reference', str(data))
+                            after_images = data.get('after_images', [])
+                        
                         # Update status to completed
                         booking.status = 'completed'
                         booking.save()
                         self.stdout.write(f"Updated booking {booking_reference} to completed")
+
+                        # Save after images
+                        for img_data in after_images:
+                            try:
+                                BookedAppointmentImage.objects.create(
+                                    booking=booking,
+                                    image_type='after',
+                                    image_url=img_data['image_url']
+                                )
+                                self.stdout.write(f"Saved after image for booking {booking_reference}")
+                            except Exception as e:
+                                self.stderr.write(f"Error saving after image: {e}")
 
                         # Send push notification (NEW)
                         send_push_notification.delay(

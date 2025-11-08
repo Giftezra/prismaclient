@@ -11,6 +11,10 @@ import {
 import LinearGradientComponent from "../helpers/LinearGradientComponent";
 import { Ionicons } from "@expo/vector-icons";
 
+interface ServiceHistoryComponentProps extends MyServiceHistoryProps {
+  onPress?: () => void;
+}
+
 const ServiceHistoryComponent = ({
   booking_date,
   appointment_date,
@@ -24,7 +28,8 @@ const ServiceHistoryComponent = ({
   tip,
   is_reviewed,
   rating,
-}: MyServiceHistoryProps) => {
+  onPress,
+}: ServiceHistoryComponentProps) => {
   const cardColor = useThemeColor({}, "cards");
   const borderColor = useThemeColor({}, "borders");
   const textColor = useThemeColor({}, "text");
@@ -35,7 +40,7 @@ const ServiceHistoryComponent = ({
     ...(is_reviewed ? [] : [styles.unratedBorder]),
   ];
 
-  return (
+  const content = (
     <LinearGradientComponent
       color1={cardColor}
       color2={borderColor}
@@ -130,6 +135,20 @@ const ServiceHistoryComponent = ({
       </View>
     </LinearGradientComponent>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        style={styles.touchable}
+      >
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
 };
 
 export default ServiceHistoryComponent;
@@ -228,5 +247,8 @@ const styles = StyleSheet.create({
   unratedBorder: {
     borderWidth: 2,
     borderColor: "#FFA500",
+  },
+  touchable: {
+    // No margins needed - card already has margins
   },
 });

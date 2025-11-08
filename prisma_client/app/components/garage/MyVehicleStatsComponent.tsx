@@ -70,6 +70,19 @@ const MyVehicleStatsComponent = ({
             </View>
           </View>
         </View>
+        {vehicleStats.vehicle?.image?.uri ||
+        (vehicleStats.vehicle?.image &&
+          typeof vehicleStats.vehicle.image === "string") ? (
+          <View style={styles.imageContainer}>
+            <Image
+              source={{
+                uri:
+                  vehicleStats.vehicle.image?.uri || vehicleStats.vehicle.image,
+              }}
+              style={styles.vehicleImage}
+            />
+          </View>
+        ) : null}
       </View>
 
       {/* Stats Grid */}

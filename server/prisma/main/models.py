@@ -94,21 +94,6 @@ class User(AbstractUser):
             self.referral_code = self.create_referral_code()
             self.save()
 
-class Referral(models.Model):
-    referrer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referrer')
-    referred = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referred')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return f"{self.referrer.name} - {self.referred.name}"
-    
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        
-        
-         
-
 
 class Referral(models.Model):
     referrer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referrer')
@@ -122,6 +107,17 @@ class Referral(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
+class Referral(models.Model):
+    referrer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referrer')
+    referred = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referred')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.referrer.name} - {self.referred.name}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 class Address(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -129,7 +125,8 @@ class Address(models.Model):
     post_code = models.CharField(max_length=10)
     city = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
-
+    latitude = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
     def __str__(self):
         return f"{self.user.name} - {self.address}"
 
@@ -144,6 +141,7 @@ class Vehicles(models.Model):
     year = models.IntegerField()
     color = models.CharField(max_length=100)
     licence = models.CharField(max_length=100)
+    image = models.ImageField(upload_to='vehicles/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -175,13 +173,20 @@ class ValetType(models.Model):
 
 class DetailerProfile(models.Model):
     name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=15, unique=True)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.name} - {self.phone}"
+    
+    def save(self, *args, **kwargs):
+        # Normalize phone number before saving
+        from main.util.phone_utils import normalize_phone
+        if self.phone:
+            self.phone = normalize_phone(self.phone)
+        super().save(*args, **kwargs)
     
 class AddOns(models.Model):
     name = models.CharField(max_length=100)
@@ -242,6 +247,32 @@ class BookedAppointment(models.Model):
             pass
         
         super().save(*args, **kwargs)
+
+
+class BookedAppointmentImage(models.Model):
+    """
+    Store before/after images for completed bookings.
+    Images are synced from detailer app via Redis when job is completed.
+    Stores image URLs (not files) from detailer server.
+    """
+    IMAGE_TYPE_CHOICES = [
+        ('before', 'Before'),
+        ('after', 'After'),
+    ]
+    
+    booking = models.ForeignKey(BookedAppointment, on_delete=models.CASCADE, related_name='job_images')
+    image_type = models.CharField(max_length=10, choices=IMAGE_TYPE_CHOICES)
+    image_url = models.URLField(max_length=500)  # Store URL from detailer server
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['booking', 'image_type']),
+        ]
+    
+    def __str__(self):
+        return f"{self.image_type} image for Booking {self.booking.booking_reference}"
 
 
 class Notification(models.Model):
@@ -450,8 +481,9 @@ class PaymentTransaction(models.Model):
         ('pending', 'Pending'),
     ]
     
-    booking = models.ForeignKey(BookedAppointment, on_delete=models.CASCADE, related_name='transactions')
+    booking = models.ForeignKey(BookedAppointment, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    booking_reference = models.CharField(max_length=255, null=True, blank=True, help_text="Booking reference for payments created before booking exists")
     
     # Stripe fields
     stripe_payment_intent_id = models.CharField(max_length=255, unique=True)
@@ -460,7 +492,9 @@ class PaymentTransaction(models.Model):
     # Transaction details
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=3, default='gbp')
+    currency = models.CharField(max_length=3, default='eur')
+    last_4_digits = models.CharField(max_length=4, null=True, blank=True)
+    card_brand = models.CharField(max_length=20, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     
     # Timestamps

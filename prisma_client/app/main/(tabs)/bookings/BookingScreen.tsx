@@ -76,6 +76,8 @@ const BookingScreen = () => {
     currentStep,
     isLoading,
     isSUV,
+    isProcessingPayment,
+    paymentConfirmationStatus,
     promotions,
 
     // Addon management state
@@ -150,6 +152,7 @@ const BookingScreen = () => {
     // Confirmation modal state and handlers
     isConfirmationModalVisible,
     confirmationBookingData,
+    confirmationBookingReference,
     handleCloseConfirmationModal,
     handleViewDashboard,
   } = useBooking();
@@ -410,10 +413,19 @@ const BookingScreen = () => {
         />
       ) : (
         <StyledButton
-          title={isLoading ? "Creating Booking..." : "Confirm Booking"}
+          title={
+            isProcessingPayment && paymentConfirmationStatus === "pending"
+              ? "Processing Payment..."
+              : isProcessingPayment &&
+                paymentConfirmationStatus === "confirming"
+              ? "Confirming Payment..."
+              : isLoading
+              ? "Creating Booking..."
+              : "Confirm Booking"
+          }
           variant="medium"
           onPress={handleBookingConfirmation}
-          disabled={!canProceedToSummary() || isLoading}
+          disabled={!canProceedToSummary() || isLoading || isProcessingPayment}
           style={styles.confirmButton}
         />
       )}
@@ -471,7 +483,7 @@ const BookingScreen = () => {
         <ModalServices
           visible={isAddressModalVisible}
           onClose={() => setIsAddressModalVisible(false)}
-          modalType="sheet"
+          modalType="fullscreen"
           animationType="slide"
           showCloseButton={true}
           component={
@@ -483,6 +495,47 @@ const BookingScreen = () => {
             />
           }
         />
+
+        {/* Payment Processing Modal */}
+        {isProcessingPayment && (
+          <ModalServices
+            visible={isProcessingPayment}
+            onClose={() => {}} // Prevent closing during processing
+            modalType="fullscreen"
+            animationType="fade"
+            showCloseButton={false}
+            component={
+              <View
+                style={[
+                  styles.paymentProcessingContainer,
+                  { backgroundColor: backgroundColor },
+                ]}
+              >
+                <ActivityIndicator size="large" color={primaryPurpleColor} />
+                <StyledText
+                  variant="titleLarge"
+                  style={[styles.processingTitle, { color: textColor }]}
+                >
+                  {paymentConfirmationStatus === "pending"
+                    ? "Processing Payment..."
+                    : paymentConfirmationStatus === "confirming"
+                    ? "Confirming Payment..."
+                    : "Processing..."}
+                </StyledText>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.processingSubtitle, { color: textColor }]}
+                >
+                  {paymentConfirmationStatus === "pending"
+                    ? "Please wait while we process your payment"
+                    : paymentConfirmationStatus === "confirming"
+                    ? "Waiting for payment confirmation..."
+                    : "Please wait..."}
+                </StyledText>
+              </View>
+            }
+          />
+        )}
 
         {/* Booking Confirmation Modal */}
         {confirmationBookingData &&
@@ -498,9 +551,7 @@ const BookingScreen = () => {
               showCloseButton={true}
               component={
                 <BookingConfirmationModal
-                  bookingReference={
-                    confirmationBookingData.job?.booking_reference || "N/A"
-                  }
+                  bookingReference={confirmationBookingReference || "N/A"}
                   vehicle={selectedVehicle}
                   serviceType={selectedServiceType}
                   valetType={selectedValetType}
@@ -640,6 +691,21 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   infoText: {
+    textAlign: "center",
+    opacity: 0.7,
+  },
+  paymentProcessingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  processingTitle: {
+    marginTop: 20,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  processingSubtitle: {
     textAlign: "center",
     opacity: 0.7,
   },

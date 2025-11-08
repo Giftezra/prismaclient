@@ -147,13 +147,16 @@ const DashboardScreen = () => {
       >
         {/* Ongoing Service Card */}
         {inProgressAppointment && (
-        <OngoingServiceCard appointment={inProgressAppointment} />
+          <OngoingServiceCard appointment={inProgressAppointment} />
         )}
 
         {/* Display the component that would show how many upcoming appointments a user has */}
         {appointments.length > 0 && (
           <View style={styles.upcomingAppointmentDateContainer}>
-            <StyledText children="Upcoming Appointments" variant="labelMedium" />
+            <StyledText
+              children="Upcoming Appointments"
+              variant="labelMedium"
+            />
             <View style={{ paddingHorizontal: 10, gap: 5 }}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {appointments.map((appointment) => (
@@ -186,8 +189,7 @@ const DashboardScreen = () => {
             horizontal
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast"
-            contentContainerStyle={styles.vehicleListContainer}
-            ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
+            contentContainerStyle={{ gap: 5}}
           />
         </View>
 
@@ -270,11 +272,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   vehicleSection: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    gap: 10,
-  },
-  vehicleListContainer: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 2,
+    paddingVertical: 4,
+    gap: 5,
   },
 });

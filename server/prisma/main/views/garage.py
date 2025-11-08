@@ -6,6 +6,7 @@ from django.db import models
 from main.models import Vehicles, BookedAppointment
 from datetime import datetime, timedelta
 from main.serializer import VehiclesSerializer
+from main.util.media_helper import get_full_media_url
 
 
 class GarageView(APIView):
@@ -80,13 +81,15 @@ class GarageView(APIView):
             year = request.data.get('year')
             color = request.data.get('color')
             licence = request.data.get('licence')
+            image = request.FILES.get('image')  # Get the uploaded image file
             
             print(f"Parsed data - make: {make}, model: {model}, year: {year}, color: {color}, licence: {licence}")
+            print(f"Image file: {image}")
             
             if not all([make, model, year, color, licence]):
                 return Response({'error': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # Create vehicle without image
+            # Create vehicle with image (if provided)
             new_vehicle = Vehicles.objects.create(
                 user=request.user,
                 make=make,
@@ -94,9 +97,10 @@ class GarageView(APIView):
                 year=year,
                 color=color,
                 licence=licence,
+                image=image if image else None,
             )
             
-            # Return the vehicle object without image
+            # Prepare vehicle data for response
             vehicle_data = {
                 'id': new_vehicle.id,
                 'make': new_vehicle.make,
@@ -104,6 +108,7 @@ class GarageView(APIView):
                 'year': new_vehicle.year,
                 'color': new_vehicle.color,
                 'licence': new_vehicle.licence,
+                'image': get_full_media_url(new_vehicle.image.url) if new_vehicle.image else None,
             }
             print(f"Returning vehicle data: {vehicle_data}")
             return Response({
@@ -125,6 +130,25 @@ class GarageView(APIView):
 
             vehicles_list = []
             for vehicle in vehicles:
+                # Get image URL with proper error handling
+                image_url = None
+                if vehicle.image:
+                    try:
+                        # Directly access the URL - Django ImageField.url might raise an exception
+                        raw_url = vehicle.image.url
+                        print(f"Vehicle {vehicle.id} - Raw image URL: {raw_url}")
+                        if raw_url:
+                            image_url = get_full_media_url(raw_url)
+                            print(f"Vehicle {vehicle.id} - Full image URL: {image_url}")
+                        else:
+                            print(f"Vehicle {vehicle.id} - Image URL is empty string")
+                    except Exception as e:
+                        print(f"Error getting image URL for vehicle {vehicle.id}: {type(e).__name__}: {str(e)}")
+                        print(f"Vehicle {vehicle.id} - Image field: {vehicle.image}, Image name: {getattr(vehicle.image, 'name', 'N/A')}")
+                        image_url = None
+                else:
+                    print(f"Vehicle {vehicle.id} - No image field")
+                
                 vehicle_data = {
                     'id': vehicle.id,
                     'make': vehicle.make,
@@ -132,7 +156,9 @@ class GarageView(APIView):
                     'year': vehicle.year,
                     'color': vehicle.color,
                     'licence': vehicle.licence,
+                    'image': image_url,  # This will be None if no image or if error occurs
                 }
+                print(f"Vehicle {vehicle.id} data: {vehicle_data}")
                 vehicles_list.append(vehicle_data)
             print(f"Vehicles list: {vehicles_list}")
             return Response({'vehicles': vehicles_list}, status=status.HTTP_200_OK)

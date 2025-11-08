@@ -4,6 +4,7 @@ import {
   View,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { MyVehiclesProps } from "../../interfaces/GarageInterface";
@@ -38,16 +39,22 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
         { backgroundColor: cardsColor, borderColor },
       ]}
     >
-      {/* Header with delete button */}
-      <View style={styles.header}>
-        <View style={styles.vehicleIcon}>
-          <Ionicons name="car" size={24} color={iconColor} />
-        </View>
+      {/* Vehicle Image Section - Prominent at top */}
+      <View style={styles.imageContainer}>
+        {vehicle.image && typeof vehicle.image === "string" ? (
+          <Image source={{ uri: vehicle.image }} style={styles.vehicleImage} />
+        ) : (
+          <Image
+            source={require("../../../assets/images/car.jpg")}
+            style={styles.vehicleImage}
+          />
+        )}
+        {/* Delete button positioned over image */}
         <TouchableOpacity
-          style={[styles.deleteButton, { backgroundColor: borderColor }]}
+          style={styles.deleteButton}
           onPress={() => onDeletePress?.(vehicle.id)}
         >
-          <Ionicons name="trash-outline" size={16} color={textColor} />
+          <Ionicons name="trash-outline" size={16} color="white" />
         </TouchableOpacity>
       </View>
 
@@ -88,9 +95,13 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
         {/* Action Buttons */}
         <View style={styles.actions}>
           {isLoadingVehicleStats ? (
-            <View style={{flexDirection: "row", alignItems: "center", gap: 6,}}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
               <ActivityIndicator size="small" color={textColor} />
-              <StyledText variant="bodySmall" style={styles.detailText}>Wait..</StyledText>
+              <StyledText variant="bodySmall" style={styles.detailText}>
+                Wait..
+              </StyledText>
             </View>
           ) : (
             <StyledButton
@@ -119,10 +130,11 @@ export default GarageVehicleComponent;
 
 const styles = StyleSheet.create({
   cardContainer: {
-    width: "48%",
-    marginBottom: 12,
-    borderRadius: 12,
+    flex:1,
+    marginBottom: 5,
+    borderRadius: 10,
     borderWidth: 1,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -132,31 +144,30 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 12,
-    paddingBottom: 8,
+  imageContainer: {
+    width: "100%",
+    height: 120, // Approximately 60% of card height (card is ~200px tall)
+    position: "relative",
+    overflow: "hidden",
   },
-  vehicleIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    opacity: 0.8,
+  vehicleImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   deleteButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
     width: 28,
     height: 28,
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   content: {
     padding: 12,
-    paddingTop: 0,
   },
   vehicleTitle: {
     fontWeight: "600",

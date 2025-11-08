@@ -7,7 +7,7 @@ const initialState: AuthState = {
   refresh: "",
   isAuthenticated: false,
   isLoading: false,
-  signUpData: null,
+  signUpData: undefined,
 };
 
 const authSlice = createSlice({
@@ -40,7 +40,12 @@ const authSlice = createSlice({
       if (!state.signUpData) {
         state.signUpData = { name: "", email: "", phone: "", password: "" };
       }
-      state.signUpData[field as keyof SignUpScreenProps] = value;
+      state.signUpData[field as keyof SignUpScreenProps] = value as never;
+    },
+
+    refreshTokenSuccess: (state, action) => {
+      state.access = action.payload.access;
+      state.refresh = action.payload.refresh;
     },
 
     /**
@@ -58,7 +63,7 @@ const authSlice = createSlice({
      * @param state - The current state of the auth slice
      */
     clearSignUpData: (state) => {
-      state.signUpData = null;
+      state.signUpData = undefined;
     },
 
     /**
@@ -85,5 +90,6 @@ export const {
   setAccessToken,
   setRefreshToken,
   updateUser,
+  refreshTokenSuccess,
 } = authSlice.actions;
 export default authSlice.reducer;

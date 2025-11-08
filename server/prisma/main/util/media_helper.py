@@ -1,22 +1,23 @@
 from django.conf import settings
+import os
 
 def get_full_media_url(relative_url):
     if not relative_url:
         return None
     
-    # If the URL is already a full URL (starts with http/https), return it as-is
-    if relative_url.startswith(('http://', 'https://')):
+    # Check if URL is already absolute (starts with http:// or https://)
+    if relative_url.startswith('http://') or relative_url.startswith('https://'):
         return relative_url
     
-    # Use the MEDIA_URL from settings which should point to S3
-    if hasattr(settings, 'MEDIA_URL') and settings.MEDIA_URL:
-        # Remove leading slash if present
-        if relative_url.startswith('/'):
-            relative_url = relative_url[1:]
-        return f"{settings.MEDIA_URL}{relative_url}"
+    # Get the base URL from settings
+    base_url = getattr(settings, 'BASE_URL', None)
+    if not base_url:
+        # Use the ngrok URL directly as fallback
+        base_url = os.getenv('BASE_URL')
     
-    # Fallback to base URL if MEDIA_URL not configured
-    base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+    # Remove leading slash if present to avoid double slashes
     if relative_url.startswith('/'):
         relative_url = relative_url[1:]
-    return f"{base_url}/{relative_url}" 
+    
+    # Combine base URL with relative URL
+    return f"{base_url}/main/{relative_url}" 

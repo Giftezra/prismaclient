@@ -72,7 +72,7 @@ const useBooking = () => {
   const user = useAppSelector((state: RootState) => state.auth.user);
   const userAddress = user?.address;
   const { refetchAppointments } = useDashboard();
-  const { openPaymentSheet } = usePayment();
+  const { openPaymentSheet, waitForPaymentConfirmation } = usePayment();
 
   /* Api hooks */
 
@@ -117,6 +117,11 @@ const useBooking = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSUV, setIsSUV] = useState<boolean>(false);
+  const [isProcessingPayment, setIsProcessingPayment] =
+    useState<boolean>(false);
+  const [paymentConfirmationStatus, setPaymentConfirmationStatus] = useState<
+    "pending" | "confirming" | "confirmed" | "failed"
+  >("pending");
 
   // Addon management state
   const [selectedAddons, setSelectedAddons] = useState<AddOnsProps[]>([]);
@@ -128,6 +133,8 @@ const useBooking = () => {
     useState<boolean>(false);
   const [confirmationBookingData, setConfirmationBookingData] =
     useState<ReturnBookingProps | null>(null);
+  const [confirmationBookingReference, setConfirmationBookingReference] =
+    useState<string>("");
 
   // Booking cancellation modal state
   const [isCancellationModalVisible, setIsCancellationModalVisible] =
@@ -1584,6 +1591,7 @@ const useBooking = () => {
     setIsAddonModalVisible(false);
     setIsConfirmationModalVisible(false);
     setConfirmationBookingData(null);
+    setConfirmationBookingReference("");
     setIsCancellationModalVisible(false);
     setCancellationData(null);
     setCancellationBookingReference("");
@@ -1601,6 +1609,7 @@ const useBooking = () => {
   const handleCloseConfirmationModal = useCallback(() => {
     setIsConfirmationModalVisible(false);
     setConfirmationBookingData(null);
+    setConfirmationBookingReference("");
     resetBooking();
     refetchAppointments();
     router.push("/main/(tabs)/dashboard/DashboardScreen");
@@ -1618,6 +1627,7 @@ const useBooking = () => {
   const handleViewDashboard = useCallback(() => {
     setIsConfirmationModalVisible(false);
     setConfirmationBookingData(null);
+    setConfirmationBookingReference("");
     resetBooking();
     refetchAppointments();
     router.push("/main/(tabs)/dashboard/DashboardScreen");
@@ -1654,6 +1664,7 @@ const useBooking = () => {
   const handleBookingConfirmation = useCallback(async () => {
     try {
       setIsLoading(true);
+      setPaymentConfirmationStatus("pending");
       // Generate a booking reference
       const bookingReference = `APT${Date.now()}`;
 
@@ -1687,7 +1698,8 @@ const useBooking = () => {
         }
       }
 
-      // Handle payment with adjusted price
+      // Process payment first
+      setIsProcessingPayment(true);
       const paymentResult = await openPaymentSheet(
         finalPrice,
         "Prisma Valet",
@@ -1695,10 +1707,33 @@ const useBooking = () => {
       );
 
       // If payment was cancelled, don't proceed with booking
-      if (paymentResult === false) {
+      if (!paymentResult.success || !paymentResult.paymentIntentId) {
+        setIsProcessingPayment(false);
+        setPaymentConfirmationStatus("failed");
         return;
       }
-      /* if payment is successful, create the booking */
+
+      // Wait for webhook confirmation
+      setPaymentConfirmationStatus("confirming");
+      try {
+        await waitForPaymentConfirmation(paymentResult.paymentIntentId);
+        setPaymentConfirmationStatus("confirmed");
+        setIsProcessingPayment(false);
+      } catch (error: any) {
+        console.error("Payment confirmation error:", error);
+        setIsProcessingPayment(false);
+        setPaymentConfirmationStatus("failed");
+        showSnackbarWithConfig({
+          message:
+            error.message ||
+            "Payment confirmation failed. Please contact support if payment was charged.",
+          type: "error",
+          duration: 5000,
+        });
+        return;
+      }
+
+      /* Only after webhook confirms payment, create the booking */
       const booking: ReturnBookingProps = await createBooking(bookingReference);
 
       if (booking.success) {
@@ -1736,6 +1771,7 @@ const useBooking = () => {
 
           // Store booking data and show confirmation modal
           setConfirmationBookingData(booking);
+          setConfirmationBookingReference(bookingReference);
           setIsConfirmationModalVisible(true);
         }
       }
@@ -1749,7 +1785,11 @@ const useBooking = () => {
         message = "You must be logged in to create a booking.";
       } else if (error?.status === 500) {
         message = "Server error. Please try again later.";
+      } else {
+        message = error?.message || "An error occurred during booking";
       }
+      setPaymentConfirmationStatus("failed");
+      setIsProcessingPayment(false);
       showSnackbarWithConfig({
         message: message,
         type: "error",
@@ -1757,13 +1797,18 @@ const useBooking = () => {
       });
     } finally {
       setIsLoading(false);
+      setIsProcessingPayment(false);
     }
   }, [
     openPaymentSheet,
+    waitForPaymentConfirmation,
     getFinalPrice,
     createBooking,
     resetBooking,
     refetchAppointments,
+    calculateFinalPrice,
+    checkFreeWash,
+    showSnackbarWithConfig,
   ]);
 
   /* Show cancellation modal with details */
@@ -1926,6 +1971,8 @@ const useBooking = () => {
     currentStep,
     isLoading,
     isSUV,
+    isProcessingPayment,
+    paymentConfirmationStatus,
     selectedAddons,
     isAddonModalVisible,
     availableTimeSlots,
@@ -1977,6 +2024,7 @@ const useBooking = () => {
     // Confirmation modal state and handlers
     isConfirmationModalVisible,
     confirmationBookingData,
+    confirmationBookingReference,
     handleCloseConfirmationModal,
     handleViewDashboard,
 

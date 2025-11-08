@@ -148,13 +148,13 @@ const SigninScreen = () => {
               style={[styles.input, styles.passwordInput]}
             />
             <TouchableOpacity
-              style={[styles.eyeIcon, { borderColor }]}
+              style={[styles.eyeIcon, { borderColor,}]}
               onPress={() => setShowPassword(!showPassword)}
             >
               <Ionicons
                 name={showPassword ? "eye-off" : "eye"}
                 size={20}
-                color={backgroundColor}
+                color={'black'}
               />
             </TouchableOpacity>
           </View>

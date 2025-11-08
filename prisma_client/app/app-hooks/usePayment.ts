@@ -1,10 +1,14 @@
 import { useCallback } from "react";
 import { useStripe } from "@stripe/stripe-react-native";
-import { useFetchPaymentSheetDetailsMutation } from "@/app/store/api/bookingApi";
+import {
+  useFetchPaymentSheetDetailsMutation,
+  useConfirmPaymentIntentMutation,
+} from "@/app/store/api/bookingApi";
 import { useAlertContext } from "@/app/contexts/AlertContext";
 import { PaymentSheetResponse } from "@/app/interfaces/BookingInterfaces";
 import { RootState, useAppSelector } from "../store/main_store";
 import { useAddresses } from "./useAddresses";
+import { useSnackbar } from "../contexts/SnackbarContext";
 
 /**
  * Custom hook for managing payment functionality using Stripe
@@ -25,7 +29,9 @@ import { useAddresses } from "./useAddresses";
 const usePayment = () => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [fetchPaymentSheetDetails] = useFetchPaymentSheetDetailsMutation();
+  const [confirmPaymentIntentMutation] = useConfirmPaymentIntentMutation();
   const { setAlertConfig, setIsVisible } = useAlertContext();
+  const { showSnackbarWithConfig } = useSnackbar();
   const { addresses } = useAddresses();
 
   /**
@@ -38,7 +44,7 @@ const usePayment = () => {
     async (
       finalPrice: number,
       bookingReference: string
-    ): Promise<PaymentSheetResponse> => {
+    ): Promise<PaymentSheetResponse & { paymentIntentId: string }> => {
       try {
         const amountInCents = Math.round(finalPrice * 100);
         const response = await fetchPaymentSheetDetails({
@@ -68,7 +74,7 @@ const usePayment = () => {
       finalPrice: number,
       bookingReference: string,
       merchantDisplayName: string = "Prisma Valet"
-    ) => {
+    ): Promise<{ paymentIntentId: string }> => {
       const address = addresses[0];
       let countryCode = "";
       let currencyCode = "";
@@ -89,7 +95,7 @@ const usePayment = () => {
       });
 
       try {
-        const { paymentIntent, ephemeralKey, customer } =
+        const { paymentIntent, paymentIntentId, ephemeralKey, customer } =
           await fetchPaymentSheetDetailsFromServer(
             finalPrice,
             bookingReference
@@ -119,6 +125,7 @@ const usePayment = () => {
         }
 
         console.log("Payment sheet initialized successfully");
+        return { paymentIntentId };
       } catch (error: any) {
         console.error("Error initializing payment sheet:", error);
         throw error;
@@ -142,10 +149,10 @@ const usePayment = () => {
       finalPrice: number,
       merchantDisplayName: string = "Prisma Valet",
       bookingReference: string
-    ): Promise<boolean> => {
+    ): Promise<{ success: boolean; paymentIntentId?: string }> => {
       try {
         // Initialize payment sheet first
-        await initializePaymentSheet(
+        const { paymentIntentId } = await initializePaymentSheet(
           finalPrice,
           bookingReference,
           merchantDisplayName
@@ -158,7 +165,7 @@ const usePayment = () => {
           // Handle specific error cases
           if (error.code === "Canceled") {
             console.log("Payment was canceled by user");
-            return false;
+            return { success: false };
           }
 
           // Handle other errors
@@ -178,21 +185,15 @@ const usePayment = () => {
               "Your card has expired. Please use a different payment method.";
             errorTitle = "Expired Card";
           }
-
-          setAlertConfig({
-            title: errorTitle,
+          showSnackbarWithConfig({
             message: errorMessage,
             type: "error",
-            isVisible: true,
-            onConfirm() {
-              setIsVisible(false);
-            },
+            duration: 3000,
           });
-
-          throw error;
+          return { success: false };
         }
 
-        return true;
+        return { success: true, paymentIntentId };
       } catch (error: any) {
         console.error("Error in payment process:", error);
 
@@ -209,19 +210,98 @@ const usePayment = () => {
           errorTitle = "Timeout Error";
         }
 
-        setAlertConfig({
-          title: errorTitle,
+        showSnackbarWithConfig({
           message: errorMessage,
           type: "error",
-          isVisible: true,
-          onConfirm() {
-            setIsVisible(false);
-          },
+          duration: 3000,
         });
+        return { success: false };
+      }
+    },
+    [initializePaymentSheet, presentPaymentSheet, showSnackbarWithConfig]
+  );
+
+  /**
+   * Confirms if a payment intent has been processed via webhook
+   *
+   * @param paymentIntentId - The Stripe payment intent ID
+   * @returns Promise that resolves to confirmation status
+   */
+  const confirmPaymentIntent = useCallback(
+    async (
+      paymentIntentId: string
+    ): Promise<{
+      confirmed: boolean;
+      payment_intent_id: string;
+      transaction_id?: string;
+      booking_reference?: string;
+    }> => {
+      try {
+        const response = await confirmPaymentIntentMutation({
+          payment_intent_id: paymentIntentId,
+        }).unwrap();
+        return response;
+      } catch (error) {
+        console.error("Error confirming payment intent:", error);
         throw error;
       }
     },
-    [initializePaymentSheet, presentPaymentSheet, setAlertConfig, setIsVisible]
+    [confirmPaymentIntentMutation]
+  );
+
+  /**
+   * Waits for payment confirmation via webhook by polling
+   *
+   * @param paymentIntentId - The Stripe payment intent ID
+   * @param maxWaitTime - Maximum time to wait in milliseconds (default: 60000ms = 60 seconds)
+   * @param pollInterval - Interval between polls in milliseconds (default: 2500ms = 2.5 seconds)
+   * @returns Promise that resolves when payment is confirmed or rejects on timeout
+   */
+  const waitForPaymentConfirmation = useCallback(
+    async (
+      paymentIntentId: string,
+      maxWaitTime: number = 60000,
+      pollInterval: number = 2500
+    ): Promise<{
+      confirmed: boolean;
+      payment_intent_id: string;
+      transaction_id?: string;
+      booking_reference?: string;
+    }> => {
+      const startTime = Date.now();
+
+      return new Promise((resolve, reject) => {
+        const poll = async () => {
+          try {
+            const result = await confirmPaymentIntent(paymentIntentId);
+
+            if (result.confirmed) {
+              resolve(result);
+              return;
+            }
+
+            // Check if we've exceeded max wait time
+            if (Date.now() - startTime >= maxWaitTime) {
+              reject(
+                new Error(
+                  "Payment confirmation timeout - webhook did not confirm payment within the expected time"
+                )
+              );
+              return;
+            }
+
+            // Schedule next poll
+            setTimeout(poll, pollInterval);
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        // Start polling
+        poll();
+      });
+    },
+    [confirmPaymentIntent]
   );
 
   /**
@@ -232,7 +312,10 @@ const usePayment = () => {
    * @returns Promise that resolves to true if payment successful, false if cancelled, throws error if failed
    */
   const processTipPayment = useCallback(
-    async (tipAmount: number, bookingReference: string): Promise<boolean> => {
+    async (
+      tipAmount: number,
+      bookingReference: string
+    ): Promise<{ success: boolean; paymentIntentId?: string }> => {
       return openPaymentSheet(
         tipAmount,
         "Prisma Valet - Tip",
@@ -247,6 +330,10 @@ const usePayment = () => {
     fetchPaymentSheetDetailsFromServer,
     initializePaymentSheet,
     openPaymentSheet,
+
+    // Payment confirmation methods
+    confirmPaymentIntent,
+    waitForPaymentConfirmation,
 
     // Specialized payment methods
     processTipPayment,

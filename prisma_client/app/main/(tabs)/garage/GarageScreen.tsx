@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import React, { useCallback, useState } from "react";
@@ -36,6 +37,8 @@ const GarageScreen = () => {
   const backgroundColor = useThemeColor({}, "background");
   const iconColor = useThemeColor({}, "icons");
   const textColor = useThemeColor({}, "text");
+  const primaryColor = useThemeColor({}, "primary");
+  const borderColor = useThemeColor({}, "borders"); 
 
   const [isAddVehicleModalVisible, setIsAddVehicleModalVisible] =
     useState(false);
@@ -59,20 +62,6 @@ const GarageScreen = () => {
           />
         }
       >
-        <View style={styles.headerSection}>
-          <StyledText
-            children="My Garage"
-            variant="titleMedium"
-            style={{ color: textColor }}
-          />
-          <StyledButton
-            title="Add Vehicle"
-            variant="medium"
-            onPress={() => {
-              setIsAddVehicleModalVisible(true);
-            }}
-          />
-        </View>
         {/* Display the list of cars the user has added in a 2-column grid */}
         <View style={styles.myvehiclecontainer}>
           {isLoadingVehicles ? (
@@ -162,6 +151,31 @@ const GarageScreen = () => {
         showCloseButton={true}
         title="More Indepth details about your vehicle"
       />
+
+      {/* Displa a floating action button to add a new vehicle */}
+      <TouchableOpacity
+        style={[
+          {
+            position: "absolute",
+            bottom: 20,
+            right: 20,
+            borderRadius: 30,
+            padding: 10,
+            borderWidth: 1,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 3,
+          },
+          {
+            backgroundColor: primaryColor,
+            borderColor: borderColor,
+          },
+        ]}
+        onPress={() => setIsAddVehicleModalVisible(true)}
+      >
+        <MaterialIcons name="add" size={24} color={textColor} />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -172,22 +186,14 @@ const styles = StyleSheet.create({
   maincontainer: {
     flex: 1,
   },
-  headerSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 5,
-    paddingHorizontal: 10,
-  },
   myvehiclecontainer: {
     flex: 1,
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
   },
   vehiclesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    paddingHorizontal: 5,
+    gap: 5,
   },
   modalHeader: {
     flexDirection: "row",

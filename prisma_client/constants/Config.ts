@@ -16,16 +16,27 @@ export const STRIPE_CONFIG = {
 
 // API Configuration with fallbacks for testing
 export const API_CONFIG = {
-  detailerAppUrl:
-    config.detailer_app_url,
-  customerAppUrl:
-    config.customer_app_url,
-  websocketUrl:
-    config.websocket_url
+  detailerAppUrl: config.detailer_app_url,
+  customerAppUrl: config.customer_app_url,
+  websocketUrl: config.websocket_url,
 };
 
-// Debug logging
-console.log("Raw config from app.json:", config);
+// Google API Keys Configuration
+// Note: The API key should be added to app.json or app.config.js under extra.googleApiKeys
+// Example configuration:
+// {
+//   "extra": {
+//     "googleApiKeys": "YOUR_GOOGLE_PLACES_API_KEY_HERE"
+//   }
+// }
+// The Places API key must have the following APIs enabled:
+// - Places API (New)
+// - Places API (Legacy) - for autocomplete
+// - Geocoding API - for place details
+export const KEY_CONFIGS = {
+  googleApiKeys: config.googleApiKeys || config.googoleApiKeys, // Support both correct and typo'd config keys
+};
+
 console.log("Config loaded:", {
   detailerAppUrl: API_CONFIG.detailerAppUrl,
   customerAppUrl: API_CONFIG.customerAppUrl,

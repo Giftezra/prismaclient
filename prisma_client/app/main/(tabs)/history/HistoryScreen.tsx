@@ -1,9 +1,15 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   StyleSheet,
   Text,
   View,
-  FlatList,
+  SectionList,
   Animated,
   RefreshControl,
 } from "react-native";
@@ -14,6 +20,8 @@ import useProfile from "@/app/app-hooks/useProfile";
 import ServiceHistoryComponent from "@/app/components/profile/ServiceHistoryComponent";
 import StyledButton from "@/app/components/helpers/StyledButton";
 import LinearGradientComponent from "@/app/components/helpers/LinearGradientComponent";
+import { useModalService } from "@/app/contexts/ModalServiceProvider";
+import ServiceImagesModal from "@/app/components/profile/ServiceImagesModal";
 
 const HistoryScreen = () => {
   const {
@@ -22,6 +30,8 @@ const HistoryScreen = () => {
     errorServiceHistory,
     refetchServiceHistory,
   } = useProfile();
+
+  const { showFullscreenModal } = useModalService();
 
   /* Import the theme colors */
   const backgroundColor = useThemeColor({}, "background");
@@ -68,11 +78,139 @@ const HistoryScreen = () => {
   }, [refetchServiceHistory]);
 
   /**
-   * Render item for FlatList
+   * Group service history by appointment date
+   */
+  const groupedServiceHistory = useMemo(() => {
+    if (!serviceHistory || serviceHistory.length === 0) {
+      return [];
+    }
+
+    // Group items by date
+    const grouped = serviceHistory.reduce(
+      (
+        acc: Record<string, { title: string; date: Date; data: any[] }>,
+        item: any
+      ) => {
+        const date = new Date(item.appointment_date);
+        const dateKey = date.toISOString().split("T")[0]; // YYYY-MM-DD format
+
+        if (!acc[dateKey]) {
+          acc[dateKey] = {
+            title: dateKey,
+            date: date,
+            data: [],
+          };
+        }
+
+        acc[dateKey].data.push(item);
+        return acc;
+      },
+      {}
+    );
+
+    // Convert to array and sort by date (most recent first)
+    return Object.values(grouped).sort(
+      (a, b) => b.date.getTime() - a.date.getTime()
+    );
+  }, [serviceHistory]);
+
+  /**
+   * Format date for section headers
+   */
+  const formatSectionDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Remove time component for comparison
+    const dateOnly = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+    const todayOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const yesterdayOnly = new Date(
+      yesterday.getFullYear(),
+      yesterday.getMonth(),
+      yesterday.getDate()
+    );
+
+    if (dateOnly.getTime() === todayOnly.getTime()) {
+      return "Today";
+    } else if (dateOnly.getTime() === yesterdayOnly.getTime()) {
+      return "Yesterday";
+    } else {
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      };
+      return date.toLocaleDateString(undefined, options);
+    }
+  };
+
+  /**
+   * Render section header
+   */
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: any }) => (
+      <View style={[styles.sectionHeader, { backgroundColor }]}>
+        <View
+          style={[
+            styles.sectionHeaderContent,
+            { backgroundColor: cardColor, borderColor },
+          ]}
+        >
+          <Ionicons
+            name="calendar"
+            size={20}
+            color={iconColor}
+            style={styles.sectionHeaderIcon}
+          />
+          <StyledText
+            variant="titleSmall"
+            children={formatSectionDate(section.title)}
+            style={[styles.sectionHeaderText, { color: textColor }]}
+          />
+        </View>
+      </View>
+    ),
+    [backgroundColor, cardColor, borderColor, iconColor, textColor]
+  );
+
+  /**
+   * Handle service history item press - opens image gallery modal
+   */
+  const handleServiceHistoryPress = useCallback(
+    (item: any) => {
+      showFullscreenModal(
+        <ServiceImagesModal bookingId={item.id} />,
+        "Service Images",
+        () => {
+          // Modal closed callback
+        }
+      );
+    },
+    [showFullscreenModal]
+  );
+
+  /**
+   * Render item for SectionList
    */
   const renderServiceHistoryItem = useCallback(
-    ({ item }: { item: any }) => <ServiceHistoryComponent {...item} />,
-    []
+    ({ item }: { item: any }) => (
+      <ServiceHistoryComponent
+        {...item}
+        onPress={() => handleServiceHistoryPress(item)}
+      />
+    ),
+    [handleServiceHistoryPress]
   );
 
   /**
@@ -181,9 +319,10 @@ const HistoryScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <FlatList
-        data={serviceHistory && serviceHistory.length > 0 ? serviceHistory : []}
+      <SectionList
+        sections={groupedServiceHistory}
         renderItem={renderServiceHistoryItem}
+        renderSectionHeader={renderSectionHeader}
         keyExtractor={(item, index) => item.id || index.toString()}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
@@ -198,6 +337,7 @@ const HistoryScreen = () => {
           />
         }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        stickySectionHeadersEnabled={false}
         style={styles.flatList}
       />
     </View>
@@ -301,5 +441,33 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
     fontWeight: "500",
+  },
+  sectionHeader: {
+    paddingTop: 10,
+    paddingBottom: 5,
+  },
+  sectionHeaderContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginHorizontal: 20,
+    borderRadius: 15,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  sectionHeaderIcon: {
+    marginRight: 10,
+  },
+  sectionHeaderText: {
+    fontWeight: "600",
+    fontSize: 16,
   },
 });

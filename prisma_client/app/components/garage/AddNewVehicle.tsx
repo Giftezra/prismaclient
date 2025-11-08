@@ -6,6 +6,8 @@ import {
   Platform,
   Keyboard,
   ActivityIndicator,
+  Image,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import StyledTextInput from "@/app/components/helpers/StyledTextInput";
@@ -13,6 +15,8 @@ import StyledText from "@/app/components/helpers/StyledText";
 import useGarage from "@/app/app-hooks/useGarage";
 import StyledButton from "@/app/components/helpers/StyledButton";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { Ionicons } from "@expo/vector-icons";
+import ModalServices from "@/app/utils/ModalServices";
 
 /**
  * AddNewVehicleScreen Component
@@ -35,8 +39,17 @@ const AddNewVehicleScreen = ({
   const borderColor = useThemeColor({}, "borders");
 
   // Extract all needed methods and state from the useGarage hook
-  const { newVehicle, collectNewVehicleData, handleSubmit, isLoadingVehicles } =
-    useGarage();
+  const {
+    newVehicle,
+    collectNewVehicleData,
+    handleSubmit,
+    isLoadingVehicles,
+    isImageModalVisible,
+    showImageSelectionModal,
+    hideImageSelectionModal,
+    handleCameraSelection,
+    handleFileSelection,
+  } = useGarage();
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -116,6 +129,53 @@ const AddNewVehicleScreen = ({
               onChangeText={(text) => collectNewVehicleData("licence", text)}
               maxLength={12}
             />
+
+            {/* Vehicle Image Section */}
+            <View style={styles.imageSection}>
+              <StyledText variant="labelMedium">Vehicle Image</StyledText>
+              <TouchableOpacity
+                style={[styles.imagePickerButton, { borderColor }]}
+                onPress={showImageSelectionModal}
+              >
+                {newVehicle?.image?.uri ? (
+                  <Image
+                    source={{ uri: newVehicle.image.uri }}
+                    style={styles.imagePreview}
+                  />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Ionicons
+                      name="camera-outline"
+                      size={32}
+                      color={textColor}
+                    />
+                    <StyledText
+                      variant="bodySmall"
+                      style={[
+                        styles.imagePlaceholderText,
+                        { color: textColor },
+                      ]}
+                    >
+                      Tap to add image
+                    </StyledText>
+                  </View>
+                )}
+              </TouchableOpacity>
+              {newVehicle?.image?.uri && (
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => collectNewVehicleData("image", null)}
+                >
+                  <Ionicons name="trash-outline" size={18} color={textColor} />
+                  <StyledText
+                    variant="bodySmall"
+                    style={[styles.removeImageText, { color: textColor }]}
+                  >
+                    Remove Image
+                  </StyledText>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
 
@@ -137,6 +197,44 @@ const AddNewVehicleScreen = ({
           )}
         </View>
       </ScrollView>
+
+      {/* Image Selection Modal */}
+      <ModalServices
+        visible={isImageModalVisible}
+        onClose={hideImageSelectionModal}
+        modalType="center"
+        animationType="fade"
+        showCloseButton={true}
+        title="Select Image Source"
+        component={
+          <View style={styles.imageModalContent}>
+            <TouchableOpacity
+              style={[styles.imageOptionButton, { borderColor }]}
+              onPress={handleCameraSelection}
+            >
+              <Ionicons name="camera" size={32} color={primaryColor} />
+              <StyledText
+                variant="bodyMedium"
+                style={[styles.imageOptionText, { color: textColor }]}
+              >
+                Take Photo
+              </StyledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.imageOptionButton, { borderColor }]}
+              onPress={handleFileSelection}
+            >
+              <Ionicons name="images-outline" size={32} color={primaryColor} />
+              <StyledText
+                variant="bodyMedium"
+                style={[styles.imageOptionText, { color: textColor }]}
+              >
+                Choose from Gallery
+              </StyledText>
+            </TouchableOpacity>
+          </View>
+        }
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -145,7 +243,7 @@ export default AddNewVehicleScreen;
 
 const styles = StyleSheet.create({
   mainContainer: {
-    flex: 1
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
@@ -181,5 +279,57 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: "white",
     fontWeight: "600",
+  },
+  imageSection: {
+    marginTop: 10,
+    gap: 8,
+  },
+  imagePickerButton: {
+    width: "100%",
+    height: 150,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  imagePreview: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  imagePlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  imagePlaceholderText: {
+    opacity: 0.7,
+  },
+  removeImageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+  },
+  removeImageText: {
+    fontSize: 12,
+  },
+  imageModalContent: {
+    padding: 20,
+    gap: 16,
+  },
+  imageOptionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  imageOptionText: {
+    fontWeight: "500",
   },
 });

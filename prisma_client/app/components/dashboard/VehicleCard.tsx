@@ -21,10 +21,14 @@ const VehicleCard: React.FC<{
     <TouchableOpacity style={styles.vehicleCard} onPress={onPress}>
       {/* Display the vehicle image */}
       <View style={styles.vehicleimagewrapper}>
-        <Image
-          source={require("../../../assets/images/car.jpg")}
-          style={styles.vehicleImage}
-        />
+        {vehicle.image && typeof vehicle.image === "string" ? (
+          <Image source={{ uri: vehicle.image }} style={styles.vehicleImage} />
+        ) : (
+          <Image
+            source={require("../../../assets/images/car.jpg")}
+            style={styles.vehicleImage}
+          />
+        )}
       </View>
 
       <View style={[styles.vehicleDetails, { backgroundColor: primaryColor }]}>
@@ -52,8 +56,7 @@ const styles = StyleSheet.create({
     width: 200, // Add explicit width
     height: 150, // Add explicit height
     overflow: "hidden",
-    borderRadius: 10,
-    marginRight: 10, // Add margin for spacing
+    borderRadius: 5,
   },
   vehicleimagewrapper: {
     width: "100%",

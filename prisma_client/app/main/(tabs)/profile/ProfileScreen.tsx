@@ -10,12 +10,13 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
+  TouchableOpacity,
 } from "react-native";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import ProfileCard from "@/app/components/profile/ProfileCard";
 import AddressCard from "@/app/components/profile/AddressCard";
 import StyledText from "@/app/components/helpers/StyledText";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import useProfile from "@/app/app-hooks/useProfile";
 import StyledButton from "@/app/components/helpers/StyledButton";
 import AddAddressModal from "@/app/components/profile/AddAddressModal";
@@ -249,14 +250,6 @@ const ProfileScreen = () => {
 
         {/* Display the list of addresses that the user has added or requested from */}
         <View>
-          <View style={styles.addressHeader}>
-            <StyledText children="My Addresses" variant="labelLarge" />
-            <StyledButton
-              title="Add Address"
-              onPress={() => setIsAddressModalVisible(true)}
-              variant="small"
-            />
-          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -273,33 +266,35 @@ const ProfileScreen = () => {
             ))}
           </ScrollView>
         </View>
+
+        {/* This is the display of the weather information for the day */}
       </ScrollView>
 
-      {/* Floating Profile Card - Only visible when scrolled */}
-      {hasScrolled && (
-        <Animated.View
-          style={[
-            styles.floatingProfileCard,
-            {
-              transform: [{ translateY: profileCardTranslateY }],
-              opacity: profileCardOpacity,
-            },
-          ]}
+      {/* Display a floating button to add a new address */}
+      <View
+        style={[
+          styles.addAAddressContainer,
+          {
+            borderColor: borderColor,
+            backgroundColor: backgroundColor,
+            shadowColor: borderColor,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.addAddressButton}
+          onPress={() => setIsAddressModalVisible(true)}
         >
-          <ProfileCard
-            profile={userProfile}
-            address={addresses?.[0]}
-            onPaymentMethodsPress={handlePaymentMethodsPress}
-            onLogoutPress={handleLogout}
-          />
-        </Animated.View>
-      )}
+          <MaterialCommunityIcons name="plus" size={24} color={iconColor} />
+          <StyledText children="Add Address" variant="labelLarge" />
+        </TouchableOpacity>
+      </View>
 
       {/* Add Address Modal */}
       <ModalServices
         visible={isAddressModalVisible}
         onClose={() => setIsAddressModalVisible(false)}
-        modalType="sheet"
+        modalType="fullscreen"
         animationType="slide"
         showCloseButton={true}
         component={
@@ -345,8 +340,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 50,
-    minHeight: "100%",
   },
 
   settingsButtonText: {
@@ -373,5 +366,23 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     elevation: 1000, // For Android
     backgroundColor: "transparent",
+  },
+  addAddressButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  addAAddressContainer: {
+    position: "absolute",
+    bottom: 10,
+    right: 10,
+    zIndex: 1000,
+    elevation: 3,
+    borderRadius: 30,
+    borderWidth: 1,
+    padding: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });

@@ -170,10 +170,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
-    padding: 6,
-    marginHorizontal: 1,
-    marginVertical: 1,
+    padding: 5,
   },
   header: {
     flexDirection: "row",

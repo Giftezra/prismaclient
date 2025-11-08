@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import NotificationInitializer from "./components/notification/NotificationInitializer";
 import { StatusBar } from "react-native";
 import { useUpdateMonitor } from "@/hooks/useUpdateMonitor";
+import ModalServiceProvider from "./contexts/ModalServiceProvider";
 
 export default function RootLayout() {
   const { currentTheme } = useThemeContext();
@@ -27,6 +28,7 @@ export default function RootLayout() {
         <ThemeProvider>
           <AlertProvider>
             <SnackbarProvider>
+              <ModalServiceProvider>
               <AuthContextProvider>
                 <NotificationInitializer>
                   <GestureHandlerRootView>
@@ -38,6 +40,7 @@ export default function RootLayout() {
                   </GestureHandlerRootView>
                 </NotificationInitializer>
               </AuthContextProvider>
+              </ModalServiceProvider>
             </SnackbarProvider>
           </AlertProvider>
         </ThemeProvider>

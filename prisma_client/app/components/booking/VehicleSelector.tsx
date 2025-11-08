@@ -56,10 +56,17 @@ const VehicleSelector: React.FC<VehicleSelectorProps> = ({
             onPress={() => onSelectVehicle(vehicle)}
           >
             <View style={styles.vehicleImageContainer}>
-              <Image
-                source={require("../../../assets/images/car.jpg")}
-                style={styles.vehicleImage}
-              />
+              {vehicle.image && typeof vehicle.image === "string" ? (
+                <Image
+                  source={{ uri: vehicle.image }}
+                  style={styles.vehicleImage}
+                />
+              ) : (
+                <Image
+                  source={require("../../../assets/images/car.jpg")}
+                  style={styles.vehicleImage}
+                />
+              )}
             </View>
 
             <LinearGradientComponent

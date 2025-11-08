@@ -74,14 +74,14 @@ class ValetTypeForm(forms.ModelForm):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'phone', 'is_active', 'created_at')
+    list_display = ('name', 'email', 'phone', 'is_active', 'is_fleet_owner')
     list_filter = ('is_active', 'is_staff', 'created_at')
     search_fields = ('name', 'email', 'phone')
     readonly_fields = ('created_at', 'updated_at')
 
 @admin.register(Vehicles)
 class VehiclesAdmin(admin.ModelAdmin):
-    list_display = ('user', 'make', 'model', 'year', 'color', 'licence', 'created_at')
+    list_display = ('user', 'make', 'model', 'year', 'color', 'licence', 'image', 'created_at')
     list_filter = ('make', 'year', 'created_at')
     search_fields = ('user__name', 'make', 'model', 'licence')
     readonly_fields = ('created_at', 'updated_at')
@@ -194,7 +194,7 @@ class TermsAndConditionsAdmin(admin.ModelAdmin):
 @admin.register(Referral)
 class ReferralAdmin(admin.ModelAdmin):
     list_display = ('referrer', 'referred', 'created_at')
-    list_filter = ('created_at')
+    list_filter = ('created_at',)
     search_fields = ('referrer__name', 'referred__name')
     readonly_fields = ('created_at', 'updated_at')
     

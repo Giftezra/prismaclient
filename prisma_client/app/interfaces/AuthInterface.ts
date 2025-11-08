@@ -6,7 +6,7 @@ export default interface AuthState {
   refresh?: string;
   isAuthenticated?: boolean;
   isLoading?: boolean;
-  signUpData?: SignUpScreenProps | null;
+  signUpData?: SignUpScreenProps;
 }
 
 export interface SignUpScreenProps {

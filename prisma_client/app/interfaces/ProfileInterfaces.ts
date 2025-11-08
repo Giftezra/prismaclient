@@ -30,6 +30,8 @@ export interface MyAddressProps {
   post_code: string;
   city: string;
   country: string;
+  latitude?: number;
+  longitude?: number;
 }
 export interface MyServiceHistoryProps {
   id: string;
