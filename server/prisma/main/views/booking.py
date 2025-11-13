@@ -64,7 +64,13 @@ class BookingView(APIView):
 
     def get_promotions(self, request):
         try:
-            promotions = Promotions.objects.filter(user=request.user, is_active=True).first()
+            from datetime import date
+            today = timezone.now().date()
+            promotions = Promotions.objects.filter(
+                user=request.user, 
+                is_active=True,
+                valid_until__gte=today  # Only return promotions that haven't expired
+            ).first()
             if promotions:
                 promotions_data = {
                     "id" : str(promotions.id),
@@ -509,6 +515,27 @@ class BookingView(APIView):
             # Create the booking in the database without detailer
             try:
                 logger.info("Creating BookedAppointment...")
+                
+                # Extract VAT breakdown from booking data
+                subtotal_amount = booking_data.get('subtotal_amount')
+                vat_amount = booking_data.get('vat_amount')
+                vat_rate = booking_data.get('vat_rate', 23.00)  # Default to 23% if not provided
+                total_amount = booking_data.get('total_amount')
+                
+                # If breakdown not provided, calculate from total_amount (backward compatibility)
+                if subtotal_amount is None or vat_amount is None:
+                    if total_amount:
+                        # Calculate VAT breakdown if not provided
+                        # total = subtotal + vat, where vat = subtotal * 0.23
+                        # So: total = subtotal + subtotal * 0.23 = subtotal * 1.23
+                        # Therefore: subtotal = total / 1.23
+                        vat_rate_decimal = vat_rate / 100 if vat_rate else 0.23
+                        subtotal_amount = total_amount / (1 + vat_rate_decimal)
+                        vat_amount = total_amount - subtotal_amount
+                    else:
+                        subtotal_amount = 0
+                        vat_amount = 0
+                
                 appointment = BookedAppointment.objects.create(
                     user = request.user,
                     appointment_date = appointment_date,
@@ -518,7 +545,10 @@ class BookingView(APIView):
                     detailer = None,
                     address = address,
                     status = booking_data.get('status'),
-                    total_amount = booking_data.get('total_amount'),
+                    total_amount = total_amount,
+                    subtotal_amount = subtotal_amount,
+                    vat_amount = vat_amount,
+                    vat_rate = vat_rate,
                     start_time = start_time,
                     duration = booking_data.get('duration'),
                     special_instructions = booking_data.get('special_instructions'),

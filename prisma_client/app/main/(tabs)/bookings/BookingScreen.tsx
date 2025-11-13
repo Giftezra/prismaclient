@@ -148,6 +148,7 @@ const BookingScreen = () => {
     getOriginalPrice,
     getFinalPrice,
     getLoyaltyDiscount,
+    calculateFinalPrice,
 
     // Confirmation modal state and handlers
     isConfirmationModalVisible,
@@ -376,6 +377,10 @@ const BookingScreen = () => {
                   originalPrice={getOriginalPrice()}
                   finalPrice={getFinalPrice()}
                   loyaltyDiscount={getLoyaltyDiscount()}
+                  subtotal={calculateFinalPrice(false).subtotal}
+                  vat={calculateFinalPrice(false).vat}
+                  vatRate={23}
+                  total={calculateFinalPrice(false).total}
                 />
               )}
           </View>

@@ -30,7 +30,7 @@ export default function ExpoStripeProvider(
   return (
     <StripeProvider
       publishableKey={publishableKey}
-      merchantIdentifier="merchant.com.time-tracker"
+      merchantIdentifier="merchant.com.prismavalet"
       urlScheme={returnurl?.split("://")?.[0]}
       {...props}
     />

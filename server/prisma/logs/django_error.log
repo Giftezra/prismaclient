@@ -438,3 +438,827 @@ LINE 1: ...ain_vehicles"."color", "main_vehicles"."licence", "main_vehi...
                                                              ^
 HINT:  Perhaps you meant to reference the column "main_vehicles.make".
 
+ERROR 2025-11-13 01:48:39,557 payment 218 123524282840768 No booking reference found in payment intent metadata
+ERROR 2025-11-13 02:11:38,665 payment 7 140045216380608 No booking reference found in payment intent metadata
+ERROR 2025-11-13 02:15:24,355 payment 7 140044991985344 No booking reference found in payment intent metadata
+ERROR 2025-11-13 14:23:27,503 payment 913 124656686180032 Error creating payment sheet: Request req_CVqM5W4Lxbxutu: Received unknown parameters: googlePay, applePay
+ERROR 2025-11-13 14:23:27,536 payment 913 124656686180032 Traceback: Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 101, in create_payment_sheet
+    payment_intent = stripe.PaymentIntent.create(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_payment_intent.py", line 3704, in create
+    cls._static_request(
+  File "/usr/local/lib/python3.11/site-packages/stripe/_api_resource.py", line 172, in _static_request
+    return _APIRequestor._global_instance().request(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_api_requestor.py", line 210, in request
+    resp = requestor._interpret_response(rbody, rcode, rheaders, api_mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_api_requestor.py", line 868, in _interpret_response
+    self.handle_error_response(
+  File "/usr/local/lib/python3.11/site-packages/stripe/_api_requestor.py", line 351, in handle_error_response
+    raise err
+stripe._error.InvalidRequestError: Request req_CVqM5W4Lxbxutu: Received unknown parameters: googlePay, applePay
+
+ERROR 2025-11-13 14:23:27,547 log 913 124656728143552 Internal Server Error: /api/v1/payment/create_payment_sheet/
+ERROR 2025-11-13 14:23:27,549 runserver 913 124657272354496 HTTP POST /api/v1/payment/create_payment_sheet/ 500 [1.53, 172.18.0.12:51824]
+ERROR 2025-11-13 14:24:21,773 payment 971 138323135821504 Error creating payment sheet: Request req_uG3FegUXzuYLTO: Received unknown parameters: applePay, googlePay
+ERROR 2025-11-13 14:24:21,786 payment 971 138323135821504 Traceback: Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 101, in create_payment_sheet
+    payment_intent = stripe.PaymentIntent.create(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_payment_intent.py", line 3704, in create
+    cls._static_request(
+  File "/usr/local/lib/python3.11/site-packages/stripe/_api_resource.py", line 172, in _static_request
+    return _APIRequestor._global_instance().request(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_api_requestor.py", line 210, in request
+    resp = requestor._interpret_response(rbody, rcode, rheaders, api_mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_api_requestor.py", line 868, in _interpret_response
+    self.handle_error_response(
+  File "/usr/local/lib/python3.11/site-packages/stripe/_api_requestor.py", line 351, in handle_error_response
+    raise err
+stripe._error.InvalidRequestError: Request req_uG3FegUXzuYLTO: Received unknown parameters: applePay, googlePay
+
+ERROR 2025-11-13 14:24:21,795 log 971 138323125331648 Internal Server Error: /api/v1/payment/create_payment_sheet/
+ERROR 2025-11-13 14:24:21,797 runserver 971 138323155744448 HTTP POST /api/v1/payment/create_payment_sheet/ 500 [1.22, 172.18.0.12:54190]
+ERROR 2025-11-13 14:36:59,633 log 1120 129160770995904 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:36:59,637 log 1120 129160789878464 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:36:59,664 log 1120 129160754210496 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:36:59,675 runserver 1120 129160886351552 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.15, 172.18.0.12:55190]
+ERROR 2025-11-13 14:36:59,697 runserver 1120 129160886351552 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.13, 172.18.0.12:55200]
+ERROR 2025-11-13 14:36:59,702 runserver 1120 129160886351552 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.22, 172.18.0.12:55182]
+ERROR 2025-11-13 14:37:02,260 log 1120 129160770995904 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:37:02,277 runserver 1120 129160886351552 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.08, 172.18.0.12:55202]
+ERROR 2025-11-13 14:37:14,707 log 1120 129160770995904 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:37:14,723 runserver 1120 129160886351552 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.08, 172.18.0.12:39390]
+ERROR 2025-11-13 14:37:16,749 log 1120 129160770995904 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:37:16,766 runserver 1120 129160886351552 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.08, 172.18.0.12:51992]
+ERROR 2025-11-13 14:37:16,802 log 1120 129160754210496 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:37:16,819 runserver 1120 129160886351552 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.10, 172.18.0.12:52002]
+ERROR 2025-11-13 14:39:35,568 log 1210 140220204836544 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:39:35,604 runserver 1210 140220304455360 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.11, 172.18.0.12:51536]
+ERROR 2025-11-13 14:39:35,640 log 1210 140220188051136 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:39:35,659 runserver 1210 140220304455360 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.08, 172.18.0.12:51540]
+ERROR 2025-11-13 14:39:35,690 log 1210 140220204836544 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:39:35,700 runserver 1210 140220304455360 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.06, 172.18.0.12:51544]
+ERROR 2025-11-13 14:39:38,117 log 1210 140220204836544 Internal Server Error: /api/v1/payment/stripe-webhook/
+Traceback (most recent call last):
+  File "/app/main/views/payment.py", line 306, in post
+    event = stripe.Webhook.construct_event(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 25, in construct_event
+    WebhookSignature.verify_header(payload, sig_header, secret, tolerance)
+  File "/usr/local/lib/python3.11/site-packages/stripe/_webhook.py", line 82, in verify_header
+    raise SignatureVerificationError(
+stripe._error.SignatureVerificationError: No signatures found matching the expected signature for payload
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 872, in __getattr__
+    target, is_submodule = _import_map[name]
+                           ~~~~~~~~~~~^^^^^^
+KeyError: 'error'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 552, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 502, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 556, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main/views/payment.py", line 313, in post
+    except stripe.error.SignatureVerificationError as e:
+           ^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/stripe/__init__.py", line 882, in __getattr__
+    raise AttributeError()
+AttributeError
+ERROR 2025-11-13 14:39:38,129 runserver 1210 140220304455360 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.07, 172.18.0.12:51556]
+ERROR 2025-11-13 14:42:12,323 payment 1263 125537073755840 No booking reference found in payment intent metadata
+ERROR 2025-11-13 19:36:23,785 log 1271 133793877845696 Internal Server Error: /api/v1/payment/stripe-webhook/
+ERROR 2025-11-13 19:36:23,788 runserver 1271 133793905112768 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.06, 172.18.0.10:40764]
+ERROR 2025-11-13 19:36:23,805 log 1271 133793877845696 Internal Server Error: /api/v1/payment/stripe-webhook/
+ERROR 2025-11-13 19:36:23,807 runserver 1271 133793905112768 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.03, 172.18.0.10:40768]
+ERROR 2025-11-13 19:36:23,921 log 1271 133793877845696 Internal Server Error: /api/v1/payment/stripe-webhook/
+ERROR 2025-11-13 19:36:23,923 runserver 1271 133793905112768 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.01, 172.18.0.10:40806]
+ERROR 2025-11-13 19:36:26,257 log 1271 133793877845696 Internal Server Error: /api/v1/payment/stripe-webhook/
+ERROR 2025-11-13 19:36:26,259 runserver 1271 133793905112768 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.03, 172.18.0.10:40816]

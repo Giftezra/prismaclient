@@ -17,9 +17,9 @@ SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
 
 
-ALLOWED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://1406609c54f0.ngrok-free.app" ]        
-CSRF_TRUSTED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://1406609c54f0.ngrok-free.app" ]
-CORS_ALLOWED_ORIGINS = ['https://prismavalet.com', 'https://www.prismavalet.com', "https://1406609c54f0.ngrok-free.app"]
+ALLOWED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://381a4014244d.ngrok-free.app" ]        
+CSRF_TRUSTED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://381a4014244d.ngrok-free.app" ]
+CORS_ALLOWED_ORIGINS = ['https://prismavalet.com', 'https://www.prismavalet.com', "https://381a4014244d.ngrok-free.app "]
 
 CORS_ALLOW_CREDENTIALS = True
 ALLOWED_HOSTS=['*']
@@ -251,8 +251,10 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
 
-
+# Asgi Application
 ASGI_APPLICATION = 'prisma.asgi.application'
+
+# Stripe Configuration
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 

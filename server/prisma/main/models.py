@@ -223,6 +223,9 @@ class BookedAppointment(models.Model):
     appointment_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Amount before VAT (after discounts)")
+    vat_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="VAT amount")
+    vat_rate = models.DecimalField(max_digits=5, decimal_places=2, default=23.00, help_text="VAT rate percentage")
     start_time = models.TimeField(null=True, blank=True)
     duration = models.IntegerField(null=True, blank=True)
     special_instructions = models.TextField(null=True, blank=True)
@@ -329,9 +332,15 @@ class Promotions(models.Model):
 
     def save(self, *args, **kwargs):
         # Set is_active to False if:
-        # 1. 30 days have passed since creation, OR
-        # 2. Promotion has been used
-        if (self.created_at and timezone.now() - self.created_at > timedelta(days=30)) or self.is_used:
+        # 1. valid_until date has passed, OR
+        # 2. 30 days have passed since creation, OR
+        # 3. Promotion has been used
+        from datetime import date
+        today = timezone.now().date()
+        
+        if (self.valid_until and self.valid_until < today) or \
+           (self.created_at and timezone.now() - self.created_at > timedelta(days=30)) or \
+           self.is_used:
             self.is_active = False
         super().save(*args, **kwargs)
     

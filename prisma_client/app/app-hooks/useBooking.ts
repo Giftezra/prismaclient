@@ -67,6 +67,8 @@ const formatLocalTime = (date: Date): string => {
  *
  * @returns Object containing all booking state, handlers, and utility methods
  */
+const VAT_RATE = 0.23; // 23% VAT rate
+
 const useBooking = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
@@ -1237,17 +1239,19 @@ const useBooking = () => {
    * and surcharges are calculated based on the actual amount being charged.
    *
    * @param excludeServicePrice - If true, sets service base price to 0 (free wash)
-   * @returns The final price after all calculations
+   * @returns Breakdown object with subtotal, VAT, and total
    *
    * @example
    * // Normal booking
-   * const price = calculateFinalPrice(false);  // £35.88
+   * const breakdown = calculateFinalPrice(false);  // { subtotal: 35.88, vat: 8.25, total: 44.13 }
    *
    * // Free Quick Sparkle (only charge addons)
-   * const price = calculateFinalPrice(true);   // £13.45
+   * const breakdown = calculateFinalPrice(true);   // { subtotal: 13.45, vat: 3.09, total: 16.54 }
    */
   const calculateFinalPrice = useCallback(
-    (excludeServicePrice: boolean = false): number => {
+    (
+      excludeServicePrice: boolean = false
+    ): { subtotal: number; vat: number; total: number } => {
       // Step 1: Calculate base amounts
       const basePrice = excludeServicePrice
         ? 0
@@ -1293,8 +1297,21 @@ const useBooking = () => {
           ? totalBeforeDiscounts * (promotions.discount_percentage / 100)
           : 0;
 
-      // Step 8: Final price
-      return totalBeforeDiscounts - loyaltyDiscount - promotionDiscount;
+      // Step 8: Calculate subtotal (after discounts)
+      const subtotalAfterDiscounts =
+        totalBeforeDiscounts - loyaltyDiscount - promotionDiscount;
+
+      // Step 9: Calculate VAT on subtotal
+      const vat = subtotalAfterDiscounts * VAT_RATE;
+
+      // Step 10: Calculate total (subtotal + VAT)
+      const total = subtotalAfterDiscounts + vat;
+
+      return {
+        subtotal: subtotalAfterDiscounts,
+        vat: vat,
+        total: total,
+      };
     },
     [
       selectedServiceType,
@@ -1309,11 +1326,11 @@ const useBooking = () => {
    * Gets the final price after all discounts (loyalty + promotion)
    *
    * @deprecated Use calculateFinalPrice(false) instead for consistency
-   * @returns The final price after all applicable discounts
+   * @returns The final price after all applicable discounts (including VAT)
    */
   const getFinalPrice = useCallback((): number => {
     // Use the new unified method for consistency
-    return calculateFinalPrice(false);
+    return calculateFinalPrice(false).total;
   }, [calculateFinalPrice]);
 
   /**
@@ -1672,7 +1689,7 @@ const useBooking = () => {
       const isQuickSparkle = selectedServiceType?.name === "The Quick Sparkle";
       const canUseFreeWash =
         isQuickSparkle && user?.loyalty_tier === "platinum";
-      let finalPrice = getFinalPrice();
+      let priceBreakdown = calculateFinalPrice(false);
       let applyFreeQuickSparkle = false;
 
       if (canUseFreeWash && isQuickSparkle) {
@@ -1683,7 +1700,7 @@ const useBooking = () => {
           if (checkResult.data && checkResult.data.can_use_free_wash) {
             // Calculate price excluding service base price and SUV surcharge
             // Only charge for addons with discounts applied
-            finalPrice = calculateFinalPrice(true);
+            priceBreakdown = calculateFinalPrice(true);
             applyFreeQuickSparkle = true;
 
             // Show user they're getting free wash
@@ -1701,7 +1718,7 @@ const useBooking = () => {
       // Process payment first
       setIsProcessingPayment(true);
       const paymentResult = await openPaymentSheet(
-        finalPrice,
+        priceBreakdown.total,
         "Prisma Valet",
         bookingReference
       );
@@ -1745,7 +1762,10 @@ const useBooking = () => {
           service_type: selectedServiceType!,
           address: selectedAddress!,
           status: "pending",
-          total_amount: finalPrice,
+          total_amount: priceBreakdown.total,
+          subtotal_amount: priceBreakdown.subtotal,
+          vat_amount: priceBreakdown.vat,
+          vat_rate: VAT_RATE * 100, // Convert to percentage (23.00)
           addons: selectedAddons,
           start_time: selectedDate ? formatLocalTime(selectedDate) : "",
           duration: getEstimatedDuration(),
@@ -2056,6 +2076,7 @@ const useBooking = () => {
     getFinalPrice,
     getLoyaltyDiscount,
     getPromotionDiscount,
+    calculateFinalPrice,
   };
 };
 

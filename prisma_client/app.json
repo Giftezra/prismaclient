@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/logo.png",  
         "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./google-services.json",
@@ -49,7 +49,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/notificationIcon.png",
+          "icon": "./assets/images/logo.png",
           "color": "#ffffff"
         }
       ],
@@ -69,9 +69,9 @@
       "typedRoutes": true
     },
     "extra": {
-      "detailer_app_url": "https://1406609c54f0.ngrok-free.app/detailer",
-      "customer_app_url": "https://1406609c54f0.ngrok-free.app/client",
-      "websocket_url": "wss://1406609c54f0.ngrok-free.app/ws/client/",
+      "detailer_app_url": "https://381a4014244d.ngrok-free.app/detailer",
+      "customer_app_url": "https://381a4014244d.ngrok-free.app/client",
+      "websocket_url": "wss://381a4014244d.ngrok-free.app/ws/client/",
       "googoleApiKeys": "AIzaSyAW00mf-OWgmU_lQ2yLiy3RLWkAVpIdE0U",
       "stripe": {
         "publishableKey": "pk_test_51S0pCyFO4bA8gRHV8aalwThKMBfWVy3jwM7xZ5cxNfM2QH0AygnOn4WPtEk7kPC3J1BJHLPQ508FpPjYtitk0Qfp00bYRMgL4p"

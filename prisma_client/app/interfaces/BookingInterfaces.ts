@@ -41,10 +41,13 @@ export interface BookedAppointmentProps {
   vehicle: MyVehiclesProps;
   valet_type: ValetTypeProps;
   service_type: ServiceTypeProps;
-  detailer?: DetailerProfileProps; 
+  detailer?: DetailerProfileProps;
   address: MyAddressProps;
   status?: string;
   total_amount: number;
+  subtotal_amount?: number;
+  vat_amount?: number;
+  vat_rate?: number;
   addons?: AddOnsProps[];
   start_time?: string;
   duration?: number;
@@ -83,6 +86,9 @@ export interface CreateBookingProps {
   addons?: string[];
   special_instructions?: string;
   total_amount: number;
+  subtotal_amount?: number;
+  vat_amount?: number;
+  vat_rate?: number;
   status: string;
   booking_date: string;
   start_time: string;

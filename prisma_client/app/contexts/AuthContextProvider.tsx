@@ -115,7 +115,8 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
     password: string,
     rememberMe: boolean
   ) => {
-    const credentials = { email, password };
+    const normalizedEmail = email.trim().toLowerCase();
+    const credentials = { email: normalizedEmail, password };
     try {
       const response = await login(credentials).unwrap();
 

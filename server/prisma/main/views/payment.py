@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from main.models import User, BookedAppointment, PaymentTransaction, RefundRecord, Address
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-import logging
+# import logging
 import json
 
 # Initialize Stripe with your secret key
@@ -47,7 +47,7 @@ class PaymentView(APIView):
         
         Creates a Stripe payment intent and ephemeral key for client-side payment processing.
         """
-        logger = logging.getLogger('main.views.payment')
+        # logger = logging.getLogger('main.views.payment')
         try:
             # Get the country from the users addresses 
             try:
@@ -95,7 +95,7 @@ class PaymentView(APIView):
                 if hasattr(user, 'stripe_customer_id'):
                     user.stripe_customer_id = customer.id
                     user.save()
-                logger.info(f"Created new Stripe customer: {customer.id}")
+                print(f"Created new Stripe customer: {customer.id}")
             
             # Create payment intent with calculated amount
             payment_intent = stripe.PaymentIntent.create(
@@ -105,15 +105,6 @@ class PaymentView(APIView):
                 automatic_payment_methods={
                     'enabled': True,
                 },
-                googlePay={
-                    'merchantCountryCode': merchant_country_code,
-                    'currencyCode': currency,
-                },
-                applePay={
-                    'merchantCountryCode': merchant_country_code,
-                    'currencyCode': currency,
-                },
-                # Enable setup for future payments
                 setup_future_usage='off_session',
                 metadata={
                     'user_id': str(user.id),
@@ -121,7 +112,7 @@ class PaymentView(APIView):
                 }
             )
             
-            logger.info(f"Created payment intent: {payment_intent.id} for booking: {booking_reference}")
+            print(f"Created payment intent: {payment_intent.id} for booking: {booking_reference}")
             
             # Create ephemeral key for client-side access
             ephemeral_key = stripe.EphemeralKey.create(
@@ -137,9 +128,9 @@ class PaymentView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            logger.error(f"Error creating payment sheet: {str(e)}")
+            print(f"Error creating payment sheet: {str(e)}")
             import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            print(f"Traceback: {traceback.format_exc()}")
             return Response(
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -180,14 +171,14 @@ class PaymentView(APIView):
 
     def confirm_payment_intent(self, request):
         """Check if payment intent has been confirmed via webhook (for polling)"""
-        logger = logging.getLogger('main.views.payment')
+        # logger = logging.getLogger('main.views.payment')
         
         try:
             payment_intent_id = request.data.get('payment_intent_id')
             if not payment_intent_id:
                 return Response({'error': 'payment_intent_id is required'}, status=status.HTTP_400_BAD_REQUEST)
             
-            logger.info(f"Checking payment confirmation for payment intent: {payment_intent_id}")
+            print(f"Checking payment confirmation for payment intent: {payment_intent_id}")
             
             # Check if PaymentTransaction exists for this payment intent
             payment_transaction = PaymentTransaction.objects.filter(
@@ -197,7 +188,7 @@ class PaymentView(APIView):
             ).first()
             
             if payment_transaction:
-                logger.info(f"Payment confirmed - transaction ID: {payment_transaction.id}")
+                print(f"Payment confirmed - transaction ID: {payment_transaction.id}")
                 return Response({
                     'confirmed': True,
                     'payment_intent_id': payment_intent_id,
@@ -205,21 +196,22 @@ class PaymentView(APIView):
                     'booking_reference': payment_transaction.booking_reference,
                 }, status=status.HTTP_200_OK)
             else:
-                logger.info(f"Payment not yet confirmed for payment intent: {payment_intent_id}")
+                print(f"Payment not yet confirmed for payment intent: {payment_intent_id}")
                 return Response({
                     'confirmed': False,
                     'payment_intent_id': payment_intent_id,
                 }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            logger.error(f"Error confirming payment intent: {str(e)}")
+            print(f"Error confirming payment intent: {str(e)}")
             import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            print(f"Traceback: {traceback.format_exc()}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     def check_payment_status(self, request):
         """Check payment status for a booking - useful for debugging"""
-        logger = logging.getLogger('main.views.payment')
+        # logger = logging.getLogger('main.views.payment')
         
         try:
             booking_reference = request.data.get('booking_reference')
@@ -227,7 +219,7 @@ class PaymentView(APIView):
             
             # If payment_intent_id is provided, check by that first (works before booking exists)
             if payment_intent_id:
-                logger.info(f"Checking payment status for payment intent: {payment_intent_id}")
+                print(f"Checking payment status for payment intent: {payment_intent_id}")
                 payment_transaction = PaymentTransaction.objects.filter(
                     stripe_payment_intent_id=payment_intent_id,
                     transaction_type='payment'
@@ -253,10 +245,10 @@ class PaymentView(APIView):
             if not booking_reference:
                 return Response({'error': 'booking_reference or payment_intent_id is required'}, status=status.HTTP_400_BAD_REQUEST)
             
-            logger.info(f"Checking payment status for booking: {booking_reference}")
+            print(f"Checking payment status for booking: {booking_reference}")
             
             booking = BookedAppointment.objects.get(booking_reference=booking_reference)
-            logger.info(f"Found booking: {booking.id}, user: {booking.user.id}, total_amount: {booking.total_amount}")
+            print(f"Found booking: {booking.id}, user: {booking.user.id}, total_amount: {booking.total_amount}")
             
             # Check for payment transactions
             payment_transactions = PaymentTransaction.objects.filter(
@@ -264,7 +256,7 @@ class PaymentView(APIView):
                 transaction_type='payment'
             ).order_by('-created_at')
             
-            logger.info(f"Found {payment_transactions.count()} payment transactions for booking")
+            print(f"Found {payment_transactions.count()} payment transactions for booking")
             
             payment_data = []
             for transaction in payment_transactions:
@@ -277,7 +269,7 @@ class PaymentView(APIView):
                     'created_at': transaction.created_at,
                     'processed_at': transaction.processed_at
                 })
-                logger.info(f"Payment transaction: {transaction.id} - {transaction.status} - {transaction.amount} {transaction.currency}")
+                print(f"Payment transaction: {transaction.id} - {transaction.status} - {transaction.amount} {transaction.currency}")
             
             return Response({
                 'booking_reference': booking_reference,
@@ -289,10 +281,10 @@ class PaymentView(APIView):
             }, status=status.HTTP_200_OK)
             
         except BookedAppointment.DoesNotExist:
-            logger.error(f"Booking not found: {booking_reference}")
+            print(f"Booking not found: {booking_reference}")
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            logger.error(f"Error checking payment status: {str(e)}")
+            print(f"Error checking payment status: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -300,43 +292,72 @@ class PaymentView(APIView):
 class StripeWebhookView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
-
     
     def post(self, request, *args, **kwargs):
-        print(f"Received Stripe webhook request: {request.body}")
-        logger = logging.getLogger('main.views.payment')
+        print(f"Received Stripe webhook request")
+        # logger = logging.getLogger('main.views.payment')
 
         try:
+            # Get the raw request body - important for signature verification
             payload = request.body
-            event = json.loads(payload)
-            event_type = event.get('type')
             
-            logger.info(f"Stripe webhook event type: {event_type}")
-            print(f"Received Stripe webhook event: {event_type}")
+            # Get the Stripe signature from headers
+            sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+            
+            # Get webhook secret from settings
+            webhook_secret = settings.STRIPE_WEBHOOK_SECRET
+            
+            # Verify signature if webhook secret is configured
+            if webhook_secret and sig_header:
+                try:
+                    event = stripe.Webhook.construct_event(
+                        payload, sig_header, webhook_secret
+                    )
+                    print(f"Stripe webhook signature verified successfully")
+                except stripe.error.SignatureVerificationError as e:
+                    print(f"Stripe webhook signature verification failed: {str(e)}")
+                    return Response({'error': 'Invalid signature'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                # For local testing with stripe listen (no signature verification)
+                print(f"Warning: Webhook secret not configured or signature missing - skipping verification")
+                if not sig_header:
+                    print(f"Warning: No Stripe-Signature header found")
+                if not webhook_secret:
+                    print(f"Warning: STRIPE_WEBHOOK_SECRET not set in settings")
+                
+                # Parse JSON directly (only for local testing)
+                try:
+                    event = json.loads(payload)
+                except json.JSONDecodeError as e:
+                    print(f"Invalid JSON payload: {str(e)}")
+                    return Response({'error': 'Invalid payload'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            event_type = event.get('type')
+            print(f"Stripe webhook event type: {event_type}")
             
             # Handle payment success events
             if event_type == 'payment_intent.succeeded':
                 payment_intent = event['data']['object']
                 metadata = payment_intent.get('metadata', {})
                 
-                logger.info(f"Payment intent succeeded - ID: {payment_intent.get('id')}")
-                logger.info(f"Payment intent amount: {payment_intent.get('amount')} {payment_intent.get('currency')}")
-                logger.info(f"Payment intent metadata: {metadata}")
+                print(f"Payment intent succeeded - ID: {payment_intent.get('id')}")
+                print(f"Payment intent amount: {payment_intent.get('amount')} {payment_intent.get('currency')}")
+                print(f"Payment intent metadata: {metadata}")
                 
                 try:
                     # Get booking reference and user_id from metadata
                     booking_reference = metadata.get('booking_reference')
                     user_id = metadata.get('user_id')
                     
-                    logger.info(f"Booking reference from metadata: {booking_reference}")
-                    logger.info(f"User ID from metadata: {user_id}")
+                    print(f"Booking reference from metadata: {booking_reference}")
+                    print(f"User ID from metadata: {user_id}")
                     
                     if not booking_reference:
-                        logger.error("No booking reference found in payment intent metadata")
+                        print("No booking reference found in payment intent metadata")
                         return Response({'error': 'No booking reference in metadata'}, status=status.HTTP_400_BAD_REQUEST)
                     
                     if not user_id:
-                        logger.error("No user_id found in payment intent metadata")
+                        print("No user_id found in payment intent metadata")
                         return Response({'error': 'No user_id in metadata'}, status=status.HTTP_400_BAD_REQUEST)
                     
                     # Check if PaymentTransaction already exists to avoid duplicates
@@ -346,24 +367,24 @@ class StripeWebhookView(APIView):
                     ).first()
                     
                     if existing_transaction:
-                        logger.warning(f"Payment transaction already exists for payment intent: {payment_intent_id}, transaction ID: {existing_transaction.id}")
+                        print(f"Payment transaction already exists for payment intent: {payment_intent_id}, transaction ID: {existing_transaction.id}")
                         return Response({'status': 'payment already recorded'}, status=status.HTTP_200_OK)
                     
                     # Get user from metadata
                     try:
                         user = User.objects.get(id=user_id)
-                        logger.info(f"Found user: {user.id}")
+                        print(f"Found user: {user.id}")
                     except User.DoesNotExist:
-                        logger.error(f"User not found for ID: {user_id}")
+                        print(f"User not found for ID: {user_id}")
                         return Response({'error': 'User not found'}, status=status.HTTP_400_BAD_REQUEST)
                     
                     # Try to get booking if it exists (may not exist yet)
                     booking = None
                     try:
                         booking = BookedAppointment.objects.get(booking_reference=booking_reference)
-                        logger.info(f"Found booking: {booking.id}, user: {booking.user.id}, amount: {booking.total_amount}")
+                        print(f"Found booking: {booking.id}, user: {booking.user.id}, amount: {booking.total_amount}")
                     except BookedAppointment.DoesNotExist:
-                        logger.info(f"Booking not yet created for reference: {booking_reference} - will create payment transaction without booking")
+                        print(f"Booking not yet created for reference: {booking_reference} - will create payment transaction without booking")
                     
                     # Safely get payment method details (may not exist)
                     last_4_digits = None
@@ -374,10 +395,10 @@ class StripeWebhookView(APIView):
                         last_4_digits = card_details.get('last4')
                         card_brand = card_details.get('brand')
                     except (AttributeError, KeyError, TypeError) as e:
-                        logger.warning(f"Could not extract card details: {str(e)}")
+                        print(f"Could not extract card details: {str(e)}")
                     
                     # Create payment transaction record (booking may be None)
-                    logger.info(f"Creating payment transaction for booking reference: {booking_reference}")
+                    print(f"Creating payment transaction for booking reference: {booking_reference}")
                     payment_transaction = PaymentTransaction.objects.create(
                         booking=booking,  # May be None if booking doesn't exist yet
                         user=user,
@@ -390,62 +411,62 @@ class StripeWebhookView(APIView):
                         card_brand=card_brand,
                         status='succeeded'
                     )
-                    logger.info(f"Payment transaction created successfully: {payment_transaction.id}")
-                    logger.info(f"Payment transaction details - Amount: {payment_transaction.amount}, Currency: {payment_transaction.currency}, Status: {payment_transaction.status}")
+                    print(f"Payment transaction created successfully: {payment_transaction.id}")
+                    print(f"Payment transaction details - Amount: {payment_transaction.amount}, Currency: {payment_transaction.currency}, Status: {payment_transaction.status}")
                     
                     # If booking exists, save it to trigger any signals
                     if booking:
                         booking.save()
-                        logger.info(f"Booking saved after payment transaction creation")
+                        print(f"Booking saved after payment transaction creation")
                     
-                    logger.info(f"Payment recorded successfully for booking reference: {booking_reference}")
+                    print(f"Payment recorded successfully for booking reference: {booking_reference}")
                     return Response({'status': 'payment recorded'}, status=status.HTTP_200_OK)
                     
                 except Exception as e:
-                    logger.error(f"Error processing payment webhook: {str(e)}")
+                    print(f"Error processing payment webhook: {str(e)}")
                     import traceback
-                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    print(f"Traceback: {traceback.format_exc()}")
                     return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
             
             # Handle refund events
             elif event_type == 'charge.dispute.created':
-                logger.info(f"Handling dispute created event")
+                print(f"Handling dispute created event")
                 dispute = event['data']['object']
                 self._handle_dispute(dispute)
                 
             elif event_type == 'charge.refunded':
-                logger.info(f"Handling refund succeeded event")
+                print(f"Handling refund succeeded event")
                 refund = event['data']['object']
                 self._handle_refund_success(refund)
 
             elif event_type == 'charge.updated':
-                logger.info(f"Handling charge updated event")
+                print(f"Handling charge updated event")
                 refund = event['data']['object']
                 self._handle_refund_updated(refund)
                 
             elif event_type == 'charge.failed':
-                logger.info(f"Handling charge failed event")
+                print(f"Handling charge failed event")
                 refund = event['data']['object']
                 self._handle_refund_failure(refund)
             
             else:
-                logger.info(f"Unhandled Stripe event type: {event_type}")
+                print(f"Unhandled Stripe event type: {event_type}")
                 return Response({
                     'status': 'success',
                     'message': f'Received {event_type}',
                     'event_type': event_type
                 }, status=status.HTTP_200_OK)
             
-            logger.info(f"Stripe event processed successfully: {event_type}")
+            print(f"Stripe event processed successfully: {event_type}")
             return Response({'status': 'event processed'}, status=status.HTTP_200_OK)
             
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON payload: {str(e)}")
+            print(f"Invalid JSON payload: {str(e)}")
             return Response({'error': 'Invalid payload'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error(f"Unexpected error in webhook: {str(e)}")
+            print(f"Unexpected error in webhook: {str(e)}")
             import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            print(f"Traceback: {traceback.format_exc()}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

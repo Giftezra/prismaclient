@@ -28,8 +28,8 @@ urlpatterns = [
     path('terms/<action>/', TermsView.as_view(), name='terms'),
     
     # Payment and webhook endpoints
-    path('payment/<action>/', PaymentView.as_view(), name='payment'),
     path('payment/stripe-webhook/', StripeWebhookView.as_view(), name='stripe_webhook'),
+    path('payment/<action>/', PaymentView.as_view(), name='payment'),
     
     # Password reset endpoints
     path('auth/password-reset/', RequestPasswordResetView.as_view(), name='request_password_reset'),

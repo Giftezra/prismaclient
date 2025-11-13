@@ -1,16 +1,17 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   StyleSheet,
   View,
   ScrollView,
   Image,
   ActivityIndicator,
-  TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import StyledText from "../helpers/StyledText";
 import { useFetchBookingImagesQuery } from "@/app/store/api/bookingApi";
+import { useSnackbar } from "@/app/contexts/SnackbarContext";
+import { useModalService } from "@/app/contexts/ModalServiceProvider";
 
 interface ServiceImagesModalProps {
   bookingId: string;
@@ -33,6 +34,28 @@ const ServiceImagesModal: React.FC<ServiceImagesModalProps> = ({
     isError,
     error,
   } = useFetchBookingImagesQuery({ booking_id: bookingId });
+  const { showSnackbarWithConfig } = useSnackbar();
+  const { closeModal } = useModalService();
+  const hasNotifiedRef = useRef(false);
+
+  const beforeImages = imagesData?.before_images ?? [];
+  const afterImages = imagesData?.after_images ?? [];
+  const hasBeforeImages = beforeImages.length > 0;
+  const hasAfterImages = afterImages.length > 0;
+  const hasAnyImages = hasBeforeImages || hasAfterImages;
+
+  useEffect(() => {
+    if (!isLoading && !isError && !hasAnyImages && !hasNotifiedRef.current) {
+      hasNotifiedRef.current = true;
+      showSnackbarWithConfig({
+        message:
+          "No images are available yet. Your appointment has not started.",
+        type: "info",
+        duration: 3500,
+      });
+      closeModal();
+    }
+  }, [closeModal, hasAnyImages, isError, isLoading, showSnackbarWithConfig]);
 
   /**
    * Empty state component when no images are available
@@ -138,17 +161,8 @@ const ServiceImagesModal: React.FC<ServiceImagesModalProps> = ({
     return <ErrorState />;
   }
 
-  if (!imagesData) {
-    return <EmptyState />;
-  }
-
-  const { before_images, after_images } = imagesData;
-  const hasBeforeImages = before_images && before_images.length > 0;
-  const hasAfterImages = after_images && after_images.length > 0;
-
-  // Show empty state if no images at all
-  if (!hasBeforeImages && !hasAfterImages) {
-    return <EmptyState />;
+  if (!imagesData || !hasAnyImages) {
+    return null;
   }
 
   return (
@@ -159,10 +173,10 @@ const ServiceImagesModal: React.FC<ServiceImagesModalProps> = ({
         showsVerticalScrollIndicator={false}
       >
         {hasBeforeImages && (
-          <ImageGallery images={before_images} title="Before Images" />
+          <ImageGallery images={beforeImages} title="Before Images" />
         )}
         {hasAfterImages && (
-          <ImageGallery images={after_images} title="After Images" />
+          <ImageGallery images={afterImages} title="After Images" />
         )}
       </ScrollView>
     </View>

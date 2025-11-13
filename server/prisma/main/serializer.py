@@ -56,6 +56,15 @@ class PromotionsSerializer(serializers.ModelSerializer):
 """
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+        email = attrs.get(self.username_field)
+        if email:
+            normalized_email = email.strip().lower()
+            try:
+                user = User.objects.get(email__iexact=normalized_email)
+                attrs[self.username_field] = user.email
+            except User.DoesNotExist:
+                attrs[self.username_field] = normalized_email
+
         try:
             data = super().validate(attrs)
         except ValidationError as e:

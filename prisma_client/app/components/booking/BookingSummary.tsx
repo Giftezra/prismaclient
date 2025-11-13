@@ -34,6 +34,11 @@ interface BookingSummaryProps {
   originalPrice?: number;
   finalPrice?: number;
   loyaltyDiscount?: number;
+  // VAT breakdown
+  subtotal?: number;
+  vat?: number;
+  vatRate?: number;
+  total?: number;
 }
 
 const BookingSummary: React.FC<BookingSummaryProps> = ({
@@ -55,11 +60,17 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
   originalPrice,
   finalPrice,
   loyaltyDiscount = 0,
+  // VAT breakdown
+  subtotal,
+  vat,
+  vatRate = 23,
+  total,
 }) => {
   const cardColor = useThemeColor({}, "cards");
   const textColor = useThemeColor({}, "text");
   const primaryPurpleColor = useThemeColor({}, "primary");
   const buttonColor = useThemeColor({}, "button");
+  const borderColor = useThemeColor({}, "borders");
 
   // Calculate loyalty discount based on user's loyalty benefits
   const calculateLoyaltyDiscount = (): number => {
@@ -81,11 +92,15 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
   const calculatedPromotionDiscount = calculatePromotionDiscount();
   const calculatedOriginalPrice =
     originalPrice || basePrice + addonPrice + suvPrice;
-  const calculatedFinalPrice =
-    finalPrice ||
-    calculatedOriginalPrice -
-      calculatedLoyaltyDiscount -
-      calculatedPromotionDiscount;
+  
+  // Use provided breakdown if available, otherwise calculate from legacy props
+  const calculatedSubtotal = subtotal !== undefined 
+    ? subtotal 
+    : (finalPrice || calculatedOriginalPrice - calculatedLoyaltyDiscount - calculatedPromotionDiscount);
+  const calculatedVat = vat !== undefined ? vat : 0;
+  const calculatedTotal = total !== undefined 
+    ? total 
+    : (finalPrice || calculatedOriginalPrice - calculatedLoyaltyDiscount - calculatedPromotionDiscount);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-GB", {
@@ -118,7 +133,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
         showsVerticalScrollIndicator={false}
       >
         {/* Vehicle Information */}
-        <View style={[styles.section, { backgroundColor: cardColor }]}>
+        <View style={[styles.section, { backgroundColor: cardColor, borderColor: borderColor }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="car" size={24} color={primaryPurpleColor} />
             <StyledText
@@ -145,7 +160,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
         </View>
 
         {/* Service Details */}
-        <View style={[styles.section, { backgroundColor: cardColor }]}>
+        <View style={[styles.section, { backgroundColor: cardColor, borderColor: borderColor }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="construct" size={24} color={primaryPurpleColor} />
             <StyledText
@@ -234,7 +249,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
         </View>
 
         {/* Date & Time */}
-        <View style={[styles.section, { backgroundColor: cardColor }]}>
+        <View style={[styles.section, { backgroundColor: cardColor, borderColor: borderColor }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="calendar" size={24} color={primaryPurpleColor} />
             <StyledText
@@ -288,7 +303,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
         </View>
 
         {/* Location */}
-        <View style={[styles.section, { backgroundColor: cardColor }]}>
+        <View style={[styles.section, { backgroundColor: cardColor, borderColor: borderColor }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="location" size={24} color={primaryPurpleColor} />
             <StyledText
@@ -322,7 +337,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
 
         {/* Special Instructions */}
         {specialInstructions && (
-          <View style={[styles.section, { backgroundColor: cardColor }]}>
+          <View style={[styles.section, { backgroundColor: cardColor, borderColor: borderColor }]}>
             <View style={styles.sectionHeader}>
               <Ionicons
                 name="information-circle"
@@ -351,7 +366,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
         {user?.loyalty_tier &&
           user?.loyalty_benefits &&
           user.loyalty_benefits.discount > 0 && (
-            <View style={[styles.section, { backgroundColor: cardColor }]}>
+            <View style={[styles.section, { backgroundColor: cardColor, borderColor: borderColor }]}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="star" size={24} color={primaryPurpleColor} />
                 <StyledText
@@ -402,7 +417,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
           )}
 
         {/* Price Summary */}
-        <View style={[styles.section, { backgroundColor: cardColor }]}>
+        <View style={[styles.section, { backgroundColor: cardColor, borderColor: borderColor  }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="card" size={24} color={primaryPurpleColor} />
             <StyledText
@@ -528,6 +543,58 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
               </View>
             )}
 
+            {/* Show subtotal after discounts */}
+            {subtotal !== undefined && (
+              <View
+                style={[
+                  styles.priceRow,
+                  {
+                    borderTopWidth: 1,
+                    borderTopColor: textColor + "20",
+                    paddingTop: 8,
+                    marginTop: 8,
+                  },
+                ]}
+              >
+                <StyledText
+                  variant="bodyMedium"
+                  style={[
+                    styles.priceLabel,
+                    { color: textColor, fontWeight: "600" },
+                  ]}
+                >
+                  Subtotal (ex VAT):
+                </StyledText>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[
+                    styles.priceValue,
+                    { color: textColor, fontWeight: "600" },
+                  ]}
+                >
+                  {formatPrice(calculatedSubtotal)}
+                </StyledText>
+              </View>
+            )}
+
+            {/* Show VAT breakdown */}
+            {calculatedVat > 0 && (
+              <View style={styles.priceRow}>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceLabel, { color: textColor }]}
+                >
+                  VAT ({vatRate}%):
+                </StyledText>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceValue, { color: textColor }]}
+                >
+                  {formatPrice(calculatedVat)}
+                </StyledText>
+              </View>
+            )}
+
             <View
               style={[
                 styles.totalRow,
@@ -546,18 +613,12 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 >
                   Total Amount:
                 </StyledText>
-                <StyledText
-                  variant="bodySmall"
-                  style={[styles.vatText, { color: textColor, opacity: 0.7 }]}
-                >
-                  VAT inc
-                </StyledText>
               </View>
               <StyledText
                 variant="titleLarge"
                 style={[styles.totalValue, { color: buttonColor }]}
               >
-                {formatPrice(calculatedFinalPrice)}
+                {formatPrice(calculatedTotal)}
               </StyledText>
             </View>
           </View>
@@ -582,8 +643,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    borderRadius: 3,
-    padding: 12,
+    borderRadius: 10,
+    padding: 15,
     marginBottom: 12,
   },
   sectionHeader: {
