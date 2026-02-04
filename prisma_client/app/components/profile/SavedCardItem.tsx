@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import StyledText from "../helpers/StyledText";
 import StyledButton from "../helpers/StyledButton";
-import { PaymentMethod } from "@/app/store/api/bookingApi";
+import { PaymentMethod } from "@/app/store/api/eventApi";
 
 interface SavedCardItemProps {
   card: PaymentMethod;

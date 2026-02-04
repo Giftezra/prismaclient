@@ -1,0 +1,57 @@
+{% extends "base_email.html" %} {% block content %}
+<div
+  style="
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  "
+>
+  <h2
+    style="
+      color: #f44336;
+      border-bottom: 2px solid #f44336;
+      padding-bottom: 10px;
+    "
+  >
+    Vehicle Transfer Request Rejected
+  </h2>
+
+  <p>Hello {{ requester_name }},</p>
+
+  <p>
+    We regret to inform you that your vehicle transfer request has been rejected
+    by {{ owner_name }}.
+  </p>
+
+  <div
+    style="
+      background-color: #ffebee;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      border-left: 4px solid #f44336;
+    "
+  >
+    <p style="margin: 5px 0">
+      <strong>Vehicle:</strong> {{ vehicle_make }} {{ vehicle_model }} {{
+      vehicle_year }}
+    </p>
+    <p style="margin: 5px 0">
+      <strong>Registration:</strong> {{ vehicle_registration }}
+    </p>
+    <p style="margin: 5px 0">
+      <strong>Current Owner:</strong> {{ owner_name }}
+    </p>
+  </div>
+
+  <p>
+    The current owner has chosen not to transfer this vehicle to your account.
+    If you believe this is an error, please contact the vehicle owner directly.
+  </p>
+
+  <p style="margin-top: 30px">
+    If you have any questions, please contact our support team.
+  </p>
+</div>
+{% endblock %}

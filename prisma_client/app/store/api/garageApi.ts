@@ -3,6 +3,8 @@ import { axiosBaseQuery } from "../baseQuery";
 import {
   MyVehicleStatsProps,
   MyVehiclesProps,
+  BranchVehiclesGroup,
+  CreateVehicleEventRequest,
 } from "@/app/interfaces/GarageInterface";
 
 const garageApi = createApi({
@@ -25,14 +27,39 @@ const garageApi = createApi({
     /**
      * Get all the vehicles from the server
      * @returns The vehicles that were fetched from the server
+     * For fleet owners: returns grouped by branch { branches: BranchVehiclesGroup[] }
+     * For regular users/branch admins: returns flat list { vehicles: MyVehiclesProps[] }
      */
-    getMyVehicles: builder.query<MyVehiclesProps[], void>({
+    getMyVehicles: builder.query<
+      MyVehiclesProps[] | { branches: BranchVehiclesGroup[] },
+      void
+    >({
       query: () => ({
         url: "/api/v1/garage/get_vehicles/",
         method: "GET",
       }),
-      transformResponse: (response: { vehicles: MyVehiclesProps[] }) =>
-        response.vehicles,
+      transformResponse: (
+        response:
+          | { vehicles: any[] }
+          | { branches: any[] }
+      ) => {
+        // Transform registration_number to licence for compatibility
+        const transformVehicle = (vehicle: any): MyVehiclesProps => ({
+          ...vehicle,
+          licence: vehicle.licence || vehicle.registration_number || "",
+        });
+
+        // Return the response as-is, let the hook handle the structure
+        if ("branches" in response) {
+          return {
+            branches: response.branches.map((branch: any) => ({
+              ...branch,
+              vehicles: branch.vehicles.map(transformVehicle),
+            })),
+          };
+        }
+        return response.vehicles.map(transformVehicle);
+      },
     }),
 
     /**
@@ -45,7 +72,19 @@ const garageApi = createApi({
         url: `/api/v1/garage/get_vehicle_stats/${vehicleId}/`,
         method: "GET",
       }),
-      transformResponse: (response: MyVehicleStatsProps) => response,
+      transformResponse: (response: MyVehicleStatsProps) => {
+        // Transform registration_number to licence for compatibility
+        if (response.vehicle) {
+          return {
+            ...response,
+            vehicle: {
+              ...response.vehicle,
+              licence: response.vehicle.licence || (response.vehicle as any).registration_number || "",
+            },
+          };
+        }
+        return response;
+      },
     }),
 
     /**
@@ -72,6 +111,22 @@ const garageApi = createApi({
         method: "DELETE",
       }),
     }),
+
+    /**
+     * Create a vehicle event (inspection, repair, service, etc.)
+     * @param eventData - The vehicle event data to create
+     * @returns The created event ID and success message
+     */
+    createVehicleEvent: builder.mutation<
+      { id: string; message: string },
+      CreateVehicleEventRequest
+    >({
+      query: (eventData) => ({
+        url: "/api/v1/garage/create_vehicle_event/",
+        method: "POST",
+        data: eventData,
+      }),
+    }),
   }),
 });
 export const {
@@ -80,5 +135,6 @@ export const {
   useDeleteVehicleMutation,
   useGetMyVehiclesQuery,
   useGetVehicleStatsQuery,
+  useCreateVehicleEventMutation,
 } = garageApi;
 export default garageApi;

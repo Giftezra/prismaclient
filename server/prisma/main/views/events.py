@@ -2,7 +2,8 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from main.models import BookedAppointment, BookedAppointmentImage, ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicles, Promotions, PaymentTransaction, RefundRecord, User, LoyaltyProgram
+from main.models import BookedAppointment, BookedAppointmentImage, ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicle, Promotions, PaymentTransaction, RefundRecord, User, LoyaltyProgram, Branch
+import uuid
 import stripe
 from django.conf import settings
 from datetime import datetime
@@ -15,7 +16,7 @@ import traceback
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 """ The view is used to define the structure of the booking api for the client.  """
-class BookingView(APIView):
+class EventsView(APIView):
     permission_classes = [IsAuthenticated]
     """ Action handlers designed to route the url to the appropriate function """
     action_handlers = {
@@ -28,7 +29,8 @@ class BookingView(APIView):
         'get_promotions' : 'get_promotions',
         'mark_promotion_used' : 'mark_promotion_used',
         'check_free_wash' : 'check_free_wash',
-        'get_booking_images' : 'get_booking_images',
+        'get_payment_methods' : 'get_payment_methods',
+        'delete_payment_method' : 'delete_payment_method',
     }
     
     """ Here we will override the crud methods and define the methods that would route the url to the appropriate function """
@@ -64,6 +66,10 @@ class BookingView(APIView):
 
     def get_promotions(self, request):
         try:
+            # Exclude promotions for fleet owners and their admins
+            if request.user.is_fleet_owner or request.user.is_fleet_admin_or_manager():
+                return Response(None, status=status.HTTP_200_OK)
+            
             from datetime import date
             today = timezone.now().date()
             promotions = Promotions.objects.filter(
@@ -127,21 +133,22 @@ class BookingView(APIView):
 
     def get_service_type(self, request):
         try:
-            service_type = ServiceType.objects.all().order_by('price')
+            service_types = ServiceType.objects.all().order_by('price')
             service_type_data = []
-            # Here we could use the serializer to get the data in the proper format,
-            # but i always prefer to destructure it manually
-            for service in service_type:
+            for service in service_types:
                 service_items = {
-                    "id" : service.id,
-                    "name" : service.name,
-                    "description" : service.description,
-                    "price" : service.price,
-                    "duration" : service.duration
+                    "id": service.id,
+                    "name": service.name,
+                    "description": service.description,
+                    "price": float(service.price),
+                    "duration": service.duration,
+                    "fleet_price": float(service.fleet_price) if service.fleet_price else None,
                 }
                 service_type_data.append(service_items)
             return Response(service_type_data, status=status.HTTP_200_OK)
         except Exception as e:
+            logger = logging.getLogger('main.views.booking')
+            logger.error(f"Error fetching service types: {str(e)}")
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
@@ -457,7 +464,7 @@ class BookingView(APIView):
                 valet_type_id = booking_data.get('valet_type', {}).get('id')
                 service_type_id = booking_data.get('service_type', {}).get('id')
                 address_id = booking_data.get('address', {}).get('id')
-                vehicle = Vehicles.objects.get(id=vehicle_id)
+                vehicle = Vehicle.objects.get(id=vehicle_id)
                 valet_type = ValetType.objects.get(id=valet_type_id)
                 logger.info(f"Valet type found: {valet_type.id} - {valet_type.name}")
                 
@@ -466,8 +473,38 @@ class BookingView(APIView):
                 logger.info(f"Service type found: {service_type.id} - {service_type.name}")
                 
                 logger.info(f"Looking up address ID: {address_id}")
-                address = Address.objects.get(id=address_id)
-                logger.info(f"Address found: {address.id} - {address.address}")
+                # Try to get Address by ID first (for regular addresses)
+                try:
+                    address = Address.objects.get(id=address_id)
+                    logger.info(f"Address found: {address.id} - {address.address}")
+                except (Address.DoesNotExist, ValueError):
+                    # If not found, check if it's a branch ID (UUID)
+                    # Branch addresses are UUIDs, Address IDs are integers
+                    try:
+                        # Try to parse as UUID to see if it's a branch ID
+                        branch_uuid = uuid.UUID(str(address_id))
+                        branch = Branch.objects.get(id=branch_uuid)
+                        logger.info(f"Branch found: {branch.id} - {branch.address}")
+                        # Create or get Address from branch data
+                        # Check if address already exists for this user from this branch
+                        address, created = Address.objects.get_or_create(
+                            user=request.user,
+                            address=branch.address or '',
+                            post_code=branch.postcode or '',
+                            city=branch.city or '',
+                            country=branch.country or '',
+                            defaults={
+                                'latitude': None,
+                                'longitude': None
+                            }
+                        )
+                        if created:
+                            logger.info(f"Created Address from branch: {address.id} - {address.address}")
+                        else:
+                            logger.info(f"Using existing Address from branch: {address.id} - {address.address}")
+                    except (Branch.DoesNotExist, ValueError, TypeError) as e:
+                        logger.error(f"Address not found and not a valid branch ID: {str(e)}")
+                        raise ValueError(f"Address with ID {address_id} not found")
                 
             except Exception as e:
                 logger.error(f"Error fetching related objects: {str(e)}")
@@ -536,6 +573,11 @@ class BookingView(APIView):
                         subtotal_amount = 0
                         vat_amount = 0
                 
+                # Get is_express_service from booking data
+                is_express_service = booking_data.get('is_express_service', False)
+                if isinstance(is_express_service, str):
+                    is_express_service = is_express_service.lower() == 'true'
+                
                 appointment = BookedAppointment.objects.create(
                     user = request.user,
                     appointment_date = appointment_date,
@@ -552,7 +594,8 @@ class BookingView(APIView):
                     start_time = start_time,
                     duration = booking_data.get('duration'),
                     special_instructions = booking_data.get('special_instructions'),
-                    booking_reference = booking_data.get('booking_reference')
+                    booking_reference = booking_data.get('booking_reference'),
+                    is_express_service = is_express_service
                 )
                 logger.info(f"BookedAppointment created successfully: {appointment.id}")
                 logger.info(f"Booking reference: {appointment.booking_reference}")
@@ -656,72 +699,98 @@ class BookingView(APIView):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def get_booking_images(self, request):
+
+    def get_payment_methods(self, request):
         """
-        Fetch all before/after images for a specific booking.
-        Called from service history when client views completed bookings.
-        
-        Args:
-            request: HTTP request with booking_id in query params
-        
-        Returns:
-            Response with grouped before/after images
+        Get saved payment methods for the authenticated user.
+        Returns list of payment methods attached to the user's Stripe customer.
         """
         try:
-            booking_id = request.query_params.get('booking_id')
-            if not booking_id:
+            user = request.user
+            
+            # Check if user has a Stripe customer ID
+            if not user.stripe_customer_id:
                 return Response({
-                    'error': 'booking_id is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                    'payment_methods': []
+                }, status=status.HTTP_200_OK)
             
-            # Get the booking and verify it belongs to the authenticated user
-            try:
-                booking = BookedAppointment.objects.get(
-                    id=booking_id,
-                    user=request.user
-                )
-            except BookedAppointment.DoesNotExist:
-                return Response({
-                    'error': 'Booking not found or access denied'
-                }, status=status.HTTP_404_NOT_FOUND)
+            # Retrieve payment methods from Stripe
+            payment_methods = stripe.PaymentMethod.list(
+                customer=user.stripe_customer_id,
+                type='card'
+            )
             
-            # Fetch all images for this booking
-            before_images = BookedAppointmentImage.objects.filter(
-                booking=booking,
-                image_type='before'
-            ).order_by('created_at')
-            
-            after_images = BookedAppointmentImage.objects.filter(
-                booking=booking,
-                image_type='after'
-            ).order_by('created_at')
-            
-            # Format response
-            before_images_data = [
-                {
-                    'id': img.id,
-                    'image_url': img.image_url,
-                    'created_at': img.created_at.isoformat()
-                } for img in before_images
-            ]
-            
-            after_images_data = [
-                {
-                    'id': img.id,
-                    'image_url': img.image_url,
-                    'created_at': img.created_at.isoformat()
-                } for img in after_images
-            ]
+            # Format payment methods for response
+            formatted_methods = []
+            for pm in payment_methods.data:
+                card = pm.card
+                formatted_methods.append({
+                    'id': pm.id,
+                    'type': pm.type,
+                    'card': {
+                        'brand': card.brand,
+                        'last4': card.last4,
+                        'exp_month': card.exp_month,
+                        'exp_year': card.exp_year,
+                    }
+                })
             
             return Response({
-                'booking_reference': booking.booking_reference,
-                'before_images': before_images_data,
-                'after_images': after_images_data
+                'payment_methods': formatted_methods
             }, status=status.HTTP_200_OK)
             
-        except Exception as e:
-            logging.error(f"Error fetching booking images: {str(e)}")
+        except stripe.error.StripeError as e:
+            logger = logging.getLogger('main.views.booking')
+            logger.error(f"Stripe error fetching payment methods: {str(e)}")
             return Response({
-                'error': str(e)
+                'error': 'Failed to fetch payment methods'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            logger = logging.getLogger('main.views.booking')
+            logger.error(f"Error fetching payment methods: {str(e)}")
+            return Response({
+                'error': 'Internal server error'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete_payment_method(self, request):
+        """
+        Delete (detach) a payment method from the user's Stripe customer.
+        """
+        try:
+            payment_method_id = request.data.get('payment_method_id')
+            
+            if not payment_method_id:
+                return Response({
+                    'error': 'payment_method_id is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Detach payment method from customer
+            stripe.PaymentMethod.detach(payment_method_id)
+            
+            return Response({
+                'message': 'Payment method deleted successfully'
+            }, status=status.HTTP_200_OK)
+            
+        except stripe.error.StripeError as e:
+            logger = logging.getLogger('main.views.booking')
+            logger.error(f"Stripe error deleting payment method: {str(e)}")
+            return Response({
+                'error': 'Failed to delete payment method'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            logger = logging.getLogger('main.views.booking')
+            logger.error(f"Error deleting payment method: {str(e)}")
+            return Response({
+                'error': 'Internal server error'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+class VehicleTransferView(APIView):
+    # This view is only designed to allow user authorise vehicle transfer. 
+    # When they recieve a notification email with a link, they click on it which will then render a page 
+    # where they will be allowed to authorise the transfer.
+
+    def post(self, request):
+        pass

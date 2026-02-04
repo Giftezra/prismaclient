@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from main.models import BookedAppointment
+from main.models import BookedAppointment, FleetVehicle, Branch
 from django.conf import settings
 from main.util.media_helper import get_full_media_url
 from django.utils import timezone
@@ -22,7 +22,9 @@ class DashboardView(APIView):
     """ Here we will override the crud methods and define the methods that would route the url to the appropriate function """
     def get(self, request, *args, **kwargs):
         action = kwargs.get('action')
+        print(f"DashboardView.get - action: {action}, kwargs: {kwargs}")
         if action not in self.action_handlers:
+            print(f"Invalid action: {action}, available actions: {list(self.action_handlers.keys())}")
             return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
         handler = getattr(self, self.action_handlers[action])
         return handler(request)
@@ -37,13 +39,42 @@ class DashboardView(APIView):
 
     def _get_upcoming_appointments(self, request):
         try:
-            # Get appointments that are confirmed, scheduled, or in progress
-            upcoming_appointments = BookedAppointment.objects.filter(
-                user=request.user, 
-                status__in=["confirmed", "scheduled", "in_progress", "pending"]
-            ).select_related(
-                'detailer', 'vehicle', 'address', 'service_type', 'valet_type'
-            )
+            # For branch admins, get appointments for all vehicles in their managed branch
+            # For regular users, get appointments for their own vehicles
+            if request.user.is_branch_admin:
+                managed_branch = request.user.get_managed_branch()
+                if managed_branch:
+                    # Get all vehicles in the managed branch
+                    branch_vehicles = FleetVehicle.objects.filter(
+                        fleet=managed_branch.fleet,
+                        branch=managed_branch
+                    ).select_related('vehicle')
+                    vehicle_ids = [fv.vehicle.id for fv in branch_vehicles if fv.vehicle]
+                    # Get appointments for vehicles in this branch
+                    if vehicle_ids:
+                        upcoming_appointments = BookedAppointment.objects.filter(
+                            vehicle_id__in=vehicle_ids,
+                            status__in=["confirmed", "scheduled", "in_progress", "pending"]
+                        ).select_related(
+                            'detailer', 'vehicle', 'address', 'service_type', 'valet_type'
+                        ).order_by('appointment_date', 'start_time')
+                    else:
+                        # No vehicles in branch, return empty
+                        upcoming_appointments = BookedAppointment.objects.none()
+                else:
+                    # No managed branch, return empty
+                    upcoming_appointments = BookedAppointment.objects.none()
+            else:
+                print("Regular user - get their own appointments")
+                # Regular user - get their own appointments
+                upcoming_appointments = BookedAppointment.objects.filter(
+                    user=request.user, 
+                    status__in=["confirmed", "scheduled", "in_progress", "pending"]
+                ).select_related(
+                    'detailer', 'vehicle', 'address', 'service_type', 'valet_type'
+                ).order_by('appointment_date', 'start_time')
+
+                print("upcoming_appointments", upcoming_appointments)
 
             upcoming_appointments_data = []
             for appointment in upcoming_appointments:
@@ -67,39 +98,50 @@ class DashboardView(APIView):
 
                 upcoming_appointments_data.append({
                     "booking_reference": str(appointment.booking_reference),
+                    # Return detailers as array for backward compatibility and express service support
+                    "detailers": [
+                        {
+                            "id": str(appointment.detailer.id) if appointment.detailer else None,
+                            "name": appointment.detailer.name if appointment.detailer else None,
+                            "rating": float(appointment.detailer.rating) if appointment.detailer and appointment.detailer.rating else 0.0,
+                            "image": None,
+                            "phone": appointment.detailer.phone if appointment.detailer else None,
+                        }
+                    ] if appointment.detailer else [],
+                    # Keep detailer for backward compatibility
                     "detailer": {
-                        "id": str(appointment.detailer.id),
-                        "name": appointment.detailer.name,
-                        "rating": float(appointment.detailer.rating),
+                        "id": str(appointment.detailer.id) if appointment.detailer else None,
+                        "name": appointment.detailer.name if appointment.detailer else None,
+                        "rating": float(appointment.detailer.rating) if appointment.detailer and appointment.detailer.rating else 0.0,
                         "image": None,
-                        "phone": appointment.detailer.phone,
+                        "phone": appointment.detailer.phone if appointment.detailer else None,
                     },
                     "vehicle": {
-                        "id": str(appointment.vehicle.id),
-                        "model": appointment.vehicle.model,
-                        "make": appointment.vehicle.make,
-                        "year": appointment.vehicle.year,
-                        "color": appointment.vehicle.color,
-                        "licence": appointment.vehicle.licence,
+                        "id": str(appointment.vehicle.id) if appointment.vehicle else None,
+                        "model": appointment.vehicle.model if appointment.vehicle else None,
+                        "make": appointment.vehicle.make if appointment.vehicle else None,
+                        "year": appointment.vehicle.year if appointment.vehicle else None,
+                        "color": appointment.vehicle.color if appointment.vehicle else None,
+                        "licence": appointment.vehicle.registration_number if appointment.vehicle else None,
                         "image": None,
                     },
                     "address": {
-                        "address": appointment.address.address,
-                        "post_code": appointment.address.post_code,
-                        "city": appointment.address.city,
-                        "country": appointment.address.country,
+                        "address": appointment.address.address if appointment.address else None,
+                        "post_code": appointment.address.post_code if appointment.address else None,
+                        "city": appointment.address.city if appointment.address else None,
+                        "country": appointment.address.country if appointment.address else None,
                     },
                     "service_type": {
-                        "id": str(appointment.service_type.id),
-                        "name": appointment.service_type.name,
-                        "description": appointment.service_type.description,
-                        "price": float(appointment.service_type.price),
-                        "duration": appointment.service_type.duration,
+                        "id": str(appointment.service_type.id) if appointment.service_type else None,
+                        "name": appointment.service_type.name if appointment.service_type else None,
+                        "description": appointment.service_type.description if appointment.service_type else None,
+                        "price": float(appointment.service_type.price) if appointment.service_type and appointment.service_type.price else 0.0,
+                        "duration": appointment.service_type.duration if appointment.service_type else None,
                     },
                     "valet_type": {
-                        "id": str(appointment.valet_type.id),
-                        "name": appointment.valet_type.name,
-                        "description": appointment.valet_type.description,
+                        "id": str(appointment.valet_type.id) if appointment.valet_type else None,
+                        "name": appointment.valet_type.name if appointment.valet_type else None,
+                        "description": appointment.valet_type.description if appointment.valet_type else None,
                     },
                     "booking_date": appointment.appointment_date.strftime('%Y-%m-%d'),
                     "total_amount": float(appointment.total_amount),
@@ -113,6 +155,9 @@ class DashboardView(APIView):
             return Response(upcoming_appointments_data, status=status.HTTP_200_OK)
             
         except Exception as e:
+            import traceback
+            print(f"Error in _get_upcoming_appointments: {str(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
             return Response(
                 {'error': f'Failed to fetch upcoming appointments: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -137,32 +182,173 @@ class DashboardView(APIView):
         
     def _get_recent_services(self, request):
         try:
-            # Get the most recent completed appointment with related objects
-            # Order by appointment_date descending to get the most recent completed service
-            recent_service = BookedAppointment.objects.filter(
-                user=request.user, 
-                status='completed'
-            ).select_related(
-                'detailer', 'vehicle', 'service_type', 'valet_type'
-            ).order_by('-appointment_date', '-created_at').first()
+            # #region agent log
+            import json
+            import time
+            log_data = {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A",
+                "location": "dashboard.py:_get_recent_services:entry",
+                "message": "Entry: _get_recent_services called",
+                "data": {
+                    "user_id": str(request.user.id),
+                    "user_email": request.user.email,
+                    "is_branch_admin": request.user.is_branch_admin,
+                    "is_fleet_owner": getattr(request.user, 'is_fleet_owner', False),
+                },
+                "timestamp": int(time.time() * 1000)
+            }
+            with open('c:\\Users\\gifte\\Projects\\prisma\\client\\.cursor\\debug.log', 'a') as f:
+                f.write(json.dumps(log_data) + '\n')
+            # #endregion
+            
+            # For branch admins, get recent services for all vehicles in their managed branch
+            # For regular users, get their own recent services
+            if request.user.is_branch_admin:
+                # #region agent log
+                log_data = {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "A",
+                    "location": "dashboard.py:_get_recent_services:branch_admin_path",
+                    "message": "Branch admin path executed",
+                    "data": {"user_id": str(request.user.id)},
+                    "timestamp": int(time.time() * 1000)
+                }
+                with open('c:\\Users\\gifte\\Projects\\prisma\\client\\.cursor\\debug.log', 'a') as f:
+                    f.write(json.dumps(log_data) + '\n')
+                # #endregion
+                
+                managed_branch = request.user.get_managed_branch()
+                
+                # #region agent log
+                log_data = {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "D",
+                    "location": "dashboard.py:_get_recent_services:managed_branch_check",
+                    "message": "Managed branch check",
+                    "data": {
+                        "user_id": str(request.user.id),
+                        "managed_branch": str(managed_branch.id) if managed_branch else None,
+                        "branch_name": managed_branch.name if managed_branch else None,
+                    },
+                    "timestamp": int(time.time() * 1000)
+                }
+                with open('c:\\Users\\gifte\\Projects\\prisma\\client\\.cursor\\debug.log', 'a') as f:
+                    f.write(json.dumps(log_data) + '\n')
+                # #endregion
+                
+                if managed_branch:
+                    # Get all vehicles in the managed branch
+                    branch_vehicles = FleetVehicle.objects.filter(
+                        fleet=managed_branch.fleet,
+                        branch=managed_branch
+                    ).select_related('vehicle')
+                    vehicle_ids = [fv.vehicle.id for fv in branch_vehicles if fv.vehicle]
+                    
+                    # #region agent log
+                    log_data = {
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "B",
+                        "location": "dashboard.py:_get_recent_services:vehicle_ids",
+                        "message": "Vehicle IDs for branch",
+                        "data": {
+                            "user_id": str(request.user.id),
+                            "vehicle_count": len(vehicle_ids),
+                            "vehicle_ids": [str(vid) for vid in vehicle_ids[:10]],  # First 10 only
+                        },
+                        "timestamp": int(time.time() * 1000)
+                    }
+                    with open('c:\\Users\\gifte\\Projects\\prisma\\client\\.cursor\\debug.log', 'a') as f:
+                        f.write(json.dumps(log_data) + '\n')
+                    # #endregion
+                    
+                    # Get most recent completed service for vehicles in this branch
+                    if vehicle_ids:
+                        recent_service = BookedAppointment.objects.filter(
+                            vehicle_id__in=vehicle_ids,
+                            status='completed'
+                        ).select_related(
+                            'detailer', 'vehicle', 'service_type', 'valet_type', 'user'
+                        ).order_by('-appointment_date', '-created_at').first()
+                    else:
+                        recent_service = None
+                else:
+                    recent_service = None
+            else:
+                # #region agent log
+                log_data = {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "C",
+                    "location": "dashboard.py:_get_recent_services:regular_user_path",
+                    "message": "Regular user path executed",
+                    "data": {"user_id": str(request.user.id)},
+                    "timestamp": int(time.time() * 1000)
+                }
+                with open('c:\\Users\\gifte\\Projects\\prisma\\client\\.cursor\\debug.log', 'a') as f:
+                    f.write(json.dumps(log_data) + '\n')
+                # #endregion
+                
+                # Regular user - get their own recent services
+                # CRITICAL: Must filter by user to prevent data leakage
+                recent_service = BookedAppointment.objects.filter(
+                    user=request.user, 
+                    status='completed'
+                ).select_related(
+                    'detailer', 'vehicle', 'service_type', 'valet_type', 'user'
+                ).order_by('-appointment_date', '-created_at').first()
+            
+            # #region agent log
+            import json
+            import time
+            log_data = {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E",
+                "location": "dashboard.py:_get_recent_services:before_response",
+                "message": "Recent service query result",
+                "data": {
+                    "user_id": str(request.user.id),
+                    "recent_service_found": recent_service is not None,
+                    "booking_reference": str(recent_service.booking_reference) if recent_service else None,
+                    "booking_user_id": str(recent_service.user.id) if recent_service else None,
+                    "booking_user_email": recent_service.user.email if recent_service else None,
+                    "booking_user_is_branch_admin": recent_service.user.is_branch_admin if recent_service else None,
+                    "vehicle_id": str(recent_service.vehicle.id) if recent_service and recent_service.vehicle else None,
+                },
+                "timestamp": int(time.time() * 1000)
+            }
+            with open('c:\\Users\\gifte\\Projects\\prisma\\client\\.cursor\\debug.log', 'a') as f:
+                f.write(json.dumps(log_data) + '\n')
+            # #endregion
             
             if not recent_service:
                 return Response({'error': 'No completed services found'}, status=status.HTTP_404_NOT_FOUND)
             
             # Format the response to match the frontend interface
+            vehicle_name = "Unknown Vehicle"
+            if recent_service.vehicle:
+                vehicle_name = f"{recent_service.vehicle.make or ''} {recent_service.vehicle.model or ''}".strip()
+                if not vehicle_name:
+                    vehicle_name = "Unknown Vehicle"
+            
             recent_service_data = {
                 "date": recent_service.appointment_date.strftime('%Y-%m-%d'),
-                "vehicle_name": f"{recent_service.vehicle.make} {recent_service.vehicle.model}",
+                "vehicle_name": vehicle_name,
                 "status": recent_service.status,
                 "cost": float(recent_service.total_amount),
                 "detailer": {
-                    "id": str(recent_service.detailer.id),
-                    "name": recent_service.detailer.name,
-                    "rating": float(recent_service.detailer.rating) if recent_service.detailer.rating else 0.0,
-                    "phone": recent_service.detailer.phone,
+                    "id": str(recent_service.detailer.id) if recent_service.detailer else None,
+                    "name": recent_service.detailer.name if recent_service.detailer else None,
+                    "rating": float(recent_service.detailer.rating) if recent_service.detailer and recent_service.detailer.rating else 0.0,
+                    "phone": recent_service.detailer.phone if recent_service.detailer else None,
                 },
-                "valet_type": recent_service.valet_type.name,
-                "service_type": recent_service.service_type.name,
+                "valet_type": recent_service.valet_type.name if recent_service.valet_type else None,
+                "service_type": recent_service.service_type.name if recent_service.service_type else None,
                 "tip": float(recent_service.review_tip) if recent_service.review_tip else 0.0,
                 "is_reviewed": recent_service.is_reviewed,
                 "rating": float(recent_service.review_rating) if recent_service.review_rating else 0.0,
@@ -186,18 +372,45 @@ class DashboardView(APIView):
             this_month = datetime.now().month
             this_year = datetime.now().year
 
-            # Get services for this month
-            services_this_month = BookedAppointment.objects.filter(
-                user=request.user, 
-                appointment_date__month=this_month, 
-                appointment_date__year=this_year
-            ).count()
+            # For branch admins, get stats for all vehicles in their managed branch
+            # For regular users, get their own stats
+            if request.user.is_branch_admin:
+                managed_branch = request.user.get_managed_branch()
+                if managed_branch:
+                    # Get all vehicles in the managed branch
+                    branch_vehicles = FleetVehicle.objects.filter(
+                        fleet=managed_branch.fleet,
+                        branch=managed_branch
+                    )
+                    vehicle_ids = [fv.vehicle.id for fv in branch_vehicles]
+                    # Get services for this month
+                    services_this_month = BookedAppointment.objects.filter(
+                        vehicle_id__in=vehicle_ids,
+                        appointment_date__month=this_month, 
+                        appointment_date__year=this_year
+                    ).count()
 
-            # Get services for this year
-            services_this_year = BookedAppointment.objects.filter(
-                user=request.user, 
-                appointment_date__year=this_year
-            ).count()
+                    # Get services for this year
+                    services_this_year = BookedAppointment.objects.filter(
+                        vehicle_id__in=vehicle_ids,
+                        appointment_date__year=this_year
+                    ).count()
+                else:
+                    services_this_month = 0
+                    services_this_year = 0
+            else:
+                # Regular user - get their own stats
+                services_this_month = BookedAppointment.objects.filter(
+                    user=request.user, 
+                    appointment_date__month=this_month, 
+                    appointment_date__year=this_year
+                ).count()
+
+                # Get services for this year
+                services_this_year = BookedAppointment.objects.filter(
+                    user=request.user, 
+                    appointment_date__year=this_year
+                ).count()
 
             stats = {
                 'services_this_month': services_this_month,

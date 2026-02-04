@@ -9,6 +9,7 @@ const initialState : BookingState = {
     selected_date : null,
     special_instructions : null,
     isSuv : false,
+    isExpressService : false,
     selected_vehicle : null,
     selected_address : null,
     selected_service_type : null,

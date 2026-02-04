@@ -6,7 +6,6 @@ import {
 } from "../interfaces/ProfileInterfaces";
 import {
   useFetchAllUserAddressesQuery,
-  useFetchAllUserServiceHistoryQuery,
   useAddNewAddressMutation,
   useUpdateExistingAddressMutation,
   useDeleteExistingAddressMutation,
@@ -223,12 +222,6 @@ const useProfile = () => {
     refetch: refetchAddresses,
   } = useFetchAllUserAddressesQuery();
 
-  const {
-    data: serviceHistory = [],
-    isLoading: isLoadingServiceHistory,
-    error: errorServiceHistory,
-    refetch: refetchServiceHistory,
-  } = useFetchAllUserServiceHistoryQuery();
 
   // Load user data from storage if not available in state
   useEffect(() => {
@@ -255,6 +248,8 @@ const useProfile = () => {
     name: currentUser?.name || "",
     email: currentUser?.email || "",
     phone: currentUser?.phone || "",
+    is_fleet_owner: currentUser?.is_fleet_owner || false,
+    is_branch_admin: currentUser?.is_branch_admin || false,
     address: {
       address: currentUser?.address?.address || "",
       post_code: currentUser?.address?.post_code || "",
@@ -506,7 +501,6 @@ const useProfile = () => {
   };
 
   return {
-    serviceHistory,
     userProfile,
     addresses,
     collectNewAddress,
@@ -521,7 +515,6 @@ const useProfile = () => {
     isLoadingDeleteAddress,
     isLoadingUpdateAddress,
     isLoadingAddresses,
-    isLoadingServiceHistory,
     isLoadingUserProfile,
     isLoadingUpdatePushNotificationToken,
     isLoadingUpdateEmailNotificationToken,
@@ -530,13 +523,11 @@ const useProfile = () => {
     errorDeleteAddress,
     errorUpdateAddress,
     errorAddresses,
-    errorServiceHistory,
     errorUserProfile,
     errorUpdatePushNotificationToken,
     errorUpdateEmailNotificationToken,
     errorUpdateMarketingEmailToken,
     refetchAddresses,
-    refetchServiceHistory,
     refetchUserProfile,
   };
 };

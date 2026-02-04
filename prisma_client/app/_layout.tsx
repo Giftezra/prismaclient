@@ -24,6 +24,7 @@ export default function RootLayout() {
     currentTheme === "dark" ? "light-content" : "dark-content";
   return (
     <SafeAreaProvider>
+      <StatusBar barStyle={statusBarStyle} />
       <Provider store={store}>
         <ThemeProvider>
           <AlertProvider>
@@ -32,10 +33,10 @@ export default function RootLayout() {
               <AuthContextProvider>
                 <NotificationInitializer>
                   <GestureHandlerRootView>
-                    <StatusBar barStyle={statusBarStyle} />
                     <Stack screenOptions={{ headerShown: false }}>
                       <Stack.Screen name="onboarding" />
                       <Stack.Screen name="main" />
+                      <Stack.Screen name="vehiclehistory" />
                     </Stack>
                   </GestureHandlerRootView>
                 </NotificationInitializer>

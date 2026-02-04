@@ -10,6 +10,8 @@ export interface ServiceTypeProps {
   name: string;
   description: string[];
   price: number;
+  fleet_price?: number | null;
+  user_price?: number; // Price for current user (fleet_price if fleet user, else price)
   duration: number;
 }
 
@@ -64,6 +66,7 @@ export default interface BookingState {
   selected_date: Date | null;
   special_instructions: string | null;
   isSuv: boolean;
+  isExpressService: boolean;
 }
 
 export interface CreateBookingProps {
@@ -96,6 +99,7 @@ export interface CreateBookingProps {
   // Only these two fields for detailer
   loyalty_tier?: string;
   loyalty_benefits?: string[]; // Array of free services
+  is_express_service?: boolean; // Express service flag for dual detailer assignment
 }
 
 /**

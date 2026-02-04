@@ -181,24 +181,25 @@ class JobChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def publish_to_redis(self, message):
-        import redis
         import asyncio
-        import json
-        
+        from main.utils.redis_streams import stream_add, STREAM_JOB_CHAT
+
+        channel = f"job_chat_{self.booking_reference}"
+        payload = json.dumps({
+            "type": "chat_message",
+            "booking_reference": self.booking_reference,
+            "message": {
+                "id": str(message.id),
+                "content": message.content,
+                "sender_type": message.sender_type,
+                "message_type": message.message_type,
+                "created_at": message.created_at.isoformat(),
+            },
+        })
+
         def publish():
-            r = redis.Redis(host='prisma_redis', port=6379, db=0)
-            r.publish(f'job_chat_{self.booking_reference}', json.dumps({
-                'type': 'chat_message',
-                'booking_reference': self.booking_reference,
-                'message': {
-                    'id': str(message.id),
-                    'content': message.content,
-                    'sender_type': message.sender_type,
-                    'message_type': message.message_type,
-                    'created_at': message.created_at.isoformat(),
-                }
-            }))
-        
+            stream_add(STREAM_JOB_CHAT, {"channel": channel, "payload": payload})
+
         await asyncio.get_event_loop().run_in_executor(None, publish)
 
     @database_sync_to_async

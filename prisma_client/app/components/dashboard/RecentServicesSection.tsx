@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, Image, TouchableOpacity, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -7,14 +7,18 @@ import StyledText from "../helpers/StyledText";
 import StyledButton from "../helpers/StyledButton";
 import { RecentServicesProps } from "@/app/interfaces/DashboardInterfaces";
 import { useAppSelector, RootState } from "@/app/store/main_store";
+import UnratedTag from "../shared/UnratedTag";
+import { formatCurrency } from "@/app/utils/methods";
 
 interface RecentServicesSectionProps {
   bookings: RecentServicesProps | null;
+  onUnratedPress?: () => void;
 }
 
 const ServiceCard: React.FC<{
   booking: RecentServicesProps | null;
-}> = ({ booking }) => {
+  onUnratedPress?: () => void;
+}> = ({ booking, onUnratedPress }) => {
   const user = useAppSelector((state: RootState) => state.auth.user);
   let currencySymbol = "";
   if (user?.address?.country === "United Kingdom") {
@@ -23,8 +27,9 @@ const ServiceCard: React.FC<{
     currencySymbol = "€";
   }
 
-  const backgroundColor = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
+  const cardColor = useThemeColor({}, "cards");
+  const borderColor = useThemeColor({}, "borders");
 
   if (!booking) {
     return null;
@@ -43,20 +48,26 @@ const ServiceCard: React.FC<{
     }
   };
 
-  return (
+  const cardContent = (
     <View
       style={[
         styles.serviceCard,
-        { backgroundColor: backgroundColor },
-        !booking.is_reviewed && styles.unratedBorder,
+        { backgroundColor: cardColor, borderColor: borderColor },
       ]}
     >
       <View style={styles.serviceHeader}>
-        <StyledText
-          style={[styles.serviceDate, { color: textColor }]}
-          variant="bodyMedium"
-          children={booking.date}
-        />
+        <View style={styles.headerLeft}>
+          <StyledText
+            style={[styles.serviceDate, { color: textColor }]}
+            variant="bodyMedium"
+            children={booking.date}
+          />
+          {!booking.is_reviewed && (
+            <View style={styles.unratedTagContainer}>
+              <UnratedTag text="Not Rated" />
+            </View>
+          )}
+        </View>
         <View
           style={[
             styles.serviceStatus,
@@ -65,7 +76,7 @@ const ServiceCard: React.FC<{
         >
           <StyledText
             style={styles.serviceStatusText}
-            variant="bodyMedium"
+            variant="bodySmall"
             children={booking.status}
           />
         </View>
@@ -90,7 +101,7 @@ const ServiceCard: React.FC<{
           <StyledText
             style={[styles.serviceType, { color: "#4CAF50" }]}
             variant="bodyMedium"
-            children={`Tip: ${currencySymbol}${booking.tip}`}
+            children={`Tip: ${formatCurrency(booking.tip, user?.address?.country)}`}
           />
         )}
       </View>
@@ -103,7 +114,11 @@ const ServiceCard: React.FC<{
           <StyledText
             style={[styles.serviceDetailerName, { color: textColor }]}
             variant="bodyMedium"
-            children={booking.detailer?.name || "No detailer assigned"}
+            children={
+              booking.detailers && booking.detailers.length > 0
+                ? booking.detailers.map(d => d.name).join(" & ")
+                : booking.detailer?.name || "No detailer assigned"
+            }
           />
           {booking.is_reviewed && booking.rating > 0 && (
             <View style={styles.ratingContainer}>
@@ -119,10 +134,29 @@ const ServiceCard: React.FC<{
       </View>
     </View>
   );
+
+  // If unrated and onUnratedPress is provided, make the card pressable
+  if (!booking.is_reviewed && onUnratedPress) {
+    return (
+      <Pressable
+        onPress={() => {
+          console.log("RecentServices card pressed - opening review modal");
+          onUnratedPress();
+        }}
+        style={styles.pressableCard}
+        android_ripple={{ color: "rgba(255, 165, 0, 0.1)" }}
+      >
+        {cardContent}
+      </Pressable>
+    );
+  }
+
+  return cardContent;
 };
 
 const RecentServicesSection: React.FC<RecentServicesSectionProps> = ({
   bookings,
+  onUnratedPress,
 }) => {
   const textColor = useThemeColor({}, "text");
   const backgroundColor = useThemeColor({}, "background");
@@ -172,7 +206,11 @@ const RecentServicesSection: React.FC<RecentServicesSectionProps> = ({
           children="Recent Services"
         />
       </View>
-      {bookings ? <ServiceCard booking={bookings} /> : renderEmptyState()}
+      {bookings ? (
+        <ServiceCard booking={bookings} onUnratedPress={onUnratedPress} />
+      ) : (
+        renderEmptyState()
+      )}
     </View>
   );
 };
@@ -193,56 +231,83 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   serviceCard: {
-    padding: 12,
-    borderRadius: 5,
-    marginBottom: 10,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  pressableCard: {
+    marginBottom: 12,
+    borderRadius: 16,
+    overflow: "hidden",
   },
   serviceHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+  headerLeft: {
+    flex: 1,
+    marginRight: 8,
+  },
+  unratedTagContainer: {
+    marginTop: 6,
   },
   serviceDate: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
+    marginBottom: 4,
   },
   serviceStatus: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   serviceStatusText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    textTransform: "uppercase",
   },
   serviceDetails: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   serviceVehicle: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 17,
+    fontWeight: "700",
+    marginBottom: 4,
   },
   serviceType: {
     fontSize: 14,
-    marginTop: 2,
+    marginTop: 4,
+    opacity: 0.8,
   },
   serviceDetailer: {
     flexDirection: "row",
     alignItems: "center",
   },
   serviceDetailerImage: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 10,
   },
   detailerInfo: {
     flex: 1,
   },
   serviceDetailerName: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 2,
   },
   ratingContainer: {
     flexDirection: "row",
@@ -254,15 +319,12 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: "500",
   },
-  unratedBorder: {
-    borderWidth: 2,
-    borderColor: "#FFA500",
-  },
   emptyStateContainer: {
-    padding: 10,
-    borderRadius: 5,
+    padding: 20,
+    borderRadius: 16,
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
+    borderWidth: 1,
   },
   emptyStateIcon: {
     marginBottom: 16,

@@ -30,6 +30,7 @@ import StyledButton from "@/app/components/helpers/StyledButton";
 
 // Import hook
 import useBooking from "@/app/app-hooks/useBooking";
+import { useAppSelector, RootState } from "@/app/store/main_store";
 
 // Import modal
 import AddAddressModal from "@/app/components/profile/AddAddressModal";
@@ -97,7 +98,6 @@ const BookingScreen = () => {
     isLoadingAddOns,
     isLoadingServiceTypes,
     isLoadingValetTypes,
-    user,
 
     // Handlers
     handleVehicleSelection,
@@ -129,13 +129,15 @@ const BookingScreen = () => {
     canProceedToSummary,
 
     // Booking
-    createBooking,
     resetBooking,
 
     // Utilities
     getTotalPrice,
     getBasePrice,
     getSUVPrice,
+    getExpressServicePrice,
+    isExpressService,
+    handleExpressServiceChange,
     getAddonPrice,
     getAddonDuration,
     getEstimatedDuration,
@@ -160,9 +162,28 @@ const BookingScreen = () => {
 
   const { addresses } = useAddresses();
   const { vehicles } = useVehicles();
+  const user = useAppSelector((state: RootState) => state.auth.user);
 
   const [showSpecialInstructions, setShowSpecialInstructions] = useState(false);
   const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
+
+  // Handle add address based on user role
+  const handleAddAddress = useCallback(() => {
+    if (user?.is_fleet_owner) {
+      // Fleet owners: Navigate to branch management screen
+      router.push("/main/(tabs)/dashboard/BranchManagementScreen");
+    } else if (user?.is_branch_admin) {
+      // Fleet admins: Cannot add addresses (only have their managed branch)
+      // Button will be hidden via showAddButton prop
+      return;
+    } else {
+      // Regular users: Open address modal
+      setIsAddressModalVisible(true);
+    }
+  }, [user]);
+
+  // Determine if add button should be shown
+  const showAddButton = !user?.is_branch_admin;
 
   const steps: BookingStep[] = [
     { id: 1, title: "Vehicle", icon: "car" },
@@ -229,6 +250,8 @@ const BookingScreen = () => {
             onAddVehicle={() => router.push("/main/(tabs)/garage/GarageScreen")}
             isSUV={isSUV}
             onSUVChange={handleSUVChange}
+            isExpressService={isExpressService}
+            onExpressServiceChange={handleExpressServiceChange}
           />
         );
 
@@ -279,7 +302,8 @@ const BookingScreen = () => {
               addresses={addresses}
               selectedAddress={selectedAddress}
               onSelectAddress={handleAddressSelection}
-              onAddAddress={() => setIsAddressModalVisible(true)}
+              onAddAddress={handleAddAddress}
+              showAddButton={showAddButton}
             />
 
             {selectedServiceType ? (
@@ -366,8 +390,10 @@ const BookingScreen = () => {
                   selectedDate={selectedDate}
                   specialInstructions={specialInstructions}
                   isSUV={isSUV}
+                  isExpressService={isExpressService}
                   basePrice={getBasePrice()}
                   suvPrice={getSUVPrice()}
+                  expressServicePrice={getExpressServicePrice()}
                   totalPrice={getTotalPrice()}
                   selectedAddons={selectedAddons}
                   addonPrice={getAddonPrice()}
@@ -447,7 +473,7 @@ const BookingScreen = () => {
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       <View style={[styles.container, { backgroundColor }]}>
-        {promotions && (
+        {promotions && !user?.is_fleet_owner && !user?.is_branch_admin && (
           <View>
             <PromotionsCardComponent {...promotions} />
           </View>

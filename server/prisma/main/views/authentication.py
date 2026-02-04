@@ -28,6 +28,7 @@ class AuthenticationView(CreateAPIView):
         
         handler = getattr(self, self.action_handlers[action])
         return handler(request)
+        
 
     def register(self, request):
         try:
@@ -62,7 +63,7 @@ class AuthenticationView(CreateAPIView):
                 user.referred_by = referred_by
             user.save()
             # Send the welcome and promotional emails to the user even if they have not allowed them as this is a new user
-            send_welcome_email.delay(args=[user.email], countdown=60)
+            send_welcome_email.apply_async(args=[user.email], countdown=60)
             send_promotional_email.apply_async(args=[user.email, user.name], countdown=300)
             
             # Generate tokens for the newly created user
@@ -75,6 +76,19 @@ class AuthenticationView(CreateAPIView):
             loyalty = LoyaltyProgram.objects.filter(user=user).first()
             loyalty_benefits = loyalty.get_tier_benefits() if loyalty else None
        
+            # Get managed branch if user is branch admin
+            managed_branch = None
+            if user.is_branch_admin:
+                managed_branch_obj = user.get_managed_branch()
+                if managed_branch_obj:
+                    managed_branch = {
+                        'id': str(managed_branch_obj.id),
+                        'name': managed_branch_obj.name,
+                        'address': managed_branch_obj.address,
+                        'postcode': managed_branch_obj.postcode,
+                        'city': managed_branch_obj.city,
+                    }
+            
             return Response({
                 'message': 'Welcome to PRISMA VALLET. Your account has been created successfully.\n\nPlease check your email for further updates',
                 'user': {
@@ -82,6 +96,8 @@ class AuthenticationView(CreateAPIView):
                     'email': user.email,
                     'phone': user.phone,
                     'is_fleet_owner': user.is_fleet_owner,
+                    'is_branch_admin': user.is_branch_admin,
+                    'managed_branch': managed_branch,
                     'address': {
                         'address': address.address if address else None,
                         'city': address.city if address else None,

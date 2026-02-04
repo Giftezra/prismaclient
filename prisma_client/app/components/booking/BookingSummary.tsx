@@ -23,8 +23,10 @@ interface BookingSummaryProps {
   selectedDate: Date;
   specialInstructions?: string;
   isSUV: boolean;
+  isExpressService?: boolean;
   basePrice: number;
   suvPrice: number;
+  expressServicePrice?: number;
   totalPrice: number;
   selectedAddons?: AddOnsProps[];
   addonPrice?: number;
@@ -49,8 +51,10 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
   selectedDate,
   specialInstructions,
   isSUV,
+  isExpressService,
   basePrice,
   suvPrice,
+  expressServicePrice,
   totalPrice,
   selectedAddons = [],
   addonPrice = 0,
@@ -455,6 +459,22 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                   style={[styles.priceValue, { color: textColor }]}
                 >
                   {formatPrice(suvPrice)}
+                </StyledText>
+              </View>
+            )}
+            {isExpressService && expressServicePrice && expressServicePrice > 0 && (
+              <View style={styles.priceRow}>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceLabel, { color: textColor }]}
+                >
+                  Express Service:
+                </StyledText>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.priceValue, { color: textColor }]}
+                >
+                  {formatPrice(expressServicePrice)}
                 </StyledText>
               </View>
             )}

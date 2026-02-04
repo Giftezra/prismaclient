@@ -9,8 +9,13 @@ import garageApi from "./api/garageApi";
 import dashboardApi from "./api/dashboardApi";
 import profileApi from "./api/profileApi";
 import bookingReducer from "./slices/bookingSlice";
-import bookingApi from "./api/bookingApi";
+import vehicleDataUploadReducer from "./slices/vehicleDataUploadSlice";
+import bookingApi from "./api/eventApi";
 import notificationApi from "./api/notificationApi";
+import fleetApi from "./api/fleetApi";
+import subscriptionApi from "./api/subscriptionApi";
+import vinLookupApi from "./api/vinLookupApi";
+import serviceHistoryApi from "./api/serviceHistoryApi";
 
 const store = configureStore({
   reducer: {
@@ -19,12 +24,17 @@ const store = configureStore({
     dashboard: dashboardReducer,
     profile: profileReducer,
     booking: bookingReducer,
+    vehicleDataUpload: vehicleDataUploadReducer,
     [authApi.reducerPath]: authApi.reducer,
     [garageApi.reducerPath]: garageApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [profileApi.reducerPath]: profileApi.reducer,
     [bookingApi.reducerPath]: bookingApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
+    [fleetApi.reducerPath]: fleetApi.reducer,
+    [subscriptionApi.reducerPath]: subscriptionApi.reducer,
+    [vinLookupApi.reducerPath]: vinLookupApi.reducer,
+    [serviceHistoryApi.reducerPath]: serviceHistoryApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -34,6 +44,10 @@ const store = configureStore({
       profileApi.middleware,
       bookingApi.middleware,
       notificationApi.middleware,
+      fleetApi.middleware,
+      subscriptionApi.middleware,
+      vinLookupApi.middleware,
+      serviceHistoryApi.middleware,
     ),
 });
 

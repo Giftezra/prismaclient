@@ -5,6 +5,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { ServiceTypeProps } from "@/app/interfaces/BookingInterfaces";
 import StyledText from "@/app/components/helpers/StyledText";
 import { formatDuration, formatCurrency } from "@/app/utils/methods";
+import { useAppSelector, RootState } from "@/app/store/main_store";
 
 interface ServiceTypeCardProps {
   service: ServiceTypeProps;
@@ -22,6 +23,16 @@ const ServiceTypeCard: React.FC<ServiceTypeCardProps> = ({
   const textColor = useThemeColor({}, "text");
   const primaryPurpleColor = useThemeColor({}, "primary");
   const buttonColor = useThemeColor({}, "button");
+
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  const isFleetUser = user?.is_fleet_owner || user?.is_branch_admin;
+  
+  // Determine which price to display
+  const displayPrice = service.user_price !== undefined 
+    ? service.user_price 
+    : (isFleetUser && service.fleet_price ? service.fleet_price : service.price);
+  
+  const showFleetDiscount = isFleetUser && service.fleet_price && service.fleet_price < service.price;
 
   return (
     <TouchableOpacity
@@ -43,15 +54,35 @@ const ServiceTypeCard: React.FC<ServiceTypeCardProps> = ({
           >
             {service.name}
           </StyledText>
-          <StyledText
-            variant="titleLarge"
-            style={[
-              styles.price,
-              { color: isSelected ? "white" : buttonColor },
-            ]}
-          >
-            {formatCurrency(service.price)}
-          </StyledText>
+          <View style={styles.priceContainer}>
+            <StyledText
+              variant="titleLarge"
+              style={[
+                styles.price,
+                { color: isSelected ? "white" : buttonColor },
+              ]}
+            >
+              {formatCurrency(displayPrice)}
+            </StyledText>
+            {showFleetDiscount && (
+              <View style={[styles.discountBadge, { backgroundColor: isSelected ? "rgba(255,255,255,0.3)" : "#4CAF50" }]}>
+                <StyledText variant="bodySmall" style={styles.discountText}>
+                  Fleet Discount
+                </StyledText>
+              </View>
+            )}
+            {showFleetDiscount && service.price && (
+              <StyledText
+                variant="bodySmall"
+                style={[
+                  styles.originalPrice,
+                  { color: isSelected ? "rgba(255,255,255,0.7)" : textColor },
+                ]}
+              >
+                {formatCurrency(service.price)}
+              </StyledText>
+            )}
+          </View>
         </View>
 
         <View
@@ -134,8 +165,27 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 4,
   },
+  priceContainer: {
+    gap: 4,
+  },
   price: {
     fontWeight: "bold",
+  },
+  discountBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: "flex-start",
+  },
+  discountText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  originalPrice: {
+    textDecorationLine: "line-through",
+    opacity: 0.6,
+    fontSize: 12,
   },
   checkbox: {
     width: 24,

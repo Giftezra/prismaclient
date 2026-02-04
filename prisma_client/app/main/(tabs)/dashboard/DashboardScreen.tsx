@@ -9,48 +9,45 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { Ionicons } from "@expo/vector-icons";
 
 import UpcomingAppointmentProps, {
   RecentServicesProps,
 } from "../../../interfaces/DashboardInterfaces";
-import { MyVehiclesProps } from "@/app/interfaces/GarageInterface";
 import OngoingServiceCard from "@/app/components/dashboard/OngoingServiceCard";
 import RecentServicesSection from "@/app/components/dashboard/RecentServicesSection";
 import StatsSection from "@/app/components/dashboard/StatsSection";
-import { FlatList } from "react-native-gesture-handler";
-import VehicleCard from "@/app/components/dashboard/VehicleCard";
 import StyledText from "@/app/components/helpers/StyledText";
 import useDashboard from "@/app/app-hooks/useDashboard";
 import AllowNotificationModal from "@/app/components/notification/AllowNotificationModal";
 import { usePermissions } from "@/app/app-hooks/usePermissions";
-import useVehicles from "@/app/app-hooks/useVehicles";
 import ModalServices from "@/app/utils/ModalServices";
 import ReviewComponent from "@/app/components/booking/ReviewComponent";
 import { useAppSelector, RootState } from "@/app/store/main_store";
 import ReferralSection from "@/app/components/dashboard/ReferralSection";
+import FleetDashboardScreen from "./FleetDashboardScreen";
+import BranchAdminDashboardScreen from "./BranchAdminDashboardScreen";
 const image = require("@/assets/images/user_image.jpg");
 const vehicleImage = require("@/assets/images/car.jpg");
 
 const DashboardScreen = () => {
+  /* Get the user from Redux store */
+  const user = useAppSelector((state: RootState) => state.auth.user);
+
+  // ALL hooks must be called before any conditional returns
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [hasAskedForPermissions, setHasAskedForPermissions] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  
   const backgroundColor = useThemeColor({}, "background");
   const buttonColor = useThemeColor({}, "button");
   const tintColor = useThemeColor({}, "tint");
   const primaryColor = useThemeColor({}, "primary");
   const borderColor = useThemeColor({}, "borders");
-
-  /* Get the currency symbol by getting the user's country */
-  const user = useAppSelector((state: RootState) => state.auth.user);
-  let currencySymbol = "$";
-  if (user?.address?.country === "United Kingdom") {
-    currencySymbol = "£";
-  } else if (user?.address?.country === "Ireland") {
-    currencySymbol = "€";
-  }
+  const cardColor = useThemeColor({}, "cards");
+  const textColor = useThemeColor({}, "text");
 
   /* Fetch the neccessary hooks */
-  const { vehicles } = useVehicles();
   const {
     appointments,
     inProgressAppointment,
@@ -65,7 +62,6 @@ const DashboardScreen = () => {
   } = useDashboard();
 
   const { permissionStatus, isLoading: permissionsLoading } = usePermissions();
-  const [showReviewModal, setShowReviewModal] = useState(false);
 
   // Show notification modal when dashboard loads, but only if notifications are not already granted
   // and we haven't asked for permissions yet in this session
@@ -92,27 +88,60 @@ const DashboardScreen = () => {
   ]);
 
   /**
-   * Handle the display for the modar review
+   * Handle unrated service press - opens review modal
    */
-  useEffect(() => {
-    if (isUnratedServices && recentService) {
+  const handleUnratedPress = () => {
+    if (recentService) {
       setShowReviewModal(true);
     }
-  }, [isUnratedServices, recentService]);
+  };
 
   /**
-   * Render the upcoming appointment date
+   * Handle review submission - closes modal and refreshes data
+   */
+  const handleReviewSubmitted = () => {
+    setShowReviewModal(false);
+    handleRefresh();
+  };
+
+  // Route to appropriate dashboard based on user type (AFTER all hooks)
+  if (user?.is_fleet_owner) {
+    return <FleetDashboardScreen />;
+  } else if (user?.is_branch_admin) {
+    return <BranchAdminDashboardScreen />;
+  }
+
+  // Regular user dashboard (existing code below)
+  /* Get the currency symbol by getting the user's country */
+  let currencySymbol = "$";
+  if (user?.address?.country === "United Kingdom") {
+    currencySymbol = "£";
+  } else if (user?.address?.country === "Ireland") {
+    currencySymbol = "€";
+  }
+
+  /**
+   * Render the upcoming appointment card
    * @param appointment - The appointment object of interface {OngoingAppointmentProps}
    * @returns A Pressable component that navigates to the upcoming booking screen
    */
   const renderUpcomingAppointmentDate = (
     appointment: UpcomingAppointmentProps
   ) => {
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    };
+
     return (
       <Pressable
         style={[
-          styles.upcomingAppointmentDate,
-          { borderColor, backgroundColor },
+          styles.upcomingAppointmentCard,
+          { borderColor, backgroundColor: cardColor },
         ]}
         onPress={() => {
           router.push({
@@ -121,7 +150,48 @@ const DashboardScreen = () => {
           });
         }}
       >
-        <StyledText children={appointment.booking_date} variant="labelSmall" />
+        <View style={styles.appointmentCardContent}>
+          <View style={styles.appointmentCardHeader}>
+            <StyledText
+              variant="bodyMedium"
+              style={[styles.appointmentReg, { color: textColor }]}
+            >
+              {appointment.vehicle.licence}
+            </StyledText>
+            <View
+              style={[
+                styles.statusBadge,
+                {
+                  backgroundColor:
+                    appointment.status === "in_progress"
+                      ? "#FF9800"
+                      : appointment.status === "confirmed" || appointment.status === "scheduled"
+                      ? "#2196F3"
+                      : "#6B7280",
+                },
+              ]}
+            >
+              <StyledText variant="bodySmall" style={styles.statusText}>
+                {appointment.status?.replace("_", " ").toUpperCase() || "PENDING"}
+              </StyledText>
+            </View>
+          </View>
+          <StyledText
+            variant="bodySmall"
+            style={[styles.appointmentServiceType, { color: textColor }]}
+          >
+            {appointment.service_type.name}
+          </StyledText>
+          <View style={styles.appointmentDateRow}>
+            <Ionicons name="calendar-outline" size={14} color={textColor} />
+            <StyledText
+              variant="bodySmall"
+              style={[styles.appointmentDate, { color: textColor }]}
+            >
+              {formatDate(appointment.booking_date)}
+            </StyledText>
+          </View>
+        </View>
       </Pressable>
     );
   };
@@ -169,31 +239,10 @@ const DashboardScreen = () => {
           </View>
         )}
 
-        {/* Vehicle section */}
-        <View style={styles.vehicleSection}>
-          <FlatList
-            data={vehicles}
-            renderItem={({ item }) => (
-              <VehicleCard
-                vehicle={item}
-                onPress={() => {
-                  try {
-                    router.push("/main/(tabs)/garage/GarageScreen");
-                  } catch (error) {
-                    console.error("Navigation error:", error);
-                  }
-                }}
-              />
-            )}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            decelerationRate="fast"
-            contentContainerStyle={{ gap: 5}}
-          />
-        </View>
-
-        <RecentServicesSection bookings={recentService} />
+        <RecentServicesSection
+          bookings={recentService}
+          onUnratedPress={handleUnratedPress}
+        />
 
         <StatsSection stats={stats} />
         <ReferralSection referral={user?.referral_code || ""} />
@@ -221,7 +270,13 @@ const DashboardScreen = () => {
       <ModalServices
         visible={showReviewModal}
         onClose={() => setShowReviewModal(false)}
-        component={<ReviewComponent currencySymbol={currencySymbol} />}
+        component={
+          <ReviewComponent
+            currencySymbol={currencySymbol}
+            bookingData={recentService || undefined}
+            onReviewSubmitted={handleReviewSubmitted}
+          />
+        }
         showCloseButton={true}
         animationType="slide"
         title="Review"
@@ -260,20 +315,50 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     gap: 5,
   },
-  upcomingAppointmentDate: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
+  upcomingAppointmentCard: {
+    padding: 12,
+    borderRadius: 12,
     marginRight: 10,
+    minWidth: 200,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
   },
-  vehicleSection: {
-    paddingHorizontal: 2,
+  appointmentCardContent: {
+    gap: 8,
+  },
+  appointmentCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  appointmentReg: {
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    gap: 5,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: "white",
+    fontSize: 9,
+    fontWeight: "600",
+  },
+  appointmentServiceType: {
+    fontWeight: "500",
+    opacity: 0.8,
+  },
+  appointmentDateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  appointmentDate: {
+    opacity: 0.7,
   },
 });

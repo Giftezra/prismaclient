@@ -41,7 +41,7 @@ const createBookingApi = createApi({
      */
     fetchServiceType: builder.query<ServiceTypeProps[], void>({
       query: () => ({
-        url: "/api/v1/booking/get_service_type/",
+        url: "/api/v1/events/get_service_type/",
         method: "GET",
       }),
     }),
@@ -58,7 +58,7 @@ const createBookingApi = createApi({
      */
     fetchValetType: builder.query<ValetTypeProps[], void>({
       query: () => ({
-        url: "/api/v1/booking/get_valet_type/",
+        url: "/api/v1/events/get_valet_type/",
         method: "GET",
       }),
     }),
@@ -76,7 +76,7 @@ const createBookingApi = createApi({
       BookedAppointmentProps
     >({
       query: (data) => ({
-        url: "/api/v1/booking/book_appointment/",
+        url: "/api/v1/events/book_appointment/",
         method: "POST",
         data: { booking_data: data },
       }),
@@ -96,7 +96,7 @@ const createBookingApi = createApi({
      */
     fetchAddOns: builder.query<AddOnsProps[], void>({
       query: () => ({
-        url: "/api/v1/booking/get_add_ons/",
+        url: "/api/v1/events/get_add_ons/",
         method: "GET",
       }),
       transformResponse: (response: AddOnsProps[]) => {
@@ -121,7 +121,7 @@ const createBookingApi = createApi({
       string
     >({
       query: (booking_reference) => ({
-        url: `/api/v1/booking/cancel_booking/`,
+        url: `/api/v1/events/cancel_booking/`,
         method: "PATCH",
         data: { booking_reference },
       }),
@@ -148,7 +148,7 @@ const createBookingApi = createApi({
       }
     >({
       query: (data) => ({
-        url: `/api/v1/booking/reschedule_booking/`,
+        url: `/api/v1/events/reschedule_booking/`,
         method: "PATCH",
         data: { data },
       }),
@@ -156,17 +156,27 @@ const createBookingApi = createApi({
 
     /**
      * Fetch the payment sheet details from the server.
-     * ARGS : number (amount in cents)
-     * RESPONSE : PaymentSheetResponse
+     * ARGS : { amount: number (in cents), booking_reference: string, booking_data: any, detailer_booking_data?: any }
+     * RESPONSE : PaymentSheetResponse & { paymentIntentId: string, booking_reference: string }
      * {
      *  paymentIntent: string
      *  ephemeralKey: string
      *  customer: string
+     *  paymentIntentId: string
+     *  booking_reference: string
      * }
      */
     fetchPaymentSheetDetails: builder.mutation<
-      PaymentSheetResponse & { paymentIntentId: string },
-      { amount: number; booking_reference: string }
+      PaymentSheetResponse & {
+        paymentIntentId: string;
+        booking_reference: string;
+      },
+      {
+        amount: number;
+        booking_reference: string;
+        booking_data: any; // Full booking data for client app
+        detailer_booking_data?: any; // Formatted data for detailer app
+      }
     >({
       query: (data) => ({
         url: "/api/v1/payment/create_payment_sheet/",
@@ -174,6 +184,8 @@ const createBookingApi = createApi({
         data: {
           amount: data.amount,
           booking_reference: data.booking_reference,
+          booking_data: data.booking_data,
+          detailer_booking_data: data.detailer_booking_data,
         },
       }),
     }),
@@ -204,7 +216,7 @@ const createBookingApi = createApi({
     /* Get the promotions for the user */
     fetchPromotions: builder.query<PromotionsProps | null, void>({
       query: () => ({
-        url: "/api/v1/booking/get_promotions/",
+        url: "/api/v1/events/get_promotions/",
         method: "GET",
       }),
       transformResponse: (response: PromotionsProps | null) => response,
@@ -220,7 +232,7 @@ const createBookingApi = createApi({
       { promotion_id: string; booking_reference: string }
     >({
       query: (data) => ({
-        url: "/api/v1/booking/mark_promotion_used/",
+        url: "/api/v1/events/mark_promotion_used/",
         method: "POST",
         data: {
           promotion_id: data.promotion_id,
@@ -246,7 +258,7 @@ const createBookingApi = createApi({
      */
     getPaymentMethods: builder.query<PaymentMethod[], void>({
       query: () => ({
-        url: "/api/v1/booking/get_payment_methods/",
+        url: "/api/v1/events/get_payment_methods/",
         method: "GET",
       }),
       transformResponse: (response: { payment_methods: PaymentMethod[] }) => {
@@ -264,7 +276,7 @@ const createBookingApi = createApi({
       { payment_method_id: string }
     >({
       query: (data) => ({
-        url: "/api/v1/booking/delete_payment_method/",
+        url: "/api/v1/events/delete_payment_method/",
         method: "DELETE",
         data: { payment_method_id: data.payment_method_id },
       }),
@@ -290,42 +302,11 @@ const createBookingApi = createApi({
       void
     >({
       query: () => ({
-        url: "/api/v1/booking/check_free_wash/",
+        url: "/api/v1/events/check_free_wash/",
         method: "GET",
       }),
     }),
 
-    /**
-     * Fetch all before/after images for a specific booking
-     * ARGS : { booking_id: string }
-     * RESPONSE : {
-     *   booking_reference: string
-     *   before_images: Array<{ id: number; image_url: string; created_at: string }>
-     *   after_images: Array<{ id: number; image_url: string; created_at: string }>
-     * }
-     */
-    fetchBookingImages: builder.query<
-      {
-        booking_reference: string;
-        before_images: Array<{
-          id: number;
-          image_url: string;
-          created_at: string;
-        }>;
-        after_images: Array<{
-          id: number;
-          image_url: string;
-          created_at: string;
-        }>;
-      },
-      { booking_id: string }
-    >({
-      query: ({ booking_id }) => ({
-        url: `/api/v1/booking/get_booking_images/`,
-        method: "GET",
-        params: { booking_id },
-      }),
-    }),
   }),
 });
 export const {
@@ -342,6 +323,5 @@ export const {
   useDeletePaymentMethodMutation,
   useCheckFreeWashQuery,
   useConfirmPaymentIntentMutation,
-  useFetchBookingImagesQuery,
 } = createBookingApi;
 export default createBookingApi;

@@ -8,6 +8,8 @@ const GarageLayout = () => {
       headerShown: false,
     }}>
       <Stack.Screen name="GarageScreen"/>
+      <Stack.Screen name="VehicleDetailsScreen"/>
+      <Stack.Screen name="VehicleDataUploadScreen"/>
     </Stack>
   )
 }

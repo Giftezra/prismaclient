@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from "react";
 import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "./AlertContext";
-import { useAppDispatch } from "../store/main_store";
+import { useAppDispatch, AppDispatch } from "../store/main_store";
 import {
   logout,
   setIsAuthenticated,
@@ -53,7 +53,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const dispatch = useAppDispatch();
+  const dispatch: AppDispatch = useAppDispatch();
   const { setIsVisible, setAlertConfig } = useAlertContext();
 
   /* Destructure the login mutation from the authApi */
@@ -70,11 +70,14 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
       const storedRefresh = await SecureStore.getItemAsync("refresh");
       // Check if the user is authenticated.
       if (user && storedAccess && storedRefresh) {
+        console.log('user', user);
+
+
         dispatch(setUser(JSON.parse(user)));
         dispatch(setAccessToken(storedAccess));
         dispatch(setRefreshToken(storedRefresh));
         dispatch(setIsAuthenticated(true));
-        router.replace("/main/(tabs)/dashboard/DashboardScreen");
+        router.replace("/main/(tabs)/dashboard/DashboardScreen" as any);
       }
     };
     reauthenticateUser();
@@ -117,12 +120,14 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   ) => {
     const normalizedEmail = email.trim().toLowerCase();
     const credentials = { email: normalizedEmail, password };
+    console.log('credentials', credentials);
     try {
       const response = await login(credentials).unwrap();
 
       // The response from the server should contain user, access, and refresh
       if (response && response.user && response.access && response.refresh) {
-        
+      
+        console.log('response.user', response.user);
         dispatch(setUser(response.user));
         dispatch(setIsAuthenticated(true));
         dispatch(setAccessToken(response.access));
@@ -136,10 +141,10 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
             response.refresh
           );
           if (saved) {
-            router.replace("/main/(tabs)/dashboard/DashboardScreen");
+            router.replace("/main/(tabs)/dashboard/DashboardScreen" as any);
           }
         } else {
-          router.replace("/main/(tabs)/dashboard/DashboardScreen");
+          router.replace("/main/(tabs)/dashboard/DashboardScreen" as any);
         }
       } else {
         console.error("Invalid response structure:", response);

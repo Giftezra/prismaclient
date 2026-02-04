@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import StyledText from "../helpers/StyledText";
-import { useFetchBookingImagesQuery } from "@/app/store/api/bookingApi";
+import { useFetchBookingImagesQuery } from "@/app/store/api/serviceHistoryApi";
 import { useSnackbar } from "@/app/contexts/SnackbarContext";
 import { useModalService } from "@/app/contexts/ModalServiceProvider";
 
@@ -38,10 +38,18 @@ const ServiceImagesModal: React.FC<ServiceImagesModalProps> = ({
   const { closeModal } = useModalService();
   const hasNotifiedRef = useRef(false);
 
-  const beforeImages = imagesData?.before_images ?? [];
-  const afterImages = imagesData?.after_images ?? [];
-  const hasBeforeImages = beforeImages.length > 0;
-  const hasAfterImages = afterImages.length > 0;
+  const beforeImagesInterior = imagesData?.before_images_interior ?? [];
+  const beforeImagesExterior = imagesData?.before_images_exterior ?? [];
+  const afterImagesInterior = imagesData?.after_images_interior ?? [];
+  const afterImagesExterior = imagesData?.after_images_exterior ?? [];
+  
+  const hasBeforeImagesInterior = beforeImagesInterior.length > 0;
+  const hasBeforeImagesExterior = beforeImagesExterior.length > 0;
+  const hasAfterImagesInterior = afterImagesInterior.length > 0;
+  const hasAfterImagesExterior = afterImagesExterior.length > 0;
+  
+  const hasBeforeImages = hasBeforeImagesInterior || hasBeforeImagesExterior;
+  const hasAfterImages = hasAfterImagesInterior || hasAfterImagesExterior;
   const hasAnyImages = hasBeforeImages || hasAfterImages;
 
   useEffect(() => {
@@ -109,6 +117,27 @@ const ServiceImagesModal: React.FC<ServiceImagesModalProps> = ({
   );
 
   /**
+   * Access denied state component
+   */
+  const AccessDeniedState = () => (
+    <View style={[styles.emptyStateContainer, { backgroundColor: cardColor }]}>
+      <Ionicons name="lock-closed-outline" size={64} color={iconColor} />
+      <StyledText
+        variant="titleMedium"
+        style={[styles.emptyStateTitle, { color: textColor }]}
+      >
+        Access Restricted
+      </StyledText>
+      <StyledText
+        variant="bodyMedium"
+        style={[styles.emptyStateDescription, { color: textColor }]}
+      >
+        {imagesData?.message || "Detailed vehicle information is only available with an active fleet subscription."}
+      </StyledText>
+    </View>
+  );
+
+  /**
    * Image gallery section component
    */
   const ImageGallery = ({
@@ -161,6 +190,11 @@ const ServiceImagesModal: React.FC<ServiceImagesModalProps> = ({
     return <ErrorState />;
   }
 
+  // Check for access denied (subscription restriction for fleet users)
+  if (imagesData?.access_denied) {
+    return <AccessDeniedState />;
+  }
+
   if (!imagesData || !hasAnyImages) {
     return null;
   }
@@ -172,11 +206,17 @@ const ServiceImagesModal: React.FC<ServiceImagesModalProps> = ({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {hasBeforeImages && (
-          <ImageGallery images={beforeImages} title="Before Images" />
+        {hasBeforeImagesInterior && (
+          <ImageGallery images={beforeImagesInterior} title="Before Images - Interior" />
         )}
-        {hasAfterImages && (
-          <ImageGallery images={afterImages} title="After Images" />
+        {hasBeforeImagesExterior && (
+          <ImageGallery images={beforeImagesExterior} title="Before Images - Exterior" />
+        )}
+        {hasAfterImagesInterior && (
+          <ImageGallery images={afterImagesInterior} title="After Images - Interior" />
+        )}
+        {hasAfterImagesExterior && (
+          <ImageGallery images={afterImagesExterior} title="After Images - Exterior" />
         )}
       </ScrollView>
     </View>

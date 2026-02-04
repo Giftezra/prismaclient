@@ -15,16 +15,16 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 interface GarageVehicleComponentProps {
   vehicle: MyVehiclesProps;
   onDeletePress?: (id: string) => void;
-  onBookServicePress?: (id: string) => void;
   onViewDetailsPress?: (id: string) => void;
+  onUploadDataPress?: (id: string) => void;
   isLoadingVehicleStats?: boolean;
 }
 
 const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
   vehicle,
   onDeletePress,
-  onBookServicePress,
   onViewDetailsPress,
+  onUploadDataPress,
   isLoadingVehicleStats,
 }) => {
   const cardsColor = useThemeColor({}, "cards");
@@ -33,11 +33,12 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
   const borderColor = useThemeColor({}, "borders");
 
   return (
-    <View
+    <TouchableOpacity
       style={[
         styles.cardContainer,
         { backgroundColor: cardsColor, borderColor },
       ]}
+      onPress={() => onViewDetailsPress?.(vehicle.id)}
     >
       {/* Vehicle Image Section - Prominent at top */}
       <View style={styles.imageContainer}>
@@ -72,13 +73,13 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
             <Ionicons
               name="color-palette-outline"
               size={14}
-              color={vehicle.color.toLowerCase()}
+              color={vehicle.color?.toLowerCase() || "#6c757d"}
             />
             <StyledText
               variant="bodySmall"
               style={[styles.detailText, { color: textColor }]}
             >
-              {vehicle.color}
+              {vehicle.color || "N/A"}
             </StyledText>
           </View>
           <View style={styles.detailRow}>
@@ -87,7 +88,7 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
               variant="bodySmall"
               style={[styles.detailText, { color: textColor }]}
             >
-              {vehicle.licence.toUpperCase()}
+              {vehicle.licence?.toUpperCase() || "N/A"}
             </StyledText>
           </View>
         </View>
@@ -105,24 +106,17 @@ const GarageVehicleComponent: React.FC<GarageVehicleComponentProps> = ({
             </View>
           ) : (
             <StyledButton
-              title={"Details"}
+              title={"Upload Data"}
               variant="tonal"
-              onPress={() => onViewDetailsPress?.(vehicle.id)}
+              onPress={() => onUploadDataPress?.(vehicle.id)}
               style={styles.actionButton}
               isLoading={isLoadingVehicleStats}
               disabled={isLoadingVehicleStats}
             />
           )}
-
-          <StyledButton
-            title="Book"
-            variant="tonal"
-            onPress={() => onBookServicePress?.(vehicle.id)}
-            style={styles.actionButton}
-          />
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -130,7 +124,7 @@ export default GarageVehicleComponent;
 
 const styles = StyleSheet.create({
   cardContainer: {
-    flex:1,
+    width: "49%",
     marginBottom: 5,
     borderRadius: 10,
     borderWidth: 1,

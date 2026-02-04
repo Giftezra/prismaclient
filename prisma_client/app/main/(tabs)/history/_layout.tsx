@@ -8,6 +8,7 @@ const HistoryLayout = () => {
         headerShown: false,
     }}>
         <Stack.Screen name="HistoryScreen" />
+        <Stack.Screen name="ServiceHistoryDetailScreen" />
     </Stack>
   )
 }

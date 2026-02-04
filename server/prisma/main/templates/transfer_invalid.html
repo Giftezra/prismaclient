@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invalid Transfer Link - Prisma</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        width: 100%;
+        max-width: 450px;
+        text-align: center;
+      }
+
+      .error-icon {
+        width: 80px;
+        height: 80px;
+        background: #dc3545;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 40px;
+        color: white;
+      }
+
+      .logo {
+        font-size: 28px;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 20px;
+      }
+
+      .title {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      .message {
+        color: #666;
+        font-size: 16px;
+        line-height: 1.5;
+        margin-bottom: 30px;
+      }
+
+      .error-details {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 30px;
+        border: 1px solid #f5c6cb;
+        font-weight: 500;
+      }
+
+      .info-box {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 30px;
+        text-align: left;
+      }
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      .info-row:last-child {
+        border-bottom: none;
+      }
+
+      .info-label {
+        color: #666;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .info-value {
+        color: #333;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 30px;
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        transition: background-color 0.3s ease;
+        margin: 10px;
+      }
+
+      .btn:hover {
+        background: #5a6fd8;
+        color: white;
+        text-decoration: none;
+      }
+
+      .btn.secondary {
+        background: #6c757d;
+      }
+
+      .btn.secondary:hover {
+        background: #5a6268;
+      }
+
+      .info {
+        background: #fff3cd;
+        color: #856404;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 20px;
+        font-size: 14px;
+        border: 1px solid #ffeaa7;
+      }
+
+      .footer {
+        margin-top: 30px;
+        color: #666;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="error-icon">✕</div>
+
+      <div class="logo">Prisma</div>
+      <h1 class="title">Invalid Transfer Link</h1>
+
+      <p class="message">
+        The transfer request link you clicked is invalid or cannot be processed.
+      </p>
+
+      <div class="error-details">{{ error }}</div>
+
+      {% if transfer %}
+      <div class="info-box">
+        <div class="info-row">
+          <span class="info-label">Transfer Status:</span>
+          <span class="info-value">{{ transfer.status|title }}</span>
+        </div>
+        {% if transfer.vehicle %}
+        <div class="info-row">
+          <span class="info-label">Vehicle:</span>
+          <span class="info-value"
+            >{{ transfer.vehicle.make }} {{ transfer.vehicle.model }} {{
+            transfer.vehicle.year }}</span
+          >
+        </div>
+        {% endif %} {% if transfer.expires_at %}
+        <div class="info-row">
+          <span class="info-label">Expires:</span>
+          <span class="info-value"
+            >{{ transfer.expires_at|date:"F d, Y \a\t g:i A" }}</span
+          >
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="info">
+        <strong>What happened?</strong><br />
+        • The link may have expired (links expire after 7 days)<br />
+        • The transfer may have already been processed<br />
+        • The transfer may have been cancelled<br />
+        • The link may be malformed or incorrect<br /><br />
+        <strong>What to do:</strong><br />
+        • Check your email for the most recent transfer request<br />
+        • Contact the requester directly if needed<br />
+        • Contact support if you believe this is an error
+      </div>
+
+      <div class="footer">
+        <p>
+          Still having trouble?
+          <a href="mailto:support@prisma.com" style="color: #667eea"
+            >Contact Support</a
+          >
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

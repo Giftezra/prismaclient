@@ -5,12 +5,16 @@ import {
 } from "./BookingInterfaces";
 import DetailerProfileProps from "./OtherInterfaces";
 
+import { BranchProps } from "./FleetInterfaces";
+
 export interface UserProfileProps {
   id?: string;
   name: string;
   email: string;
   phone: string;
   is_fleet_owner?: boolean;
+  is_branch_admin?: boolean;
+  managed_branch?: BranchProps | null;
   address: MyAddressProps | null;
   push_notification_token: boolean;
   email_notification_token: boolean;

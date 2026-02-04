@@ -13,7 +13,7 @@ const OngoingServiceCard: React.FC<{
   const cardColor = useThemeColor({}, "cards");
   const iconColor = useThemeColor({}, "icons");
   const borderColor = useThemeColor({}, "borders");
-  const tintColor = useThemeColor({}, "tint");
+  const textColor = useThemeColor({}, "text");
   const backgroundColor = useThemeColor({}, "background");
 
   // Make the appointmet status user friendly
@@ -23,16 +23,28 @@ const OngoingServiceCard: React.FC<{
 
   if (!appointment) {
     return (
-      <View style={[styles.ongoingCard]}>
+      <View
+        style={[
+          styles.ongoingCard,
+          { backgroundColor: cardColor, borderColor: borderColor },
+        ]}
+      >
         <View style={styles.ongoingHeader}>
-          <Ionicons name="time" size={20} color={iconColor} />
-          <StyledText style={styles.ongoingTitle} children="Ongoing Service" />
+          <View style={styles.headerLeft}>
+            <Ionicons name="time" size={22} color={iconColor} />
+            <StyledText
+              style={[styles.ongoingTitle, { color: textColor }]}
+              variant="titleMedium"
+              children="Ongoing Service"
+            />
+          </View>
         </View>
 
         <View style={styles.noServiceContent}>
           <Ionicons name="car-outline" size={48} color={iconColor} />
           <StyledText
-            style={styles.noServiceText}
+            style={[styles.noServiceText, { color: textColor }]}
+            variant="bodyMedium"
             children="You currently have no ongoing service"
           />
         </View>
@@ -40,51 +52,96 @@ const OngoingServiceCard: React.FC<{
     );
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "in_progress":
+        return "#FFA500";
+      case "confirmed":
+      case "scheduled":
+        return "#2196F3";
+      case "pending":
+        return "#6B7280";
+      default:
+        return "#2196F3";
+    }
+  };
+
   return (
     <View
       style={[
         styles.ongoingCard,
-        { backgroundColor, borderColor, shadowColor: cardColor },
+        { backgroundColor: cardColor, borderColor: borderColor },
       ]}
     >
       <View style={styles.ongoingHeader}>
-        <Ionicons name="time" size={20} color={iconColor} />
-        <StyledText style={styles.ongoingTitle} children="Ongoing Service" />
-        <StyledButton
-          variant="small"
-          title={userFriendlyStatus || ""}
-          onPress={() => {}}
-        />
+        <View style={styles.headerLeft}>
+          <Ionicons name="time" size={22} color={iconColor} />
+          <StyledText
+            style={[styles.ongoingTitle, { color: textColor }]}
+            variant="titleMedium"
+            children="Ongoing Service"
+          />
+        </View>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: getStatusColor(appointment.status || "") },
+          ]}
+        >
+          <StyledText
+            style={styles.statusBadgeText}
+            variant="labelSmall"
+            children={userFriendlyStatus?.toUpperCase() || ""}
+          />
+        </View>
       </View>
 
       <View style={styles.ongoingContent}>
         <View style={styles.detailerInfo}>
-          <View>
+          <View style={styles.detailerContent}>
             <StyledText
+              style={[styles.detailerName, { color: textColor }]}
               variant="titleMedium"
-              children={appointment.detailer?.name || "Assigning detailer..."}
+              children={
+                appointment.detailers && appointment.detailers.length > 0
+                  ? appointment.detailers.map(d => d.name).join(" & ")
+                  : appointment.detailer?.name || "Assigning detailer..."
+              }
             />
-            {appointment.detailer && (
+            {(appointment.detailers && appointment.detailers.length > 0) || appointment.detailer ? (
               <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={12} color="#FFD700" />
+                <Ionicons name="star" size={14} color="#FFD700" />
                 <StyledText
-                  variant="bodyMedium"
-                  children={appointment.detailer.rating}
+                  style={[styles.ratingText, { color: textColor }]}
+                  variant="bodySmall"
+                  children={
+                    appointment.detailers && appointment.detailers.length > 0
+                      ? appointment.detailers.map(d => d.rating?.toFixed(1) || "0.0").join(", ")
+                      : appointment.detailer?.rating?.toFixed(1) || "0.0"
+                  }
                 />
               </View>
-            )}
+            ) : null}
           </View>
         </View>
 
         <View style={styles.vehicleInfo}>
-          <StyledText
-            variant="bodyMedium"
-            children={`${appointment.vehicle.make} ${appointment.vehicle.model}`}
-          />
-          <StyledText
-            variant="bodyMedium"
-            children={`${appointment.start_time} - ${appointment.end_time}`}
-          />
+          <View style={styles.vehicleRow}>
+            <Ionicons name="car-outline" size={16} color={iconColor} />
+            <StyledText
+              style={[styles.vehicleText, { color: textColor }]}
+              variant="bodyMedium"
+              children={`${appointment.vehicle.make} ${appointment.vehicle.model}`}
+            />
+          </View>
+          <View style={styles.timeRow}>
+            <Ionicons name="time-outline" size={16} color={iconColor} />
+            <StyledText
+              style={[styles.timeText, { color: textColor }]}
+              variant="bodySmall"
+              children={`${appointment.start_time} - ${appointment.end_time}`}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -95,54 +152,91 @@ export default OngoingServiceCard;
 
 const styles = StyleSheet.create({
   ongoingCard: {
-    padding: 8,
-    marginBottom: 10,
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   ongoingHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
-  ongoingTitle: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginLeft: 8,
-    flex: 1,
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    shadowColor: "red",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 4,
-  },
-  ongoingContent: {
-    marginBottom: 16,
-  },
-  detailerInfo: {
+  headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    flex: 1,
   },
-  detailerImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
+  ongoingTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginLeft: 10,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  ongoingContent: {
+    marginBottom: 8,
+  },
+  detailerInfo: {
+    marginBottom: 16,
+  },
+  detailerContent: {
+    flexDirection: "column",
+  },
+  detailerName: {
+    fontSize: 17,
+    fontWeight: "700",
+    marginBottom: 4,
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 2,
-    gap: 10,
+    marginTop: 4,
+    gap: 6,
+  },
+  ratingText: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginLeft: 2,
   },
   vehicleInfo: {
-    marginTop: 8,
+    marginTop: 4,
+    gap: 8,
+  },
+  vehicleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  vehicleText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  timeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  timeText: {
+    fontSize: 13,
+    opacity: 0.8,
   },
   trackButton: {
     flexDirection: "row",
@@ -166,8 +260,7 @@ const styles = StyleSheet.create({
   noServiceText: {
     marginTop: 16,
     textAlign: "center",
-    color: "white",
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 15,
+    opacity: 0.7,
   },
 });

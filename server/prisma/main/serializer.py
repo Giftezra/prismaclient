@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Vehicles, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, LoyaltyProgram, Promotions
+from .models import User, Vehicle, VehicleOwnership, VehicleEvent, Fleet, FleetMember, FleetVehicle, VehicleTransfer, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, LoyaltyProgram, Promotions, Branch, SubscriptionTier, SubscriptionPlan, FleetSubscription, SubscriptionBilling, EventDataManagement
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import ValidationError   
 
@@ -8,10 +8,40 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
 
-class VehiclesSerializer(serializers.ModelSerializer):
+class VehicleSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True, use_url=True)
     class Meta:
-        model = Vehicles
+        model = Vehicle
+        fields = '__all__'
+
+class VehicleOwnershipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VehicleOwnership
+        fields = '__all__'
+
+class VehicleEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VehicleEvent
+        fields = '__all__'
+
+class FleetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fleet
+        fields = '__all__'
+
+class FleetMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FleetMember
+        fields = '__all__'
+
+class FleetVehicleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FleetVehicle
+        fields = '__all__'
+
+class VehicleTransferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VehicleTransfer
         fields = '__all__'
 
 class ServiceTypeSerializer(serializers.ModelSerializer):
@@ -49,6 +79,50 @@ class PromotionsSerializer(serializers.ModelSerializer):
         model = Promotions
         fields = '__all__'
 
+class BranchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = '__all__'
+
+class SubscriptionTierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionTier
+        fields = '__all__'
+
+class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    tier = SubscriptionTierSerializer(read_only=True)
+    tier_id = serializers.PrimaryKeyRelatedField(queryset=SubscriptionTier.objects.all(), source='tier', write_only=True, required=False)
+    
+    class Meta:
+        model = SubscriptionPlan
+        fields = '__all__'
+
+class FleetSubscriptionSerializer(serializers.ModelSerializer):
+    plan = SubscriptionPlanSerializer(read_only=True)
+    plan_id = serializers.PrimaryKeyRelatedField(queryset=SubscriptionPlan.objects.all(), source='plan', write_only=True, required=False)
+    
+    class Meta:
+        model = FleetSubscription
+        fields = '__all__'
+
+class SubscriptionBillingSerializer(serializers.ModelSerializer):
+    subscription = FleetSubscriptionSerializer(read_only=True)
+    
+    class Meta:
+        model = SubscriptionBilling
+        fields = '__all__'
+
+class EventDataManagementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventDataManagement
+        fields = [
+            'id', 'booking', 'tire_tread_depth', 'tire_condition', 'wiper_status',
+            'oil_level', 'coolant_level', 'brake_fluid_level', 'battery_condition',
+            'headlights_status', 'taillights_status', 'indicators_status',
+            'vehicle_condition_notes', 'damage_report', 'inspected_at'
+        ]
+        read_only_fields = ['inspected_at']
+
 """ Customise the token serializer to get the attrs sent from the client 
     This attrs contains the users email and password.
     Returns the users profile data, access and refresh tokens,
@@ -76,14 +150,29 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         loyalty = LoyaltyProgram.objects.filter(user=user).first()
         loyalty_benefits = loyalty.get_tier_benefits() if loyalty else None
         
+        # Get managed branch if user is branch admin
+        managed_branch = None
+        if user.is_branch_admin:
+            managed_branch_obj = user.get_managed_branch()
+            if managed_branch_obj:
+                managed_branch = {
+                    'id': str(managed_branch_obj.id),
+                    'name': managed_branch_obj.name,
+                    'address': managed_branch_obj.address,
+                    'postcode': managed_branch_obj.postcode,
+                    'city': managed_branch_obj.city,
+                }
+        
         # Add user data to the existing token data
         data.update({
             'user': {
                 'id': user.id,
-                'name': user.name,
+                'name': user.name ,
                 'email': user.email,
                 'phone': user.phone,
                 'is_fleet_owner': user.is_fleet_owner,
+                'is_branch_admin': user.is_branch_admin,
+                'managed_branch': managed_branch,
                 'address': {
                     'address': address.address if address else None,
                     'city': address.city if address else None,
@@ -97,5 +186,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'loyalty_benefits': loyalty_benefits,
                 'referral_code': user.referral_code if user.referral_code else None,
             }
+            
         })
         return data

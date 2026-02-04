@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, Pressable } from "react-native";
 import React from "react";
 import { MyServiceHistoryProps } from "@/app/interfaces/ProfileInterfaces";
 import StyledText from "../helpers/StyledText";
@@ -10,9 +10,11 @@ import {
 } from "@/app/utils/methods";
 import LinearGradientComponent from "../helpers/LinearGradientComponent";
 import { Ionicons } from "@expo/vector-icons";
+import UnratedTag from "../shared/UnratedTag";
 
 interface ServiceHistoryComponentProps extends MyServiceHistoryProps {
   onPress?: () => void;
+  onUnratedPress?: () => void;
 }
 
 const ServiceHistoryComponent = ({
@@ -29,22 +31,19 @@ const ServiceHistoryComponent = ({
   is_reviewed,
   rating,
   onPress,
+  onUnratedPress,
 }: ServiceHistoryComponentProps) => {
   const cardColor = useThemeColor({}, "cards");
   const borderColor = useThemeColor({}, "borders");
   const textColor = useThemeColor({}, "text");
   const primaryPurple = useThemeColor({}, "primary");
 
-  const cardStyle = [
-    styles.card,
-    ...(is_reviewed ? [] : [styles.unratedBorder]),
-  ];
 
   const content = (
     <LinearGradientComponent
       color1={cardColor}
       color2={borderColor}
-      style={cardStyle}
+      style={styles.card}
     >
       {/* Header with Status */}
       <View style={styles.header}>
@@ -99,9 +98,9 @@ const ServiceHistoryComponent = ({
       {/* Detailer */}
       <View style={styles.section}>
         <StyledText variant="labelMedium" children="Detailer" />
-        <StyledText variant="labelSmall" children={detailer.name} />
-        <StyledText variant="labelSmall" children={detailer.rating} />
-        {is_reviewed && rating > 0 && (
+        <StyledText variant="labelSmall" children={`Name: ${detailer.name}`} />
+        <StyledText variant="labelSmall" children={`Rating: ${detailer.rating?.toFixed(1)}`} />
+        {is_reviewed && rating > 0 ? (
           <View style={styles.ratingContainer}>
             <Ionicons name="star" size={16} color="#FFD700" />
             <StyledText
@@ -110,6 +109,16 @@ const ServiceHistoryComponent = ({
               children={`Your rating: ${rating.toFixed(1)}`}
             />
           </View>
+        ) : (
+          !is_reviewed && (
+            <View style={styles.unratedContainer}>
+              <UnratedTag
+                text="Unrated"
+                onPress={onUnratedPress}
+                variant="compact"
+              />
+            </View>
+          )
         )}
       </View>
 
@@ -138,13 +147,11 @@ const ServiceHistoryComponent = ({
 
   if (onPress) {
     return (
-      <TouchableOpacity
+      <Pressable
         onPress={onPress}
-        activeOpacity={0.7}
-        style={styles.touchable}
       >
         {content}
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 
@@ -155,19 +162,12 @@ export default ServiceHistoryComponent;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 25,
+    borderRadius: 30,
     padding: 15,
     marginVertical: 8,
-    marginHorizontal: 5,
+    marginHorizontal: 20,
     borderWidth: 1,
-    shadowColor: "#fff",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    
   },
   header: {
     flexDirection: "row",
@@ -244,11 +244,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  unratedBorder: {
-    borderWidth: 2,
-    borderColor: "#FFA500",
-  },
-  touchable: {
-    // No margins needed - card already has margins
+  unratedContainer: {
+    marginTop: 8,
   },
 });

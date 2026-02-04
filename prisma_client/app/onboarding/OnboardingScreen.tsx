@@ -157,6 +157,7 @@ const OnboardingScreen = () => {
                   onChangeText={(text) => handleSignUpData("phone", text)}
                   keyboardType="phone-pad"
                   autoCapitalize="none"
+                  maxLength={12}
                   style={styles.textInput}
                   placeholderTextColor={
                     textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"

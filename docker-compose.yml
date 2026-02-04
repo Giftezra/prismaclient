@@ -38,8 +38,10 @@ services:
       - CELERY_RESULT_BACKEND=redis://prisma_redis:6379/1
       - CELERY_WORKER_CONCURRENCY=3
     depends_on:
-      - prisma_redis
-      - client_server
+      prisma_redis:
+        condition: service_started
+      client_server:
+        condition: service_started
     networks:
       - prisma_shared_net
     healthcheck:
@@ -58,6 +60,7 @@ services:
       - ./redis/data:/data
     networks:
       - prisma_shared_net
+
 
   nginx:
     image: nginx:alpine
@@ -113,7 +116,6 @@ services:
 
 volumes:
   redis_data:
-  postgres_data:
 
 networks:
   prisma_shared_net:

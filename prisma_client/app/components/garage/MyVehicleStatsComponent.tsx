@@ -10,6 +10,7 @@ import { formatCurrency, formatDate } from "@/app/utils/methods";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import VehicleInspectionSection from "./VehicleInspectionSection";
 
 interface MyVehicleStatsComponentProps {
   vehicleStats: MyVehicleStatsProps;
@@ -159,6 +160,9 @@ const MyVehicleStatsComponent = ({
           </View>
         </View>
       </View>
+
+      {/* Inspection Section */}
+      <VehicleInspectionSection inspection={vehicleStats.latest_inspection} />
 
       {/* Action Button */}
       <View style={styles.actionContainer}>

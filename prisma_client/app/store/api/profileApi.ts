@@ -2,7 +2,6 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import axiosBaseQuery from "@/app/store/baseQuery";
 import {
   MyAddressProps,
-  MyServiceHistoryProps,
   UserProfileProps,
 } from "@/app/interfaces/ProfileInterfaces";
 
@@ -22,20 +21,6 @@ const profileApi = createApi({
       transformResponse: (response: { addresses: MyAddressProps[] }) =>
         response.addresses,
     }),
-    /**
-     * Fetch the service history of the user.
-     * on the server side, we will simply return all the service history for the user.
-     */
-    fetchAllUserServiceHistory: builder.query<MyServiceHistoryProps[], void>({
-      query: () => ({
-        url: "/api/v1/profile/get_service_history/",
-        method: "GET",
-      }),
-      transformResponse: (response: {
-        service_history: MyServiceHistoryProps[];
-      }) => response.service_history,
-    }),
-
     /**
      * Add a new address to the user's profile.
      * on the server side, we will simply add the new address to the user's profile.
@@ -135,7 +120,6 @@ const profileApi = createApi({
 
 export const {
   useFetchAllUserAddressesQuery,
-  useFetchAllUserServiceHistoryQuery,
   useAddNewAddressMutation,
   useUpdateExistingAddressMutation,
   useDeleteExistingAddressMutation,

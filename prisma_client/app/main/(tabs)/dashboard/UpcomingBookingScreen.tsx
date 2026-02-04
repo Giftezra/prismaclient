@@ -276,87 +276,125 @@ const UpcomingBookingScreen = () => {
     );
   }
 
+  // Get status color
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "confirmed":
+      case "scheduled":
+        return "#10B981"; // Green
+      case "in_progress":
+        return "#F59E0B"; // Amber
+      case "pending":
+        return "#6B7280"; // Gray
+      default:
+        return primaryColor;
+    }
+  };
+
+  const statusColor = getStatusColor(appointment?.status || "");
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor }]}
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
     >
-      {/* Status Card */}
-      <View style={[styles.statusCard]}>
-        <View style={styles.statusHeader}>
-          <View style={[styles.statusBadge, { borderColor: borderColor }]}>
-            <StyledText variant="labelMedium">{appointment?.status?.replace("_", " ").toUpperCase()}</StyledText>
+      {/* Hero Status Card with Gradient */}
+      <LinearGradientComponent
+        color1={statusColor + "15"}
+        color2={statusColor + "05"}
+        style={styles.heroCard}
+      >
+        <View style={styles.heroHeader}>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+            <Ionicons name="checkmark-circle" size={16} color="white" />
+            <StyledText variant="labelMedium" style={styles.statusBadgeText}>
+              {appointment?.status?.replace("_", " ").toUpperCase()}
+            </StyledText>
           </View>
-
           <StyledText
-            variant="titleMedium"
-            style={[styles.appointmentId, { color: textColor }]}
+            variant="bodySmall"
+            style={[styles.appointmentId, { color: textColor, opacity: 0.7 }]}
           >
             #{appointment.booking_reference}
           </StyledText>
         </View>
 
-        <View style={styles.timingInfo}>
-          <View style={styles.timeItem}>
-            <Ionicons name="calendar" size={20} color={iconColor} />
-            <View>
+        <View style={styles.timingGrid}>
+          <View style={[styles.timingCard, { backgroundColor: cardColor }]}>
+            <View style={[styles.timingIconContainer, { backgroundColor: statusColor + "20" }]}>
+              <Ionicons name="calendar-outline" size={24} color={statusColor} />
+            </View>
+            <View style={styles.timingContent}>
               <StyledText
                 variant="bodySmall"
-                style={[styles.timeLabel, { color: textColor }]}
+                style={[styles.timingLabel, { color: textColor, opacity: 0.6 }]}
               >
                 Date
               </StyledText>
               <StyledText
-                variant="bodyMedium"
-                style={[styles.timeValue, { color: textColor }]}
+                variant="titleSmall"
+                style={[styles.timingValue, { color: textColor }]}
+                numberOfLines={1}
               >
-                {new Date(appointment.booking_date).toLocaleDateString()}
+                {new Date(appointment.booking_date).toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </StyledText>
             </View>
           </View>
 
-          <View style={styles.timeItem}>
-            <Ionicons name="time" size={20} color={iconColor} />
-            <View>
+          <View style={[styles.timingCard, { backgroundColor: cardColor }]}>
+            <View style={[styles.timingIconContainer, { backgroundColor: statusColor + "20" }]}>
+              <Ionicons name="time-outline" size={24} color={statusColor} />
+            </View>
+            <View style={styles.timingContent}>
               <StyledText
                 variant="bodySmall"
-                style={[styles.timeLabel, { color: textColor }]}
+                style={[styles.timingLabel, { color: textColor, opacity: 0.6 }]}
               >
                 Time
               </StyledText>
               <StyledText
-                variant="bodyMedium"
-                style={[styles.timeValue, { color: textColor }]}
+                variant="titleSmall"
+                style={[styles.timingValue, { color: textColor }]}
               >
                 {appointment.start_time} - {appointment.end_time}
               </StyledText>
             </View>
           </View>
 
-          <View style={styles.timeItem}>
-            <Ionicons name="hourglass" size={20} color={iconColor} />
-            <View>
+          <View style={[styles.timingCard, { backgroundColor: cardColor }]}>
+            <View style={[styles.timingIconContainer, { backgroundColor: statusColor + "20" }]}>
+              <Ionicons name="hourglass-outline" size={24} color={statusColor} />
+            </View>
+            <View style={styles.timingContent}>
               <StyledText
                 variant="bodySmall"
-                style={[styles.timeLabel, { color: textColor }]}
+                style={[styles.timingLabel, { color: textColor, opacity: 0.6 }]}
               >
                 Duration
               </StyledText>
               <StyledText
-                variant="bodyMedium"
-                style={[styles.timeValue, { color: textColor }]}
+                variant="titleSmall"
+                style={[styles.timingValue, { color: textColor }]}
               >
                 {appointment.estimated_duration}
               </StyledText>
             </View>
           </View>
         </View>
-      </View>
+      </LinearGradientComponent>
 
-      {/* Vehicle Information */}
-      <View style={[styles.section]}>
+      {/* Vehicle Information Card */}
+      <View style={[styles.card, { backgroundColor: cardColor, borderColor: borderColor }]}>
         <View style={styles.sectionHeader}>
-          <Ionicons name="car" size={24} color={iconColor} />
+          <View style={[styles.iconWrapper, { backgroundColor: primaryColor + "15" }]}>
+            <Ionicons name="car-sport" size={22} color={primaryColor} />
+          </View>
           <StyledText
             variant="titleMedium"
             style={[styles.sectionTitle, { color: textColor }]}
@@ -365,41 +403,65 @@ const UpcomingBookingScreen = () => {
           </StyledText>
         </View>
         <View style={styles.vehicleInfo}>
-          <Image
-            source={
-              appointment.vehicle.image
-                ? { uri: appointment.vehicle.image }
-                : require("@/assets/images/car.jpg")
-            }
-            style={styles.vehicleImage}
-          />
+          <View style={styles.vehicleImageContainer}>
+            <Image
+              source={
+                appointment.vehicle.image
+                  ? { uri: appointment.vehicle.image }
+                  : require("@/assets/images/car.jpg")
+              }
+              style={styles.vehicleImage}
+              resizeMode="cover"
+            />
+            <View style={[styles.vehicleImageOverlay, { backgroundColor: primaryColor + "10" }]} />
+          </View>
           <View style={styles.vehicleDetails}>
             <StyledText
-              variant="titleMedium"
+              variant="titleLarge"
               style={[styles.vehicleName, { color: textColor }]}
+              numberOfLines={2}
             >
               {appointment.vehicle.make} {appointment.vehicle.model}
             </StyledText>
-            <StyledText
-              variant="bodyMedium"
-              style={[styles.vehicleInfoText, { color: textColor }]}
-            >
-              {appointment.vehicle.year} • {appointment.vehicle.color}
-            </StyledText>
-            <StyledText
-              variant="bodyMedium"
-              style={[styles.vehicleInfoText, { color: textColor }]}
-            >
-              License: {appointment.vehicle.licence}
-            </StyledText>
+            <View style={styles.vehicleMeta}>
+              <View style={styles.vehicleMetaItem}>
+                <Ionicons name="calendar-outline" size={14} color={iconColor} />
+                <StyledText
+                  variant="bodySmall"
+                  style={[styles.vehicleInfoText, { color: textColor, opacity: 0.8 }]}
+                >
+                  {appointment.vehicle.year}
+                </StyledText>
+              </View>
+              <View style={styles.vehicleMetaItem}>
+                <Ionicons name="color-palette-outline" size={14} color={iconColor} />
+                <StyledText
+                  variant="bodySmall"
+                  style={[styles.vehicleInfoText, { color: textColor, opacity: 0.8 }]}
+                >
+                  {appointment.vehicle.color}
+                </StyledText>
+              </View>
+            </View>
+            <View style={[styles.licenseBadge, { backgroundColor: borderColor + "30" }]}>
+              <Ionicons name="shield-checkmark-outline" size={16} color={primaryColor} />
+              <StyledText
+                variant="bodySmall"
+                style={[styles.licenseText, { color: textColor }]}
+              >
+                {appointment.vehicle.licence}
+              </StyledText>
+            </View>
           </View>
         </View>
       </View>
 
-      {/* Service Details */}
-      <View style={[styles.section]}>
+      {/* Service Details Card */}
+      <View style={[styles.card, { backgroundColor: cardColor, borderColor: borderColor }]}>
         <View style={styles.sectionHeader}>
-          <Ionicons name="construct" size={24} color={iconColor} />
+          <View style={[styles.iconWrapper, { backgroundColor: primaryColor + "15" }]}>
+            <Ionicons name="construct-outline" size={22} color={primaryColor} />
+          </View>
           <StyledText
             variant="titleMedium"
             style={[styles.sectionTitle, { color: textColor }]}
@@ -409,107 +471,131 @@ const UpcomingBookingScreen = () => {
         </View>
 
         <View style={styles.serviceInfo}>
-          <View style={styles.serviceItem}>
-            <StyledText
-              variant="bodySmall"
-              style={[styles.serviceLabel, { color: textColor }]}
-            >
-              Service Type
-            </StyledText>
-            <StyledText
-              variant="bodyMedium"
-              style={[styles.serviceValue, { color: textColor }]}
-            >
-              {appointment.service_type.name}
-            </StyledText>
+          <View style={[styles.serviceItem, { borderBottomColor: borderColor }]}>
+            <View style={styles.serviceItemLeft}>
+              <Ionicons name="sparkles-outline" size={18} color={primaryColor} />
+              <View style={styles.serviceItemContent}>
+                <StyledText
+                  variant="bodySmall"
+                  style={[styles.serviceLabel, { color: textColor, opacity: 0.6 }]}
+                >
+                  Service Type
+                </StyledText>
+                <StyledText
+                  variant="bodyLarge"
+                  style={[styles.serviceValue, { color: textColor }]}
+                >
+                  {appointment.service_type.name}
+                </StyledText>
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.serviceItem, { borderBottomColor: borderColor }]}>
+            <View style={styles.serviceItemLeft}>
+              <Ionicons name="water-outline" size={18} color={primaryColor} />
+              <View style={styles.serviceItemContent}>
+                <StyledText
+                  variant="bodySmall"
+                  style={[styles.serviceLabel, { color: textColor, opacity: 0.6 }]}
+                >
+                  Valet Type
+                </StyledText>
+                <StyledText
+                  variant="bodyLarge"
+                  style={[styles.serviceValue, { color: textColor }]}
+                >
+                  {appointment.valet_type.name}
+                </StyledText>
+              </View>
+            </View>
           </View>
 
           <View style={styles.serviceItem}>
-            <StyledText
-              variant="bodySmall"
-              style={[styles.serviceLabel, { color: textColor }]}
-            >
-              Valet Type
-            </StyledText>
-            <StyledText
-              variant="bodyMedium"
-              style={[styles.serviceValue, { color: textColor }]}
-            >
-              {appointment.valet_type.name}
-            </StyledText>
-          </View>
-
-          <View style={styles.serviceItem}>
-            <StyledText
-              variant="bodySmall"
-              style={[styles.serviceLabel, { color: textColor }]}
-            >
-              Total Amount
-            </StyledText>
-            <StyledText
-              variant="titleMedium"
-              style={[styles.priceValue, { color: textColor }]}
-            >
-              {formatCurrency(appointment.total_amount, user?.address?.country)}
-            </StyledText>
+            <View style={styles.serviceItemLeft}>
+              <Ionicons name="cash-outline" size={18} color={primaryColor} />
+              <View style={styles.serviceItemContent}>
+                <StyledText
+                  variant="bodySmall"
+                  style={[styles.serviceLabel, { color: textColor, opacity: 0.6 }]}
+                >
+                  Total Amount
+                </StyledText>
+                <StyledText
+                  variant="titleLarge"
+                  style={[styles.priceValue, { color: primaryColor }]}
+                >
+                  {formatCurrency(appointment.total_amount, user?.address?.country)}
+                </StyledText>
+              </View>
+            </View>
           </View>
         </View>
 
         {/* Service Description */}
         <View style={styles.descriptionContainer}>
           <StyledText
-            variant="bodySmall"
+            variant="bodyMedium"
             style={[styles.descriptionTitle, { color: textColor }]}
           >
             What's included:
           </StyledText>
-          {appointment.service_type.description.map((item, index) => (
-            <View key={index} style={styles.descriptionItem}>
-              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
-              <StyledText
-                variant="bodyMedium"
-                style={[styles.descriptionText, { color: textColor }]}
-              >
-                {item}
-              </StyledText>
-            </View>
-          ))}
+          <View style={styles.descriptionList}>
+            {appointment.service_type.description.map((item, index) => (
+              <View key={index} style={styles.descriptionItem}>
+                <View style={[styles.checkIconContainer, { backgroundColor: "#10B981" + "20" }]}>
+                  <Ionicons name="checkmark" size={14} color="#10B981" />
+                </View>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.descriptionText, { color: textColor }]}
+                  numberOfLines={0}
+                >
+                  {item}
+                </StyledText>
+              </View>
+            ))}
+          </View>
         </View>
         {appointment.add_ons && appointment.add_ons.length > 0 && (
           <View style={styles.descriptionContainer}>
             <StyledText
-              variant="bodySmall"
+              variant="bodyMedium"
               style={[styles.descriptionTitle, { color: textColor }]}
             >
               Add Ons:
             </StyledText>
-            {appointment.add_ons.map((item, index) => (
-              <View key={index} style={styles.descriptionItem}>
-                <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
-                <View style={styles.addonDetails}>
-                  <StyledText
-                    variant="bodyMedium"
-                    style={[styles.descriptionText, { color: textColor }]}
-                  >
-                    {item.name}
-                  </StyledText>
-                  <StyledText
-                    variant="bodySmall"
-                    style={[styles.addonPrice, { color: textColor }]}
-                  >
-                    {formatCurrency(item.price, user?.address?.country)}
-                  </StyledText>
+            <View style={styles.descriptionList}>
+              {appointment.add_ons.map((item, index) => (
+                <View key={index} style={[styles.descriptionItem, styles.addonItem]}>
+                  <View style={[styles.checkIconContainer, { backgroundColor: primaryColor + "20" }]}>
+                    <Ionicons name="add-circle" size={14} color={primaryColor} />
+                  </View>
+                  <View style={styles.addonDetails}>
+                    <StyledText
+                      variant="bodyMedium"
+                      style={[styles.descriptionText, { color: textColor }]}
+                      numberOfLines={0}
+                    >
+                      {item.name}
+                    </StyledText>
+                    <StyledText
+                      variant="bodySmall"
+                      style={[styles.addonPrice, { color: primaryColor }]}
+                    >
+                      +{formatCurrency(item.price, user?.address?.country)}
+                    </StyledText>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
         )}
       </View>
 
-      {/* Detailer Information */}
-      <View style={[styles.section]}>
+      {/* Detailer Information Card */}
+      <View style={[styles.card, { backgroundColor: cardColor, borderColor: borderColor }]}>
         <View style={styles.sectionHeader}>
-          <Ionicons name="person" size={24} color={iconColor} />
           <StyledText
             variant="titleMedium"
             style={[styles.sectionTitle, { color: textColor }]}
@@ -519,45 +605,74 @@ const UpcomingBookingScreen = () => {
         </View>
 
         <View style={styles.detailerInfo}>
-          <Image
-            source={require("@/assets/images/user_image.jpg")}
-            style={styles.detailerImage}
-          />
-          <View style={styles.detailerDetails}>
-            <StyledText
-              variant="titleMedium"
-              style={[styles.detailerName, { color: textColor }]}
-            >
-              {appointment.detailer.name}
-            </StyledText>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="#FFD700" />
-              <StyledText
-                variant="bodyMedium"
-                style={[styles.ratingText, { color: textColor }]}
-              >
-                {appointment.detailer.rating} Rating
-              </StyledText>
+          <View style={styles.detailerImageContainer}>
+            <Image
+              source={require("@/assets/images/user_image.jpg")}
+              style={styles.detailerImage}
+            />
+            <View style={[styles.detailerImageBadge, { backgroundColor: statusColor }]}>
+              <Ionicons name="checkmark" size={12} color="white" />
             </View>
           </View>
-          {appointment.detailer.phone && (
-            <TouchableOpacity
-              style={[styles.contactButton, { backgroundColor: primaryColor }]}
-              onPress={() => callDetailer(appointment.detailer.phone!)}
+          <View style={styles.detailerDetails}>
+            <StyledText
+              variant="titleLarge"
+              style={[styles.detailerName, { color: textColor }]}
+              numberOfLines={2}
             >
-              <Ionicons name="call" size={16} color="white" />
-              <StyledText variant="bodyMedium" style={styles.contactButtonText}>
-                Call
-              </StyledText>
-            </TouchableOpacity>
-          )}
+              {appointment.detailers && appointment.detailers.length > 0
+                ? appointment.detailers.map(d => d.name).join(" & ")
+                : appointment.detailer?.name || "Assigning detailer..."}
+            </StyledText>
+            {((appointment.detailers && appointment.detailers.length > 0) || appointment.detailer) && (
+              <View style={styles.ratingContainer}>
+                <View style={styles.ratingStars}>
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const avgRating = appointment.detailers && appointment.detailers.length > 0
+                      ? appointment.detailers.reduce((sum, d) => sum + (d.rating || 0), 0) / appointment.detailers.length
+                      : appointment.detailer?.rating || 0;
+                    return (
+                      <Ionicons
+                        key={star}
+                        name={star <= Math.round(avgRating) ? "star" : "star-outline"}
+                        size={14}
+                        color="#FFD700"
+                      />
+                    );
+                  })}
+                </View>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.ratingText, { color: textColor, opacity: 0.8 }]}
+                >
+                  {appointment.detailers && appointment.detailers.length > 0
+                    ? `${(appointment.detailers.reduce((sum, d) => sum + (d.rating || 0), 0) / appointment.detailers.length).toFixed(1)} Rating`
+                    : `${appointment.detailer?.rating?.toFixed(1) || "0.0"} Rating`}
+                </StyledText>
+              </View>
+            )}
+            {((appointment.detailers && appointment.detailers.length > 0 && appointment.detailers[0].phone) || appointment.detailer?.phone) && (
+              <TouchableOpacity
+                style={[styles.contactButton, { backgroundColor: primaryColor }]}
+                onPress={() => callDetailer((appointment.detailers && appointment.detailers.length > 0 ? appointment.detailers[0].phone : appointment.detailer?.phone)!)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="call" size={18} color="white" />
+                <StyledText variant="bodyMedium" style={styles.contactButtonText}>
+                  Call
+                </StyledText>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
 
-      {/* Location */}
-      <View style={[styles.section]}>
+      {/* Location Card */}
+      <View style={[styles.card, { backgroundColor: cardColor, borderColor: borderColor }]}>
         <View style={styles.sectionHeader}>
-          <Ionicons name="location" size={24} color={iconColor} />
+          <View style={[styles.iconWrapper, { backgroundColor: primaryColor + "15" }]}>
+            <Ionicons name="location-outline" size={22} color={primaryColor} />
+          </View>
           <StyledText
             variant="titleMedium"
             style={[styles.sectionTitle, { color: textColor }]}
@@ -567,23 +682,28 @@ const UpcomingBookingScreen = () => {
         </View>
 
         <View style={styles.locationInfo}>
-          <Ionicons name="location-outline" size={20} color={iconColor} />
+          <View style={[styles.locationIconContainer, { backgroundColor: primaryColor + "15" }]}>
+            <Ionicons name="location" size={20} color={primaryColor} />
+          </View>
           <View style={styles.locationText}>
             <StyledText
-              variant="bodyMedium"
+              variant="bodyLarge"
               style={[styles.addressText, { color: textColor }]}
+              numberOfLines={0}
             >
               {appointment.address.address}
             </StyledText>
             <StyledText
               variant="bodyMedium"
-              style={[styles.addressText, { color: textColor }]}
+              style={[styles.addressText, { color: textColor, opacity: 0.8, marginTop: 4 }]}
+              numberOfLines={0}
             >
               {appointment.address.city}, {appointment.address.post_code}
             </StyledText>
             <StyledText
-              variant="bodyMedium"
-              style={[styles.addressText, { color: textColor }]}
+              variant="bodySmall"
+              style={[styles.addressText, { color: textColor, opacity: 0.6, marginTop: 2 }]}
+              numberOfLines={0}
             >
               {appointment.address.country}
             </StyledText>
@@ -591,15 +711,17 @@ const UpcomingBookingScreen = () => {
         </View>
       </View>
 
-      {/* Special Instructions */}
+      {/* Special Instructions Card */}
       {appointment.special_instructions && (
-        <View style={[styles.section, { backgroundColor: cardColor }]}>
+        <View style={[styles.card, { backgroundColor: cardColor, borderColor: borderColor }]}>
           <View style={styles.sectionHeader}>
-            <Ionicons
-              name="information-circle"
-              size={24}
-              color={primaryColor}
-            />
+            <View style={[styles.iconWrapper, { backgroundColor: "#F59E0B" + "15" }]}>
+              <Ionicons
+                name="information-circle-outline"
+                size={22}
+                color="#F59E0B"
+              />
+            </View>
             <StyledText
               variant="titleMedium"
               style={[styles.sectionTitle, { color: textColor }]}
@@ -607,12 +729,14 @@ const UpcomingBookingScreen = () => {
               Special Instructions
             </StyledText>
           </View>
-          <StyledText
-            variant="bodyMedium"
-            style={[styles.instructionsText, { color: textColor }]}
-          >
-            {appointment.special_instructions}
-          </StyledText>
+          <View style={[styles.instructionsContainer, { backgroundColor: backgroundColor }]}>
+            <StyledText
+              variant="bodyMedium"
+              style={[styles.instructionsText, { color: textColor }]}
+            >
+              {appointment.special_instructions}
+            </StyledText>
+          </View>
         </View>
       )}
 
@@ -622,6 +746,7 @@ const UpcomingBookingScreen = () => {
           style={[
             styles.actionButton,
             styles.cancelButton,
+            { borderColor: borderColor },
             (isAppointmentInProgress(appointment) || isLoadingCancelBooking) &&
               styles.disabledButton,
           ]}
@@ -631,17 +756,18 @@ const UpcomingBookingScreen = () => {
           disabled={
             isAppointmentInProgress(appointment) || isLoadingCancelBooking
           }
+          activeOpacity={0.7}
         >
           <Ionicons
-            name="close-circle"
-            size={20}
-            color={isAppointmentInProgress(appointment) ? "#999" : "#F44336"}
+            name="close-circle-outline"
+            size={22}
+            color={isAppointmentInProgress(appointment) ? "#999" : "#EF4444"}
           />
           <StyledText
-            variant="bodyMedium"
+            variant="bodyLarge"
             style={[
               styles.cancelButtonText,
-              isAppointmentInProgress(appointment) && styles.disabledButtonText,
+              { color: isAppointmentInProgress(appointment) ? "#999" : "#EF4444" },
             ]}
           >
             {isLoadingCancelBooking
@@ -751,190 +877,337 @@ export default UpcomingBookingScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 4,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  heroCard: {
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 20,
-    paddingTop: 5,
+    overflow: "hidden",
   },
-  statusCard: {
-    borderRadius: 3,
-    padding: 10,
-    marginBottom: 10,
-  },
-  statusHeader: {
+  heroHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
-    gap: 10,
+    marginBottom: 20,
   },
   statusBadge: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 5,
-    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
   },
-  statusText: {
+  statusBadgeText: {
     color: "white",
-    marginLeft: 4,
-    fontWeight: "600",
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   appointmentId: {
-    fontWeight: "600",
+    fontWeight: "500",
+    letterSpacing: 0.3,
   },
-  timingInfo: {
+  timingGrid: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    gap: 12,
+    flexWrap: "wrap",
   },
-  timeItem: {
-    flexDirection: "row",
-    alignItems: "center",
+  timingCard: {
     flex: 1,
+    minWidth: 100,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
   },
-  timeLabel: {
-    marginLeft: 8,
-    opacity: 0.7,
+  timingIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
   },
-  timeValue: {
-    marginLeft: 8,
-    fontWeight: "600",
+  timingContent: {
+    alignItems: "center",
+    width: "100%",
   },
-  section: {
-    borderRadius: 3,
-    padding: 10,
-    marginBottom: 5,
+  timingLabel: {
+    fontSize: 11,
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  timingValue: {
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  card: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   sectionHeader: {
-    flexDirection: "row",
+    marginBottom: 20,
+  },
+  iconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
-    marginBottom: 16,
+    justifyContent: "center",
+    marginRight: 12,
   },
   sectionTitle: {
-    marginLeft: 12,
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 18,
   },
   vehicleInfo: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+  },
+  vehicleImageContainer: {
+    position: "relative",
+    marginRight: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: "hidden",
   },
   vehicleImage: {
-    width: 80,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 16,
+    width: 120,
+    height: 90,
+    borderRadius: 12,
+  },
+  vehicleImageOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   vehicleDetails: {
     flex: 1,
+    minWidth: 150,
   },
   vehicleName: {
-    fontWeight: "600",
-    marginBottom: 4,
+    fontWeight: "700",
+    marginBottom: 8,
+    fontSize: 20,
+  },
+  vehicleMeta: {
+    flexDirection: "row",
+    gap: 16,
+    marginBottom: 12,
+  },
+  vehicleMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   vehicleInfoText: {
-    marginBottom: 2,
+    fontSize: 13,
+  },
+  licenseBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+    gap: 6,
+  },
+  licenseText: {
+    fontWeight: "600",
+    fontSize: 13,
+    letterSpacing: 0.5,
   },
   serviceInfo: {
-    marginBottom: 16,
+    gap: 0,
   },
   serviceItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
+  },
+  serviceItemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  serviceItemContent: {
+    flex: 1,
   },
   serviceLabel: {
-    opacity: 0.7,
+    marginBottom: 4,
+    fontSize: 12,
   },
   serviceValue: {
     fontWeight: "600",
   },
   priceValue: {
-    fontWeight: "bold",
+    fontWeight: "700",
+    fontSize: 22,
   },
   descriptionContainer: {
     marginTop: 8,
   },
   descriptionTitle: {
-    fontWeight: "600",
-    marginBottom: 8,
+    fontWeight: "700",
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  descriptionList: {
+    gap: 12,
   },
   descriptionItem: {
     flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    flexShrink: 1,
+  },
+  addonItem: {
+    paddingVertical: 8,
+  },
+  checkIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: "center",
-    marginBottom: 6,
+    justifyContent: "center",
+    marginTop: 2,
   },
   descriptionText: {
-    marginLeft: 8,
+    flex: 1,
+    lineHeight: 22,
+    flexWrap: "wrap",
   },
   addonDetails: {
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 12,
+    flexShrink: 1,
   },
   addonPrice: {
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 14,
   },
   detailerInfo: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 16,
+    flexWrap: "wrap",
+  },
+  detailerImageContainer: {
+    position: "relative",
   },
   detailerImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 16,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 3,
+    borderColor: "transparent",
+  },
+  detailerImageBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
   },
   detailerDetails: {
     flex: 1,
+    minWidth: 120,
   },
   detailerName: {
-    fontWeight: "600",
-    marginBottom: 4,
+    fontWeight: "700",
+    marginBottom: 8,
+    fontSize: 20,
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+  },
+  ratingStars: {
+    flexDirection: "row",
+    gap: 2,
   },
   ratingText: {
-    marginLeft: 4,
+    fontSize: 14,
   },
   contactButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    alignSelf: "flex-start",
+    marginTop: 8,
   },
   contactButtonText: {
     color: "white",
-    marginLeft: 4,
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 15,
   },
   locationInfo: {
     flexDirection: "row",
     alignItems: "flex-start",
+    gap: 12,
+  },
+  locationIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
   },
   locationText: {
-    marginLeft: 12,
     flex: 1,
+    flexShrink: 1,
   },
   addressText: {
-    marginBottom: 2,
+    lineHeight: 22,
+    flexWrap: "wrap",
+  },
+  instructionsContainer: {
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
   },
   instructionsText: {
-    lineHeight: 20,
+    lineHeight: 24,
+    fontSize: 15,
   },
   actionButtons: {
-    flexDirection: "column",
-    gap: 10,
     marginTop: 8,
     marginBottom: 32,
   },
@@ -942,46 +1215,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    flex: 1,
-    marginHorizontal: 4,
-    gap: 20,
-  },
-  secondaryButton: {
-    borderWidth: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    gap: 10,
     backgroundColor: "transparent",
-  },
-  secondaryButtonText: {
-    marginLeft: 4,
-    fontWeight: "600",
+    borderWidth: 2,
   },
   cancelButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#F44336",
+    borderWidth: 2,
   },
   cancelButtonText: {
-    color: "#F44336",
-    marginLeft: 4,
-    fontWeight: "600",
-  },
-  rescheduleButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "green",
-  },
-  rescheduleButtonText: {
-    color: "green",
-    marginLeft: 4,
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 16,
   },
   disabledButton: {
-    opacity: 0.5,
+    opacity: 0.4,
     backgroundColor: "#f5f5f5",
-  },
-  disabledButtonText: {
-    color: "#999",
   },
 });

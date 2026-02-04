@@ -9,7 +9,7 @@ import {
   useGetPaymentMethodsQuery,
   useDeletePaymentMethodMutation,
   PaymentMethod,
-} from "@/app/store/api/bookingApi";
+} from "@/app/store/api/eventApi";
 
 interface PaymentMethodsComponentProps {
   // No props needed since it's just a component now

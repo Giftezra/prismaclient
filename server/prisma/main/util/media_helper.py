@@ -20,4 +20,4 @@ def get_full_media_url(relative_url):
         relative_url = relative_url[1:]
     
     # Combine base URL with relative URL
-    return f"{base_url}/main/{relative_url}" 
+    return f"{base_url}/client/{relative_url}" 

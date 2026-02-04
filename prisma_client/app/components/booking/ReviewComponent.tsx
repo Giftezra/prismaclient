@@ -13,9 +13,21 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { useSubmitReviewMutation } from "@/app/store/api/dashboardApi";
 import useDashboard from "@/app/app-hooks/useDashboard";
 import usePayment from "@/app/app-hooks/usePayment"; // Add this import
+import { RecentServicesProps } from "@/app/interfaces/DashboardInterfaces";
+import { formatCurrency } from "@/app/utils/methods";
+import { useAppSelector, RootState } from "@/app/store/main_store";
+import { MaterialIcons } from "@expo/vector-icons";
 
-const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
+interface ReviewComponentProps {
+  currencySymbol: string;
+  bookingData?: RecentServicesProps;
+  onReviewSubmitted?: () => void;
+}
+
+const ReviewComponent: React.FC<ReviewComponentProps> = ({
   currencySymbol,
+  bookingData,
+  onReviewSubmitted,
 }) => {
   const [rating, setRating] = useState(0);
   const [tipAmount, setTipAmount] = useState("0.00");
@@ -36,6 +48,10 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
   const { recentService, refetchRecentServices } = useDashboard();
   const [submitReview] = useSubmitReviewMutation();
   const { processTipPayment } = usePayment(); // Add this hook
+  const user = useAppSelector((state: RootState) => state.auth.user);
+
+  // Use bookingData if provided, otherwise fall back to recentService
+  const currentBooking = bookingData || recentService;
 
   useEffect(() => {
     Animated.parallel([
@@ -76,7 +92,7 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
   };
 
   const handleSubmitReview = async () => {
-    if (!recentService) return;
+    if (!currentBooking) return;
 
     setIsSubmitting(true);
     try {
@@ -85,10 +101,10 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
         setIsProcessingPayment(true);
         const paymentSuccess = await processTipPayment(
           parseFloat(tipAmount),
-          recentService.booking_reference
+          currentBooking.booking_reference
         );
 
-        if (!paymentSuccess) {
+        if (!paymentSuccess || !paymentSuccess.success) {
           // Payment was cancelled or failed
           setIsSubmitting(false);
           setIsProcessingPayment(false);
@@ -99,13 +115,24 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
 
       // After successful payment (or no tip), submit the review
       await submitReview({
-        booking_reference: recentService.booking_reference,
+        booking_reference: currentBooking.booking_reference,
         rating: rating,
         tip_amount: parseFloat(tipAmount) || 0.0,
       }).unwrap();
 
       setCurrentStep(2);
-      refetchRecentServices();
+      
+      // Only refetch if we're using recentService (not bookingData)
+      if (!bookingData) {
+        refetchRecentServices();
+      }
+      
+      // Call onReviewSubmitted callback if provided
+      if (onReviewSubmitted) {
+        setTimeout(() => {
+          onReviewSubmitted();
+        }, 2000);
+      }
 
       setTimeout(() => {
         setRating(0);
@@ -175,10 +202,10 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
         <View
           style={[
             styles.iconContainer,
-            { backgroundColor: primaryColor + "20" },
+            { backgroundColor: primaryColor + "15" },
           ]}
         >
-          <Ionicons name="star" size={24} color={primaryColor} />
+          <Ionicons name="star" size={32} color={primaryColor} />
         </View>
         <StyledText
           variant="titleLarge"
@@ -194,7 +221,7 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
         </StyledText>
       </View>
 
-      {recentService && (
+      {currentBooking && (
         <View
           style={[
             styles.serviceCard,
@@ -202,25 +229,45 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
           ]}
         >
           <View style={styles.serviceInfo}>
-            <StyledText
-              variant="titleMedium"
-              style={[styles.vehicleName, { color: textColor }]}
-            >
-              {recentService.vehicle_name}
-            </StyledText>
-            <StyledText
-              variant="bodySmall"
-              style={[styles.serviceDetail, { color: textColor }]}
-            >
-              {recentService.service_type} • {formatDate(recentService.date)}
-            </StyledText>
-            {recentService.detailer && (
+            <View style={styles.serviceHeaderRow}>
+              <Ionicons name="car-outline" size={20} color={primaryColor} />
+              <StyledText
+                variant="titleMedium"
+                style={[styles.vehicleName, { color: textColor }]}
+              >
+                {currentBooking.vehicle_name}
+              </StyledText>
+            </View>
+            <View style={styles.serviceDetailsRow}>
+              <Ionicons name="construct-outline" size={16} color={textColor} style={{ opacity: 0.7 }} />
               <StyledText
                 variant="bodySmall"
-                style={[styles.detailerName, { color: textColor }]}
+                style={[styles.serviceDetail, { color: textColor }]}
               >
-                with {recentService.detailer.name}
+                {currentBooking.service_type}
               </StyledText>
+            </View>
+            <View style={styles.serviceDetailsRow}>
+              <Ionicons name="calendar-outline" size={16} color={textColor} style={{ opacity: 0.7 }} />
+              <StyledText
+                variant="bodySmall"
+                style={[styles.serviceDetail, { color: textColor }]}
+              >
+                {currentBooking.date}
+              </StyledText>
+            </View>
+            {((currentBooking.detailers && currentBooking.detailers.length > 0) || currentBooking.detailer) && (
+              <View style={styles.serviceDetailsRow}>
+                <Ionicons name="person-outline" size={16} color={textColor} style={{ opacity: 0.7 }} />
+                <StyledText
+                  variant="bodySmall"
+                  style={[styles.detailerName, { color: textColor }]}
+                >
+                  {currentBooking.detailers && currentBooking.detailers.length > 0
+                    ? currentBooking.detailers.map(d => d.name).join(" & ")
+                    : currentBooking.detailer?.name || "Unknown"}
+                </StyledText>
+              </View>
             )}
           </View>
         </View>
@@ -264,10 +311,10 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
         <View
           style={[
             styles.iconContainer,
-            { backgroundColor: primaryColor + "20" },
+            { backgroundColor: primaryColor + "15" },
           ]}
         >
-          <Ionicons name="heart" size={24} color={primaryColor} />
+          <Ionicons name="heart" size={32} color={primaryColor} />
         </View>
         <StyledText
           variant="titleLarge"
@@ -279,7 +326,7 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
           variant="bodyMedium"
           style={[styles.subtitle, { color: textColor }]}
         >
-          Show appreciation for excellent service (optional)
+          Would you like to tip your detailer?
         </StyledText>
       </View>
 
@@ -290,29 +337,15 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
         ]}
       >
         <View style={styles.tipInputRow}>
-          <StyledText style={[styles.dollarSign, { color: textColor }]}>
-            {currencySymbol}
-          </StyledText>
-          <TouchableOpacity
-            style={[styles.tipInput, { borderColor }]}
-            onPress={handleCustomTipPress}
-            activeOpacity={0.7}
-          >
-            <TextInput
-              value={tipAmount}
-              onChangeText={handleTipAmountChange}
-              placeholder="0.00"
-              placeholderTextColor={textColor + "50"}
-              style={[styles.tipAmountInput, { color: textColor }]}
-              keyboardType="decimal-pad"
-              returnKeyType="done"
-              selectTextOnFocus={true}
-            />
-          </TouchableOpacity>
+          <View style={[styles.currencyContainer, { borderColor, backgroundColor: cardColor }]}>
+            <StyledText variant="bodyMedium" style={[styles.currencySymbol, { color: textColor }]}>
+              {formatCurrency(parseFloat(tipAmount), user?.address?.country)}
+            </StyledText>
+          </View>
         </View>
 
         <View style={styles.quickTipButtons}>
-          {["5", "10", "15", "20"].map((amount) => (
+          {[ "2", "5", "10", "15", "20"].map((amount) => (
             <TouchableOpacity
               key={amount}
               style={[
@@ -332,8 +365,7 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
                   { color: tipAmount === amount ? primaryColor : textColor },
                 ]}
               >
-                {currencySymbol}
-                {amount}
+                {formatCurrency(parseFloat(amount), user?.address?.country)}
               </StyledText>
             </TouchableOpacity>
           ))}
@@ -376,8 +408,8 @@ const ReviewComponent: React.FC<{ currencySymbol: string }> = ({
           style={[styles.confirmationSubtitle, { color: textColor }]}
         >
           Your review has been sent
-          {recentService?.detailer?.name
-            ? ` to ${recentService.detailer.name}`
+          {currentBooking?.detailer?.name
+            ? ` to ${currentBooking.detailer.name}`
             : ""}
         </StyledText>
       </View>
@@ -408,12 +440,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
     fontWeight: "700",
@@ -426,24 +458,45 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     width: "100%",
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1.5,
     marginBottom: 32,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   serviceInfo: {
+    width: "100%",
+  },
+  serviceHeaderRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  serviceDetailsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
   },
   vehicleName: {
-    fontWeight: "600",
-    marginBottom: 4,
+    fontWeight: "700",
+    fontSize: 18,
   },
   serviceDetail: {
-    opacity: 0.7,
-    marginBottom: 2,
+    opacity: 0.8,
+    fontSize: 14,
   },
   detailerName: {
-    opacity: 0.7,
+    opacity: 0.8,
+    fontSize: 14,
   },
   ratingSection: {
     alignItems: "center",
@@ -471,28 +524,42 @@ const styles = StyleSheet.create({
   },
   tipContainer: {
     width: "100%",
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 24,
+    padding: 15,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    marginBottom: 32,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tipInputRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: 24,
+    gap: 12,
   },
-  dollarSign: {
+  currencyContainer: {
+    borderWidth: 2,
+    borderRadius: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
+  currencySymbol: {
     fontSize: 20,
     fontWeight: "700",
-    marginRight: 8,
   },
   tipInput: {
     borderWidth: 2,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minWidth: 120,
+    borderRadius: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    minWidth: 150,
     alignItems: "center",
   },
   tipAmount: {
@@ -506,14 +573,14 @@ const styles = StyleSheet.create({
   },
   quickTipButtons: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
   },
   quickTipButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    borderWidth: 1,
+    padding:3,
+    borderRadius: 14,
+    borderWidth: 1.5,
     alignItems: "center",
     marginHorizontal: 4,
   },

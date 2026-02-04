@@ -22,7 +22,7 @@ import {
   useFetchPromotionsQuery,
   useMarkPromotionAsUsedMutation,
   useCheckFreeWashQuery,
-} from "@/app/store/api/bookingApi";
+} from "@/app/store/api/eventApi";
 import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "@/app/contexts/AlertContext";
 import { useSnackbar } from "@/app/contexts/SnackbarContext";
@@ -119,6 +119,7 @@ const useBooking = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSUV, setIsSUV] = useState<boolean>(false);
+  const [isExpressService, setIsExpressService] = useState<boolean>(false);
   const [isProcessingPayment, setIsProcessingPayment] =
     useState<boolean>(false);
   const [paymentConfirmationStatus, setPaymentConfirmationStatus] = useState<
@@ -251,6 +252,7 @@ const useBooking = () => {
         );
         url.searchParams.append("country", selectedAddress?.country || "");
         url.searchParams.append("city", selectedAddress?.city || "");
+        url.searchParams.append("is_express_service", isExpressService.toString());
 
         const response = await fetch(url.toString(), {
           method: "GET",
@@ -514,7 +516,7 @@ const useBooking = () => {
         setAvailableTimeSlots([]);
       }
     },
-    [selectedDate, fetchAvailableTimeSlots]
+    [selectedDate, fetchAvailableTimeSlots, isExpressService]
   );
 
   // ============================================================================
@@ -554,6 +556,23 @@ const useBooking = () => {
    */
   const handleSUVChange = useCallback((suv: boolean) => {
     setIsSUV(suv);
+  }, []);
+
+  /**
+   * Handles express service toggle
+   *
+   * This method updates the express service state. When express service is selected,
+   * an additional €30 fee is applied and the system attempts to assign 2 detailers.
+   *
+   * @param expressService - Boolean indicating if express service is selected
+   * @type {boolean}
+   *
+   * @example
+   * handleExpressServiceChange(true);  // Enables express service
+   * handleExpressServiceChange(false); // Disables express service
+   */
+  const handleExpressServiceChange = useCallback((expressService: boolean) => {
+    setIsExpressService(expressService);
   }, []);
 
   /**
@@ -1111,8 +1130,9 @@ const useBooking = () => {
     );
     const totalBeforeSurcharge = basePrice + addonCosts;
     const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
-    return totalBeforeSurcharge + suvSurcharge;
-  }, [selectedServiceType, isSUV, selectedAddons]);
+    const expressServiceFee = isExpressService ? 30 : 0;
+    return totalBeforeSurcharge + suvSurcharge + expressServiceFee;
+  }, [selectedServiceType, isSUV, isExpressService, selectedAddons]);
 
   /**
    * Gets the base price of the selected service
@@ -1127,8 +1147,19 @@ const useBooking = () => {
    * const basePrice = getBasePrice(); // Returns 75 for Standard Detail service
    */
   const getBasePrice = useCallback((): number => {
-    return selectedServiceType?.price || 0;
-  }, [selectedServiceType]);
+    if (!selectedServiceType) return 0;
+    
+    // Use fleet_price if user is fleet owner/admin, otherwise use regular price
+    if (selectedServiceType.user_price !== undefined) {
+      return selectedServiceType.user_price;
+    }
+    
+    if ((user?.is_fleet_owner || user?.is_branch_admin) && selectedServiceType.fleet_price) {
+      return selectedServiceType.fleet_price;
+    }
+    
+    return selectedServiceType.price;
+  }, [selectedServiceType, user?.is_fleet_owner, user?.is_branch_admin]);
 
   /**
    * Gets the loyalty discount amount
@@ -1142,8 +1173,20 @@ const useBooking = () => {
    * const loyaltyDiscount = getLoyaltyDiscount(); // Returns 10 if user has 10% discount and total price is 100
    */
   const getLoyaltyDiscount = useCallback((): number => {
+    // Fleet owners and admins should NOT get loyalty discounts
+    if (user?.is_fleet_owner || user?.is_branch_admin) return 0;
     if (!user?.loyalty_benefits?.discount) return 0;
-    const basePrice = selectedServiceType?.price || 0;
+    
+    // Use fleet_price if user is fleet owner/admin, otherwise use regular price
+    const servicePrice = selectedServiceType
+      ? (selectedServiceType.user_price !== undefined
+          ? selectedServiceType.user_price
+          : (user?.is_fleet_owner || user?.is_branch_admin) && selectedServiceType.fleet_price
+          ? selectedServiceType.fleet_price
+          : selectedServiceType.price)
+      : 0;
+    
+    const basePrice = servicePrice;
     const addonCosts = selectedAddons.reduce(
       (total, addon) => total + addon.price,
       0
@@ -1155,6 +1198,8 @@ const useBooking = () => {
     return totalBeforeDiscount * (user.loyalty_benefits.discount / 100);
   }, [
     user?.loyalty_benefits?.discount,
+    user?.is_fleet_owner,
+    user?.is_branch_admin,
     selectedServiceType,
     selectedAddons,
     isSUV,
@@ -1175,7 +1220,16 @@ const useBooking = () => {
   const getPromotionDiscount = useCallback((): number => {
     if (!promotions?.is_active || !promotions?.discount_percentage) return 0;
 
-    const basePrice = selectedServiceType?.price || 0;
+    // Use fleet_price if user is fleet owner/admin, otherwise use regular price
+    const servicePrice = selectedServiceType
+      ? (selectedServiceType.user_price !== undefined
+          ? selectedServiceType.user_price
+          : (user?.is_fleet_owner || user?.is_branch_admin) && selectedServiceType.fleet_price
+          ? selectedServiceType.fleet_price
+          : selectedServiceType.price)
+      : 0;
+
+    const basePrice = servicePrice;
     const addonCosts = selectedAddons.reduce(
       (total, addon) => total + addon.price,
       0
@@ -1188,6 +1242,8 @@ const useBooking = () => {
   }, [
     promotions?.is_active,
     promotions?.discount_percentage,
+    user?.is_fleet_owner,
+    user?.is_branch_admin,
     selectedServiceType,
     selectedAddons,
     isSUV,
@@ -1204,15 +1260,39 @@ const useBooking = () => {
    * @example
    * const suvPrice = getSUVPrice(); // Returns 14.06 if total price is 93.75 and isSUV is true, 0 otherwise
    */
+  /**
+   * Gets the express service fee amount
+   *
+   * This method returns the express service fee if express service is selected.
+   *
+   * @returns The express service fee amount (€30 if selected, 0 otherwise)
+   * @type {number}
+   *
+   * @example
+   * const expressPrice = getExpressServicePrice(); // Returns 30 if isExpressService is true, 0 otherwise
+   */
+  const getExpressServicePrice = useCallback((): number => {
+    return isExpressService ? 30 : 0;
+  }, [isExpressService]);
+
   const getSUVPrice = useCallback((): number => {
-    const basePrice = selectedServiceType?.price || 0;
+    // Use fleet_price if user is fleet owner/admin, otherwise use regular price
+    const servicePrice = selectedServiceType
+      ? (selectedServiceType.user_price !== undefined
+          ? selectedServiceType.user_price
+          : (user?.is_fleet_owner || user?.is_branch_admin) && selectedServiceType.fleet_price
+          ? selectedServiceType.fleet_price
+          : selectedServiceType.price)
+      : 0;
+    
+    const basePrice = servicePrice;
     const addonCosts = selectedAddons.reduce(
       (total, addon) => total + addon.price,
       0
     );
     const totalBeforeSurcharge = basePrice + addonCosts;
     return isSUV ? totalBeforeSurcharge * 0.15 : 0;
-  }, [isSUV, selectedServiceType, selectedAddons]);
+  }, [isSUV, selectedServiceType, user?.is_fleet_owner, user?.is_branch_admin, selectedAddons]);
 
   /**
    * Gets the original price before loyalty discount (for display purposes)
@@ -1220,7 +1300,16 @@ const useBooking = () => {
    * @returns The original price before any loyalty discount
    */
   const getOriginalPrice = useCallback((): number => {
-    const basePrice = selectedServiceType?.price || 0;
+    // Use fleet_price if user is fleet owner/admin, otherwise use regular price
+    const servicePrice = selectedServiceType
+      ? (selectedServiceType.user_price !== undefined
+          ? selectedServiceType.user_price
+          : (user?.is_fleet_owner || user?.is_branch_admin) && selectedServiceType.fleet_price
+          ? selectedServiceType.fleet_price
+          : selectedServiceType.price)
+      : 0;
+
+    const basePrice = servicePrice;
     const addonCosts = selectedAddons.reduce(
       (total, addon) => total + addon.price,
       0
@@ -1229,7 +1318,7 @@ const useBooking = () => {
     const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
 
     return totalBeforeSurcharge + suvSurcharge;
-  }, [selectedServiceType, isSUV, selectedAddons]);
+  }, [selectedServiceType, user?.is_fleet_owner, user?.is_branch_admin, isSUV, selectedAddons]);
 
   /**
    * Calculate final price with option to exclude service base price (for free washes)
@@ -1253,9 +1342,16 @@ const useBooking = () => {
       excludeServicePrice: boolean = false
     ): { subtotal: number; vat: number; total: number } => {
       // Step 1: Calculate base amounts
-      const basePrice = excludeServicePrice
-        ? 0
-        : selectedServiceType?.price || 0;
+      // Use fleet_price if user is fleet owner/admin, otherwise use regular price
+      const servicePrice = selectedServiceType
+        ? (selectedServiceType.user_price !== undefined
+            ? selectedServiceType.user_price
+            : (user?.is_fleet_owner || user?.is_branch_admin) && selectedServiceType.fleet_price
+            ? selectedServiceType.fleet_price
+            : selectedServiceType.price)
+        : 0;
+      
+      const basePrice = excludeServicePrice ? 0 : servicePrice;
 
       // Step 2: Calculate addon costs (with 4+ addon discount)
       let addonCosts = 0;
@@ -1287,28 +1383,30 @@ const useBooking = () => {
       const totalBeforeDiscounts = subtotal + suvSurcharge;
 
       // Step 6: Calculate loyalty discount (applied to current total)
-      const loyaltyDiscount = user?.loyalty_benefits?.discount
-        ? totalBeforeDiscounts * (user.loyalty_benefits.discount / 100)
-        : 0;
+      // Fleet owners and admins should NOT get loyalty discounts
+      const loyaltyDiscount = 
+        !(user?.is_fleet_owner || user?.is_branch_admin) &&
+        user?.loyalty_benefits?.discount
+          ? totalBeforeDiscounts * (user.loyalty_benefits.discount / 100)
+          : 0;
 
       // Step 7: Calculate promotion discount (applied to current total)
+      // Promotions are already excluded for fleet users at the API level
       const promotionDiscount =
         promotions?.is_active && promotions?.discount_percentage
           ? totalBeforeDiscounts * (promotions.discount_percentage / 100)
           : 0;
 
-      // Step 8: Calculate subtotal (after discounts)
-      const subtotalAfterDiscounts =
-        totalBeforeDiscounts - loyaltyDiscount - promotionDiscount;
+      // Step 8: Calculate total after discounts (this is the final price with VAT included)
+      const total = totalBeforeDiscounts - loyaltyDiscount - promotionDiscount;
 
-      // Step 9: Calculate VAT on subtotal
-      const vat = subtotalAfterDiscounts * VAT_RATE;
-
-      // Step 10: Calculate total (subtotal + VAT)
-      const total = subtotalAfterDiscounts + vat;
+      // Step 9: Extract VAT from total (since prices already include VAT)
+      // Formula: subtotal_ex_vat = total / (1 + VAT_RATE)
+      const subtotalExVat = total / (1 + VAT_RATE);
+      const vat = total - subtotalExVat;
 
       return {
-        subtotal: subtotalAfterDiscounts,
+        subtotal: subtotalExVat,
         vat: vat,
         total: total,
       };
@@ -1449,128 +1547,6 @@ const useBooking = () => {
   }, []);
 
   /**
-   * Creates a new booking appointment
-   *
-   * This method creates a new booking appointment with all the selected
-   * information. It validates all required fields before creating the booking
-   * and simulates an API call to the backend.
-   *
-   * The booking includes:
-   * - Appointment ID (auto-generated)
-   * - Booking date (current date)
-   * - Service date and time
-   * - Vehicle information
-   * - Service and valet type details
-   * - Detailer assignment
-   * - Address information
-   * - Total amount
-   * - Status (scheduled)
-   *
-   * @returns Promise that resolves to the created booking or null if failed
-   * @type {Promise<BookedAppointmentProps | null>}
-   *
-   * @throws {Error} If required fields are not completed
-   *
-   * @example
-   * try {
-   *   const booking = await createBooking();
-   *   if (booking) {
-   *     console.log('Booking created:', booking.appointment_id);
-   *   }
-   * } catch (error) {
-   *   console.error('Booking failed:', error.message);
-   * }
-   */
-  const createBooking = async (bookingReference: string) => {
-    if (!canProceedToSummary()) {
-      setAlertConfig({
-        title: "Error",
-        message: "Please complete all required fields before booking",
-        type: "error",
-        isVisible: true,
-        onConfirm: () => {
-          setIsVisible(false);
-        },
-      });
-      return null;
-    }
-
-    try {
-      // Calculate end time by adding total service duration to start time
-      const startTime = selectedDate;
-      const totalDurationMinutes = calculateTotalServiceDuration();
-      const endTime = new Date(
-        startTime.getTime() + totalDurationMinutes * 60 * 1000
-      );
-      /* Arrange the data to be sent to the detailer app stack */
-      const bookingData: CreateBookingProps = {
-        client_name: user?.name || "",
-        client_phone: user?.phone || "",
-        vehicle_registration: selectedVehicle?.licence || "",
-        vehicle_make: selectedVehicle?.make || "",
-        vehicle_model: selectedVehicle?.model || "",
-        vehicle_year: selectedVehicle?.year.toString() || "",
-        vehicle_color: selectedVehicle?.color || "",
-        address: selectedAddress?.address || "",
-        city: selectedAddress?.city || "",
-        postcode: selectedAddress?.post_code || "",
-        country: selectedAddress?.country || "",
-        latitude: user?.latitude || 0,
-        longitude: user?.longitude || 0,
-        valet_type: selectedValetType?.name || "",
-        addons: selectedAddons.map((addon) => addon.name || ""),
-        special_instructions: specialInstructions || "",
-        total_amount: getOriginalPrice(), // Send original price to detailer (no discount info)
-        status: "pending",
-        booking_reference: bookingReference,
-        service_type: selectedServiceType?.name || "",
-        booking_date: selectedDate?.toISOString().split("T")[0] || "",
-        start_time: formatLocalTime(startTime),
-        end_time: formatLocalTime(endTime),
-        loyalty_tier: user?.loyalty_tier || "",
-        loyalty_benefits: user?.loyalty_benefits?.free_service || [],
-      };
-      console.log("Booking data: ", bookingData);
-      /* Send the data to the detailer app stack and append the booking data to the url as params
-       * The stack returns the DetailerProfileProps
-       */
-      const url = new URL(
-        `${API_CONFIG.detailerAppUrl}/api/v1/booking/create_booking/`
-      );
-      const response = await fetch(url.toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bookingData),
-      });
-      const data = await response.json();
-      return data;
-    } catch (error: any) {
-      let message = "";
-      if (error?.data?.error) {
-        message = error.data.error;
-      } else if (error?.status === 400) {
-        message = "Not created booking. Please try again.";
-      } else if (error?.status === 401) {
-        message = "You must be logged in to create a booking.";
-      } else if (error?.status === 500) {
-        message = "Server error. Please try again later.";
-      }
-      setAlertConfig({
-        title: "Error",
-        message: message,
-        type: "error",
-        isVisible: true,
-        onConfirm: () => {
-          setIsVisible(false);
-        },
-      });
-      return null;
-    }
-  };
-
-  /**
    * Resets all booking state to initial values
    *
    * This method clears all booking selections and returns the booking
@@ -1604,6 +1580,7 @@ const useBooking = () => {
     setSpecialInstructions("");
     setCurrentStep(1);
     setIsSUV(false);
+    setIsExpressService(false);
     setSelectedAddons([]);
     setIsAddonModalVisible(false);
     setIsConfirmationModalVisible(false);
@@ -1669,14 +1646,15 @@ const useBooking = () => {
    * Handles the complete booking confirmation flow including payment and booking creation
    *
    * This method orchestrates the entire booking confirmation process:
-   * 1. Processes payment through Stripe
-   * 2. Creates the booking if payment is successful
-   * 3. Shows confirmation modal with booking details
-   * 4. Handles navigation after successful booking
+   * 1. Builds booking data for client and detailer apps
+   * 2. Processes payment through Stripe with booking data
+   * 3. Waits for webhook to create bookings (webhook handles booking creation)
+   * 4. Shows confirmation modal with booking details
+   * 5. Handles navigation after successful booking
    *
    * @example
    * handleBookingConfirmation();
-   * // Processes payment and creates booking
+   * // Processes payment, webhook creates bookings automatically
    */
   const handleBookingConfirmation = useCallback(async () => {
     try {
@@ -1715,27 +1693,112 @@ const useBooking = () => {
         }
       }
 
-      // Process payment first
+      // Calculate end time by adding total service duration to start time
+      const startTime = selectedDate;
+      const totalDurationMinutes = calculateTotalServiceDuration();
+      const endTime = new Date(
+        startTime.getTime() + totalDurationMinutes * 60 * 1000
+      );
+
+      // Build booking data for client app (used to create BookedAppointment)
+      const bookingDataForClient = {
+        date: selectedDate?.toISOString().split("T")[0] || "",
+        vehicle: selectedVehicle,
+        valet_type: selectedValetType,
+        service_type: selectedServiceType,
+        address: selectedAddress,
+        status: "pending",
+        total_amount: priceBreakdown.total,
+        subtotal_amount: priceBreakdown.subtotal,
+        vat_amount: priceBreakdown.vat,
+        vat_rate: VAT_RATE * 100, // Convert to percentage (23.00)
+        addons: selectedAddons,
+        start_time: selectedDate ? formatLocalTime(selectedDate) : "",
+        duration: getEstimatedDuration(),
+        special_instructions: specialInstructions,
+        booking_reference: bookingReference,
+        applied_free_quick_sparkle: applyFreeQuickSparkle,
+      };
+
+      // Build detailer booking data (formatted for detailer app)
+      const detailerBookingData: CreateBookingProps = {
+        client_name: user?.name || "",
+        client_phone: user?.phone || "",
+        vehicle_registration: selectedVehicle?.licence || "",
+        vehicle_make: selectedVehicle?.make || "",
+        vehicle_model: selectedVehicle?.model || "",
+        vehicle_year: selectedVehicle?.year.toString() || "",
+        vehicle_color: selectedVehicle?.color || "",
+        address: selectedAddress?.address || "",
+        city: selectedAddress?.city || "",
+        postcode: selectedAddress?.post_code || "",
+        country: selectedAddress?.country || "",
+        latitude: user?.latitude || 0,
+        longitude: user?.longitude || 0,
+        valet_type: selectedValetType?.name || "",
+        addons: selectedAddons.map((addon) => addon.name || ""),
+        special_instructions: specialInstructions || "",
+        total_amount: getOriginalPrice(), // Send original price to detailer (no discount info)
+        status: "pending",
+        booking_reference: bookingReference,
+        service_type: selectedServiceType?.name || "",
+        booking_date: selectedDate?.toISOString().split("T")[0] || "",
+        start_time: formatLocalTime(startTime),
+        end_time: formatLocalTime(endTime),
+        loyalty_tier: user?.loyalty_tier || "",
+        loyalty_benefits: user?.loyalty_benefits?.free_service || [],
+        is_express_service: isExpressService,
+      };
+
+      // Process payment with booking data (webhook will create bookings)
       setIsProcessingPayment(true);
       const paymentResult = await openPaymentSheet(
         priceBreakdown.total,
         "Prisma Valet",
-        bookingReference
+        bookingReference,
+        bookingDataForClient,
+        detailerBookingData
       );
 
-      // If payment was cancelled, don't proceed with booking
+      // If payment was cancelled, don't proceed
       if (!paymentResult.success || !paymentResult.paymentIntentId) {
         setIsProcessingPayment(false);
         setPaymentConfirmationStatus("failed");
         return;
       }
 
-      // Wait for webhook confirmation
+      // Wait for webhook confirmation (webhook creates bookings automatically)
       setPaymentConfirmationStatus("confirming");
       try {
-        await waitForPaymentConfirmation(paymentResult.paymentIntentId);
+        const confirmationResult = await waitForPaymentConfirmation(
+          paymentResult.paymentIntentId
+        );
         setPaymentConfirmationStatus("confirmed");
         setIsProcessingPayment(false);
+
+        console.log("Payment confirmed, webhook should have created bookings");
+
+        // Mark promotion as used if there's an active promotion
+        if (promotions?.is_active && promotions?.id) {
+          try {
+            await markPromotionAsUsed({
+              promotion_id: promotions.id,
+              booking_reference: bookingReference,
+            }).unwrap();
+          } catch (error) {
+            console.error("Failed to mark promotion as used:", error);
+          }
+        }
+
+        // Show success modal with booking reference
+        // Webhook has already created bookings, so we just need to show confirmation
+        setConfirmationBookingReference(bookingReference);
+        // Create a simple booking data object for the modal
+        setConfirmationBookingData({
+          success: true,
+          booking_reference: bookingReference,
+        } as ReturnBookingProps);
+        setIsConfirmationModalVisible(true);
       } catch (error: any) {
         console.error("Payment confirmation error:", error);
         setIsProcessingPayment(false);
@@ -1748,52 +1811,6 @@ const useBooking = () => {
           duration: 5000,
         });
         return;
-      }
-
-      /* Only after webhook confirms payment, create the booking */
-      const booking: ReturnBookingProps = await createBooking(bookingReference);
-
-      if (booking.success) {
-        console.log("Booking data from detailer app stack: ", booking);
-        const response = await bookAppointment({
-          date: selectedDate?.toISOString().split("T")[0] || "",
-          vehicle: selectedVehicle!,
-          valet_type: selectedValetType!,
-          service_type: selectedServiceType!,
-          address: selectedAddress!,
-          status: "pending",
-          total_amount: priceBreakdown.total,
-          subtotal_amount: priceBreakdown.subtotal,
-          vat_amount: priceBreakdown.vat,
-          vat_rate: VAT_RATE * 100, // Convert to percentage (23.00)
-          addons: selectedAddons,
-          start_time: selectedDate ? formatLocalTime(selectedDate) : "",
-          duration: getEstimatedDuration(),
-          special_instructions: specialInstructions,
-          booking_reference: bookingReference,
-          applied_free_quick_sparkle: applyFreeQuickSparkle,
-        }).unwrap();
-
-        /* If the appointment is created successfully, show the confirmation modal */
-        if (response.appointment_id && response) {
-          console.log("Appointment created successfully: ", response);
-          // Mark promotion as used if there's an active promotion
-          if (promotions?.is_active && promotions?.id) {
-            try {
-              await markPromotionAsUsed({
-                promotion_id: promotions.id,
-                booking_reference: bookingReference,
-              }).unwrap();
-            } catch (error) {
-              console.error("Failed to mark promotion as used:", error);
-            }
-          }
-
-          // Store booking data and show confirmation modal
-          setConfirmationBookingData(booking);
-          setConfirmationBookingReference(bookingReference);
-          setIsConfirmationModalVisible(true);
-        }
       }
     } catch (error: any) {
       let message = "";
@@ -1822,13 +1839,23 @@ const useBooking = () => {
   }, [
     openPaymentSheet,
     waitForPaymentConfirmation,
-    getFinalPrice,
-    createBooking,
-    resetBooking,
-    refetchAppointments,
     calculateFinalPrice,
     checkFreeWash,
     showSnackbarWithConfig,
+    selectedDate,
+    selectedVehicle,
+    selectedValetType,
+    selectedServiceType,
+    selectedAddress,
+    selectedAddons,
+    specialInstructions,
+    calculateTotalServiceDuration,
+    getEstimatedDuration,
+    getOriginalPrice,
+    user,
+    promotions,
+    markPromotionAsUsed,
+    isExpressService,
   ]);
 
   /* Show cancellation modal with details */
@@ -1991,6 +2018,7 @@ const useBooking = () => {
     currentStep,
     isLoading,
     isSUV,
+    isExpressService,
     isProcessingPayment,
     paymentConfirmationStatus,
     selectedAddons,
@@ -2008,6 +2036,7 @@ const useBooking = () => {
     isLoadingValetTypes,
     handleVehicleSelection,
     handleSUVChange,
+    handleExpressServiceChange,
     handleServiceTypeSelection,
     handleValetTypeSelection,
     handleAddressSelection,
@@ -2038,7 +2067,6 @@ const useBooking = () => {
     canProceedToSummary,
 
     // Booking
-    createBooking,
     resetBooking,
 
     // Confirmation modal state and handlers
@@ -2060,6 +2088,7 @@ const useBooking = () => {
     getTotalPrice,
     getBasePrice,
     getSUVPrice,
+    getExpressServicePrice,
     getAddonPrice,
     getAddonDuration,
     getEstimatedDuration,

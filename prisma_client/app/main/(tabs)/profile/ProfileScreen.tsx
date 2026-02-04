@@ -24,6 +24,8 @@ import PaymentMethodsComponent from "@/app/components/profile/PaymentMethodsComp
 import { MyAddressProps } from "@/app/interfaces/ProfileInterfaces";
 import { useAuthContext } from "@/app/contexts/AuthContextProvider";
 import ModalServices from "@/app/utils/ModalServices";
+import FleetOwnerProfileScreen from "./FleetOwnerProfileScreen";
+import BranchAdminProfileScreen from "./BranchAdminProfileScreen";
 
 const ProfileScreen = () => {
   const {
@@ -37,6 +39,9 @@ const ProfileScreen = () => {
     isLoadingAddresses,
     isLoadingServiceHistory,
   } = useProfile();
+
+
+  // Default profile screen for regular users
   const { handleLogout } = useAuthContext();
 
   /* Import the theme colors */
@@ -225,6 +230,20 @@ const ProfileScreen = () => {
       progressBackgroundColor={backgroundColor}
     />
   );
+
+    // Check user role and conditionally render appropriate screen
+  const isFleetOwner = userProfile?.is_fleet_owner === true;
+  const isBranchAdmin = userProfile?.is_branch_admin === true;
+
+  // Route to appropriate profile screen based on user role
+  if (isFleetOwner) {
+    return <FleetOwnerProfileScreen />;
+  }
+
+  if (isBranchAdmin) {
+    return <BranchAdminProfileScreen />;
+  }
+
 
   return (
     <View style={[styles.container, { backgroundColor }]}>

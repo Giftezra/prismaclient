@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Image,
   TouchableOpacity,
+  Modal,
+  FlatList,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import StyledTextInput from "@/app/components/helpers/StyledTextInput";
@@ -17,6 +19,8 @@ import StyledButton from "@/app/components/helpers/StyledButton";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { Ionicons } from "@expo/vector-icons";
 import ModalServices from "@/app/utils/ModalServices";
+import { useAppSelector, RootState } from "@/app/store/main_store";
+import { useGetBranchesQuery } from "@/app/store/api/fleetApi";
 
 /**
  * AddNewVehicleScreen Component
@@ -31,12 +35,24 @@ const AddNewVehicleScreen = ({
   setIsAddVehicleModalVisible: (visible: boolean) => void;
 }) => {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [showBranchModal, setShowBranchModal] = useState(false);
 
   // Theme colors
   const backgroundColor = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
   const primaryColor = useThemeColor({}, "primary");
   const borderColor = useThemeColor({}, "borders");
+  const cardColor = useThemeColor({}, "cards");
+
+  // Get user from Redux store
+  const user = useAppSelector((state: RootState) => state.auth.user);
+
+  // Fetch branches if fleet owner
+  const { data: branchesData } = useGetBranchesQuery(undefined, {
+    skip: !user?.is_fleet_owner,
+  });
+
+  const branches = branchesData?.branches || [];
 
   // Extract all needed methods and state from the useGarage hook
   const {
@@ -50,6 +66,24 @@ const AddNewVehicleScreen = ({
     handleCameraSelection,
     handleFileSelection,
   } = useGarage();
+
+  // Auto-set branch for branch admin
+  useEffect(() => {
+    if (user?.is_branch_admin && user?.managed_branch?.id && !newVehicle?.branch_id) {
+      collectNewVehicleData("branch_id", user.managed_branch.id);
+    }
+  }, [user?.is_branch_admin, user?.managed_branch?.id]);
+
+  // Get selected branch info
+  const selectedBranch = branches.find(
+    (b) => b.id === newVehicle?.branch_id
+  );
+  const branchAdminBranch = user?.managed_branch;
+
+  const handleBranchSelect = (branchId: string) => {
+    collectNewVehicleData("branch_id", branchId);
+    setShowBranchModal(false);
+  };
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -73,7 +107,6 @@ const AddNewVehicleScreen = ({
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
@@ -123,12 +156,74 @@ const AddNewVehicleScreen = ({
             />
 
             <StyledTextInput
+              label="VIN (Vehicle Identification Number)"
+              placeholder="e.g., 1HGBH41JXMN109186"
+              value={newVehicle?.vin || ""}
+              onChangeText={(text) => collectNewVehicleData("vin", text.toUpperCase())}
+              maxLength={17}
+              autoCapitalize="characters"
+            />
+
+            <StyledTextInput
               label="License Plate"
               placeholder="e.g., ABC123"
               value={newVehicle?.licence || ""}
-              onChangeText={(text) => collectNewVehicleData("licence", text)}
               maxLength={12}
+              onChangeText={(text) => collectNewVehicleData("licence", text)}
             />
+
+            {/* Branch Selection (for fleet owners) */}
+            {user?.is_fleet_owner && (
+              <View style={styles.branchSection}>
+                <StyledText variant="labelMedium">Branch *</StyledText>
+                <TouchableOpacity
+                  style={[styles.branchSelector, { borderColor, backgroundColor: cardColor }]}
+                  onPress={() => setShowBranchModal(true)}
+                >
+                  <StyledText
+                    variant="bodyMedium"
+                    style={[
+                      styles.branchSelectorText,
+                      {
+                        color: selectedBranch ? textColor : textColor + "80",
+                      },
+                    ]}
+                  >
+                    {selectedBranch
+                      ? `${selectedBranch.name}${selectedBranch.city ? ` - ${selectedBranch.city}` : ""}`
+                      : "Select a branch"}
+                  </StyledText>
+                  <Ionicons name="chevron-down" size={20} color={textColor} />
+                </TouchableOpacity>
+                {selectedBranch && (
+                  <StyledText variant="bodySmall" style={[styles.branchInfo, { color: textColor + "80" }]}>
+                    {selectedBranch.address && `${selectedBranch.address}, `}
+                    {selectedBranch.postcode && `${selectedBranch.postcode}, `}
+                    {selectedBranch.city}
+                  </StyledText>
+                )}
+              </View>
+            )}
+
+            {/* Branch Display (for branch admins - read-only) */}
+            {user?.is_branch_admin && branchAdminBranch && (
+              <View style={styles.branchSection}>
+                <StyledText variant="labelMedium">Branch</StyledText>
+                <View style={[styles.branchDisplay, { borderColor, backgroundColor: cardColor }]}>
+                  <StyledText variant="bodyMedium" style={{ color: textColor }}>
+                    {branchAdminBranch.name}
+                    {branchAdminBranch.city ? ` - ${branchAdminBranch.city}` : ""}
+                  </StyledText>
+                </View>
+                {branchAdminBranch.address && (
+                  <StyledText variant="bodySmall" style={[styles.branchInfo, { color: textColor + "80" }]}>
+                    {branchAdminBranch.address}
+                    {branchAdminBranch.postcode && `, ${branchAdminBranch.postcode}`}
+                    {branchAdminBranch.city && `, ${branchAdminBranch.city}`}
+                  </StyledText>
+                )}
+              </View>
+            )}
 
             {/* Vehicle Image Section */}
             <View style={styles.imageSection}>
@@ -235,6 +330,103 @@ const AddNewVehicleScreen = ({
           </View>
         }
       />
+
+      {/* Branch Selection Modal (for fleet owners) */}
+      {user?.is_fleet_owner && (
+        <Modal
+          visible={showBranchModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowBranchModal(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowBranchModal(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={[styles.modalContent, { backgroundColor: cardColor }]}
+            >
+              <View style={styles.modalHeader}>
+                <StyledText
+                  variant="titleMedium"
+                  style={[styles.modalTitle, { color: textColor }]}
+                >
+                  Select Branch
+                </StyledText>
+                <TouchableOpacity
+                  onPress={() => setShowBranchModal(false)}
+                  style={styles.modalCloseButton}
+                >
+                  <Ionicons name="close" size={24} color={textColor} />
+                </TouchableOpacity>
+              </View>
+              {branches.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <StyledText
+                    variant="bodyMedium"
+                    style={[styles.emptyStateText, { color: textColor }]}
+                  >
+                    No branches available. Please create a branch first.
+                  </StyledText>
+                </View>
+              ) : (
+                <FlatList
+                  data={branches}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.branchItem,
+                        newVehicle?.branch_id === item.id && {
+                          backgroundColor: primaryColor + "20",
+                        },
+                        { borderBottomColor: borderColor },
+                      ]}
+                      onPress={() => handleBranchSelect(item.id)}
+                    >
+                      <View style={styles.branchItemContent}>
+                        <StyledText
+                          variant="bodyMedium"
+                          style={[
+                            styles.branchItemText,
+                            {
+                              color:
+                                newVehicle?.branch_id === item.id
+                                  ? primaryColor
+                                  : textColor,
+                              fontWeight:
+                                newVehicle?.branch_id === item.id ? "600" : "400",
+                            },
+                          ]}
+                        >
+                          {item.name}
+                        </StyledText>
+                        {item.city && (
+                          <StyledText
+                            variant="bodySmall"
+                            style={[
+                              { color: textColor + "80" },
+                            ]}
+                          >
+                            {item.city}
+                          </StyledText>
+                        )}
+                      </View>
+                      {newVehicle?.branch_id === item.id && (
+                        <Ionicons name="checkmark" size={20} color={primaryColor} />
+                      )}
+                    </TouchableOpacity>
+                  )}
+                  style={styles.branchList}
+                />
+              )}
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </KeyboardAvoidingView>
   );
 };
@@ -331,5 +523,84 @@ const styles = StyleSheet.create({
   },
   imageOptionText: {
     fontWeight: "500",
+  },
+  branchSection: {
+    marginTop: 10,
+    gap: 8,
+  },
+  branchSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 48,
+  },
+  branchSelectorText: {
+    flex: 1,
+  },
+  branchDisplay: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 48,
+    justifyContent: "center",
+  },
+  branchInfo: {
+    marginTop: 4,
+    paddingLeft: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 12,
+    maxHeight: "80%",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0, 0, 0, 0.1)",
+  },
+  modalTitle: {
+    fontWeight: "600",
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  branchList: {
+    maxHeight: 400,
+  },
+  branchItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  branchItemContent: {
+    flex: 1,
+    gap: 4,
+  },
+  branchItemText: {
+    fontSize: 16,
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyStateText: {
+    textAlign: "center",
   },
 });

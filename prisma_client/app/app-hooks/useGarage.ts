@@ -4,6 +4,7 @@ import {
   MyVehiclesProps,
   MyVehicleStatsProps,
   PromotionsProps,
+  BranchVehiclesGroup,
 } from "../interfaces/GarageInterface";
 import { createNewVehicle, resetNewVehicle } from "../store/slices/garageSlice";
 import { RootState, useAppDispatch, useAppSelector } from "../store/main_store";
@@ -37,6 +38,7 @@ import * as ExpoImagePicker from "expo-image-picker";
 const useGarage = () => {
   const dispatch = useAppDispatch();
   const garage = useAppSelector((state: RootState) => state.garage);
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const { showSnackbarWithConfig } = useSnackbar();
 
   const [vehicleId, setVehicleId] = useState<string>("");
@@ -51,10 +53,22 @@ const useGarage = () => {
     { isLoading: isDeletingVehicle, error: deleteVehicleError },
   ] = useDeleteVehicleMutation();
   const {
-    data: vehicles = [],
+    data: vehiclesData,
     isLoading: isLoadingVehicles,
     refetch: refetchVehicles,
   } = useGetMyVehiclesQuery();
+
+  // Transform vehicles data based on user type
+  // For fleet owners: transform grouped response to flat list and also provide grouped version
+  // For others: use flat list as-is
+  const vehicles: MyVehiclesProps[] = Array.isArray(vehiclesData)
+    ? vehiclesData
+    : vehiclesData && "branches" in vehiclesData
+    ? vehiclesData.branches.flatMap((branch: BranchVehiclesGroup) => branch.vehicles)
+    : [];
+
+  const vehiclesByBranch: BranchVehiclesGroup[] | null =
+    vehiclesData && "branches" in vehiclesData ? vehiclesData.branches : null;
 
   // Get vehicle stats for the first vehicle (if available)
   const {
@@ -73,18 +87,30 @@ const useGarage = () => {
     next_recommended_service: "",
   });
 
-  // Update vehicleStats when vehicles or vehicleStatsData are loaded
+  // Update vehicleStats when vehicleStatsData changes
   useEffect(() => {
-    if (vehicles.length > 0 && vehicleStatsData) {
-      setVehicleStats(vehicleStatsData);
-    } else if (vehicles.length > 0) {
-      // Set default stats with vehicle info if no stats data available
-      setVehicleStats((prev) => ({
-        ...prev,
-        vehicle: vehicles[0],
-      }));
+    if (vehicleStatsData) {
+      setVehicleStats((prev) => {
+        // Only update if the data actually changed to prevent unnecessary re-renders
+        if (prev.vehicle?.id !== vehicleStatsData.vehicle?.id) {
+          return vehicleStatsData;
+        }
+        // Deep comparison for other stats fields
+        if (
+          prev.total_bookings !== vehicleStatsData.total_bookings ||
+          prev.total_amount !== vehicleStatsData.total_amount ||
+          prev.last_cleaned !== vehicleStatsData.last_cleaned ||
+          prev.next_recommended_service !== vehicleStatsData.next_recommended_service ||
+          JSON.stringify(prev.latest_inspection) !== JSON.stringify(vehicleStatsData.latest_inspection)
+        ) {
+          return vehicleStatsData;
+        }
+        return prev;
+      });
     }
-  }, [vehicles, vehicleStatsData]);
+    // Removed else clause that referenced 'vehicles' array to prevent infinite loops
+    // The vehicles array is recreated on every render, causing infinite updates
+  }, [vehicleStatsData]); // Only depend on vehicleStatsData to prevent infinite loops
 
   /* Get the state values here */
   const garageState = useAppSelector((state: RootState) => state.garage);
@@ -317,6 +343,12 @@ const useGarage = () => {
     if (newVehicle.year) formData.append("year", newVehicle.year.toString());
     if (newVehicle.color) formData.append("color", newVehicle.color);
     if (newVehicle.licence) formData.append("licence", newVehicle.licence);
+    if (newVehicle.vin) formData.append("vin", newVehicle.vin);
+
+    // Add branch_id if provided (for fleet owners)
+    if (newVehicle.branch_id) {
+      formData.append("branch_id", newVehicle.branch_id);
+    }
 
     // Add image - React Native FormData requires uri, name, and type
     if (newVehicle.image && newVehicle.image.uri) {
@@ -341,17 +373,32 @@ const useGarage = () => {
    * @throws {Error} If validation fails or vehicle creation encounters an error
    */
   const handleSubmit = useCallback(async () => {
-    // Validate required fields
+    // Validate required fields including VIN
     if (
       !newVehicle?.make ||
       !newVehicle?.model ||
       !newVehicle?.year ||
       !newVehicle?.licence ||
-      !newVehicle?.color
+      !newVehicle?.color ||
+      !newVehicle?.vin
     ) {
       setAlertConfig({
         title: "Missing Information",
-        message: "Please fill in all required fields.",
+        message: "Please fill in all required fields. VIN is required.",
+        type: "error",
+        isVisible: true,
+        onConfirm() {
+          setIsVisible(false);
+        },
+      });
+      return;
+    }
+
+    // Validate branch selection for fleet owners
+    if (user?.is_fleet_owner && !newVehicle?.branch_id) {
+      setAlertConfig({
+        title: "Branch Required",
+        message: "Please select a branch for this vehicle.",
         type: "error",
         isVisible: true,
         onConfirm() {
@@ -535,6 +582,7 @@ const useGarage = () => {
 
   return {
     vehicles,
+    vehiclesByBranch, // Grouped vehicles by branch (for fleet owners)
     vehicleStats,
     isModalVisible,
     newVehicle,

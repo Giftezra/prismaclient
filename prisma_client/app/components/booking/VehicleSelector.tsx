@@ -19,6 +19,8 @@ interface VehicleSelectorProps {
   onAddVehicle: () => void;
   isSUV: boolean;
   onSUVChange: (isSUV: boolean) => void;
+  isExpressService?: boolean;
+  onExpressServiceChange?: (isExpressService: boolean) => void;
 }
 
 const VehicleSelector: React.FC<VehicleSelectorProps> = ({
@@ -28,33 +30,38 @@ const VehicleSelector: React.FC<VehicleSelectorProps> = ({
   onAddVehicle,
   isSUV,
   onSUVChange,
+  isExpressService = false,
+  onExpressServiceChange,
 }) => {
   const cardColor = useThemeColor({}, "cards");
   const textColor = useThemeColor({}, "text");
   const primaryPurpleColor = useThemeColor({}, "primary");
 
+  // Ensure vehicles is always an array
+  const vehiclesList = Array.isArray(vehicles) ? vehicles : [];
+
   return (
     <View style={styles.container}>
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
       >
-        {vehicles.map((vehicle) => (
-          <TouchableOpacity
-            key={vehicle.id}
-            style={[
-              styles.vehicleCard,
-              {
-                backgroundColor: cardColor,
-                borderColor:
-                  selectedVehicle?.id === vehicle.id
-                    ? primaryPurpleColor
-                    : "#E5E5E5",
-              },
-            ]}
-            onPress={() => onSelectVehicle(vehicle)}
-          >
+        <View style={styles.grid}>
+          {vehiclesList.map((vehicle) => (
+            <TouchableOpacity
+              key={vehicle.id}
+              style={[
+                styles.vehicleCard,
+                {
+                  backgroundColor: cardColor,
+                  borderColor:
+                    selectedVehicle?.id === vehicle.id
+                      ? primaryPurpleColor
+                      : "#E5E5E5",
+                },
+              ]}
+              onPress={() => onSelectVehicle(vehicle)}
+            >
             <View style={styles.vehicleImageContainer}>
               {vehicle.image && typeof vehicle.image === "string" ? (
                 <Image
@@ -106,12 +113,13 @@ const VehicleSelector: React.FC<VehicleSelectorProps> = ({
                 <Ionicons name="checkmark" size={16} color="white" />
               </View>
             )}
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
 
       {/* Empty State */}
-      {vehicles.length === 0 && (
+      {vehiclesList.length === 0 && (
         <View style={[styles.emptyState, { backgroundColor: cardColor }]}>
           <Ionicons name="car-outline" size={48} color={textColor} />
           <StyledText
@@ -184,6 +192,47 @@ const VehicleSelector: React.FC<VehicleSelectorProps> = ({
           </TouchableOpacity>
         </View>
       )}
+
+      {selectedVehicle && (
+        <View style={[styles.suvSection, { backgroundColor: cardColor }]}>
+          <StyledText variant="titleMedium" style={[styles.suvTitle]}>
+            Service Options
+          </StyledText>
+          <TouchableOpacity
+            style={styles.suvOption}
+            onPress={() => onExpressServiceChange?.(!isExpressService)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.radioContainer}>
+              <View
+                style={[
+                  styles.radioButton,
+                  {
+                    borderColor: isExpressService ? primaryPurpleColor : "#E5E5E5",
+                    backgroundColor: isExpressService ? primaryPurpleColor : "transparent",
+                  },
+                ]}
+              >
+                {isExpressService && <Ionicons name="checkmark" size={12} color="white" />}
+              </View>
+              <View style={styles.suvTextContainer}>
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.suvText, { color: textColor }]}
+                >
+                  Express Service
+                </StyledText>
+                <StyledText
+                  variant="bodySmall"
+                  style={[styles.suvDescription, { color: textColor }]}
+                >
+                  Faster service with 2 detailers - Additional €30
+                </StyledText>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -207,12 +256,19 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   scrollContainer: {
-    paddingHorizontal: 4,
+    padding: 8,
+    paddingBottom: 20,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
+    justifyContent: "space-between",
   },
   vehicleCard: {
-    width: 200,
+    width: "48%",
     borderRadius: 12,
-    marginRight: 10,
+    marginBottom: 10,
     borderWidth: 1,
     overflow: "hidden",
   },

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vehicle Transfer Request - Prisma</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        padding: 40px;
+        width: 100%;
+        max-width: 550px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .logo {
+        font-size: 32px;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+      }
+
+      .title {
+        font-size: 28px;
+        color: #2d3748;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .subtitle {
+        color: #718096;
+        font-size: 16px;
+        font-weight: 400;
+      }
+
+      .info-box {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+
+      .info-title {
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 16px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .info-row:last-child {
+        border-bottom: none;
+      }
+
+      .info-label {
+        color: #718096;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .info-value {
+        color: #2d3748;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: right;
+      }
+
+      .warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        font-size: 14px;
+        border: 1px solid #ffc107;
+        font-weight: 500;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .btn {
+        flex: 1;
+        padding: 16px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+      }
+
+      .btn-approve {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+      }
+
+      .btn-approve:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+      }
+
+      .btn-reject {
+        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+      }
+
+      .btn-reject:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 101, 101, 0.4);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 32px;
+        color: #718096;
+        font-size: 14px;
+        padding-top: 24px;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          margin: 10px;
+          padding: 24px;
+        }
+
+        .title {
+          font-size: 24px;
+        }
+
+        .logo {
+          font-size: 28px;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="logo">Prisma</div>
+        <h1 class="title">Vehicle Transfer Request</h1>
+        <p class="subtitle">Review and respond to the transfer request</p>
+      </div>
+
+      <div class="warning">
+        <strong>Note:</strong> This request will expire on {{ expires_at|date:"F
+        d, Y \a\t g:i A" }}. If you do not respond by then, the request will be
+        automatically cancelled.
+      </div>
+
+      <div class="info-box">
+        <div class="info-title">Vehicle Information</div>
+        <div class="info-row">
+          <span class="info-label">Make & Model:</span>
+          <span class="info-value"
+            >{{ vehicle.make }} {{ vehicle.model }} {{ vehicle.year }}</span
+          >
+        </div>
+        <div class="info-row">
+          <span class="info-label">Registration:</span>
+          <span class="info-value">{{ vehicle.registration_number }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">VIN:</span>
+          <span class="info-value">{{ vehicle.vin }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Color:</span>
+          <span class="info-value">{{ vehicle.color }}</span>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-title">Transfer Request</div>
+        <div class="info-row">
+          <span class="info-label">Requested by:</span>
+          <span class="info-value">{{ requester.name }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Email:</span>
+          <span class="info-value">{{ requester.email }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Requested on:</span>
+          <span class="info-value"
+            >{{ transfer.requested_at|date:"F d, Y \a\t g:i A" }}</span
+          >
+        </div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="button-group">
+          <button
+            type="submit"
+            name="action"
+            value="approve"
+            class="btn btn-approve"
+          >
+            Approve Transfer
+          </button>
+          <button
+            type="submit"
+            name="action"
+            value="reject"
+            class="btn btn-reject"
+          >
+            Reject Transfer
+          </button>
+        </div>
+      </form>
+
+      <div class="footer">
+        <p>
+          If you approve this transfer, the vehicle will be removed from your
+          account and transferred to {{ requester.name }}'s account.
+        </p>
+        <p style="margin-top: 16px">
+          Need help?
+          <a href="mailto:support@prisma.com">Contact Support</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

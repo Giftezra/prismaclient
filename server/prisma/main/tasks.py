@@ -4,11 +4,12 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from .util.graph_mail import send_mail as graph_send_mail
 import os
-import redis
-from main.models import BookedAppointment
 import json
+from main.models import BookedAppointment
+from main.utils.redis_streams import stream_add, STREAM_JOB_EVENTS
 from datetime import timedelta
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from exponent_server_sdk import PushClient, PushMessage
 
 
@@ -60,16 +61,10 @@ def send_promotional_email(user_email, customer_name):
 
 @shared_task
 def publish_booking_cancelled(booking_reference):
-    print(f"DEBUG: publish_booking_cancelled called with booking_reference: {booking_reference}")
     try:
-        r = redis.Redis(host='prisma_redis', port=6379, db=0)
-        channel = 'booking_cancelled'
-        message = json.dumps({
-            'booking_reference': booking_reference  # Send as object, not just string
-        })
-        result = r.publish(channel, message)
-        print(f"DEBUG: publish_booking_cancelled result: {result}")
-        return f"Booking cancelled published to redis: {result}"
+        payload = json.dumps({'booking_reference': booking_reference})
+        msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'booking_cancelled', 'payload': payload})
+        return f"Booking cancelled published to stream: {msg_id}"
     except Exception as e:
         print(f"DEBUG: publish_booking_cancelled error: {str(e)}")
         return f"Failed to publish booking cancelled to redis: {str(e)}"
@@ -77,19 +72,15 @@ def publish_booking_cancelled(booking_reference):
 
 @shared_task
 def publish_booking_rescheduled(booking_reference, new_date, new_time, total_cost):
-    print(f"DEBUG: publish_booking_rescheduled called with booking_reference: {booking_reference}")
     try:
-        r = redis.Redis(host='prisma_redis', port=6379, db=0)
-        channel = 'booking_rescheduled'
-        message = json.dumps({
+        payload = json.dumps({
             'booking_reference': booking_reference,
-            'new_appointment_date': new_date,  # Changed from 'new_date'
-            'new_appointment_time': new_time,  # Changed from 'new_time'
-            'total_amount': total_cost         # Changed from 'total_cost'
+            'new_appointment_date': new_date,
+            'new_appointment_time': new_time,
+            'total_amount': total_cost,
         })
-        result = r.publish(channel, message)
-        print(f"DEBUG: publish_booking_rescheduled result: {result}")
-        return f"Booking rescheduled published to redis: {result}"
+        msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'booking_rescheduled', 'payload': payload})
+        return f"Booking rescheduled published to stream: {msg_id}"
     except Exception as e:
         print(f"DEBUG: publish_booking_rescheduled error: {str(e)}")
         return f"Failed to publish booking rescheduled to redis: {str(e)}"
@@ -177,19 +168,15 @@ def send_push_notification(user_id, title, message, type):
 
 @shared_task
 def publish_review_to_detailer(booking_reference, rating, tip_amount):
-    """Publish review data to Redis for detailer app"""
+    """Publish review data to Redis stream for detailer app"""
     try:
-        print(f"DEBUG: publish_review_to_detailer called with booking_reference: {booking_reference}")
-        r = redis.Redis(host='prisma_redis', port=6379, db=0, decode_responses=True)
-        channel = 'review_received'
-        message = json.dumps({
+        payload = json.dumps({
             'booking_reference': booking_reference,
             'rating': rating,
-            'tip_amount': tip_amount
+            'tip_amount': tip_amount,
         })
-        result = r.publish(channel, message)
-        print(f"DEBUG: publish_review_to_detailer result: {result}")
-        return f"Review published to detailer: {result}"
+        msg_id = stream_add(STREAM_JOB_EVENTS, {'event': 'review_received', 'payload': payload})
+        return f"Review published to detailer: {msg_id}"
     except Exception as e:
         print(f"Failed to publish review to detailer: {e}")
         return f"Failed to publish review to detailer: {e}"
@@ -453,3 +440,313 @@ def check_loyalty_decay():
         
     except Exception as e:
         return f"Failed to check loyalty decay: {str(e)}"
+
+
+@shared_task
+def cleanup_expired_pending_bookings():
+    """Clean up expired pending bookings (older than 24 hours)"""
+    from main.models import PendingBooking
+    from django.utils import timezone
+    
+    try:
+        expired_bookings = PendingBooking.objects.filter(
+            expires_at__lt=timezone.now(),
+            payment_status__in=['pending', 'failed']
+        )
+        
+        count = expired_bookings.count()
+        expired_bookings.delete()
+        
+        print(f"Cleaned up {count} expired pending bookings")
+        return f"Cleaned up {count} expired pending bookings"
+    except Exception as e:
+        print(f"Failed to cleanup expired pending bookings: {str(e)}")
+        return f"Failed to cleanup expired pending bookings: {str(e)}"
+
+
+@shared_task
+def send_transfer_request_email(transfer_id, owner_email, requester_name, vehicle_registration):
+    """Send email to current owner requesting vehicle transfer consent"""
+    from main.models import VehicleTransfer
+    from django.conf import settings
+    
+    try:
+        transfer = VehicleTransfer.objects.get(id=transfer_id)
+        base_url = getattr(settings, 'BASE_URL', 'https://yourdomain.com')
+        
+        # Create approval and rejection URLs (web views)
+        approve_url = f"{base_url}/api/v1/garage/web-transfer-action/{transfer_id}/?action=approve"
+        reject_url = f"{base_url}/api/v1/garage/web-transfer-action/{transfer_id}/?action=reject"
+        
+        subject = f"Vehicle Transfer Request - {vehicle_registration}"
+        html_message = render_to_string('vehicle_transfer_request.html', {
+            'owner_name': transfer.from_owner.name,
+            'requester_name': requester_name,
+            'vehicle_registration': vehicle_registration,
+            'vehicle_make': transfer.vehicle.make,
+            'vehicle_model': transfer.vehicle.model,
+            'vehicle_year': transfer.vehicle.year,
+            'approve_url': approve_url,
+            'reject_url': reject_url,
+            'expires_at': transfer.expires_at.strftime('%B %d, %Y at %I:%M %p'),
+        })
+        
+        graph_send_mail(subject, html_message, owner_email)
+        return f"Transfer request email sent successfully to {owner_email}"
+    except VehicleTransfer.DoesNotExist:
+        return f"Transfer {transfer_id} not found"
+    except Exception as e:
+        return f"Failed to send transfer request email: {str(e)}"
+
+
+@shared_task
+def send_transfer_approved_email(transfer_id, requester_email, owner_name, vehicle_registration):
+    """Send email to requester when transfer is approved"""
+    from main.models import VehicleTransfer
+    
+    try:
+        transfer = VehicleTransfer.objects.get(id=transfer_id)
+        
+        subject = f"Vehicle Transfer Approved - {vehicle_registration}"
+        html_message = render_to_string('vehicle_transfer_approved.html', {
+            'requester_name': transfer.to_owner.name,
+            'owner_name': owner_name,
+            'vehicle_registration': vehicle_registration,
+            'vehicle_make': transfer.vehicle.make,
+            'vehicle_model': transfer.vehicle.model,
+            'vehicle_year': transfer.vehicle.year,
+            'transfer_date': transfer.responded_at.strftime('%B %d, %Y at %I:%M %p') if transfer.responded_at else '',
+        })
+        
+        graph_send_mail(subject, html_message, requester_email)
+        return f"Transfer approved email sent successfully to {requester_email}"
+    except VehicleTransfer.DoesNotExist:
+        return f"Transfer {transfer_id} not found"
+    except Exception as e:
+        return f"Failed to send transfer approved email: {str(e)}"
+
+
+@shared_task
+def send_transfer_rejected_email(transfer_id, requester_email, owner_name, vehicle_registration):
+    """Send email to requester when transfer is rejected"""
+    from main.models import VehicleTransfer
+    
+    try:
+        transfer = VehicleTransfer.objects.get(id=transfer_id)
+        
+        subject = f"Vehicle Transfer Request Rejected - {vehicle_registration}"
+        html_message = render_to_string('vehicle_transfer_rejected.html', {
+            'requester_name': transfer.to_owner.name,
+            'owner_name': owner_name,
+            'vehicle_registration': vehicle_registration,
+            'vehicle_make': transfer.vehicle.make,
+            'vehicle_model': transfer.vehicle.model,
+            'vehicle_year': transfer.vehicle.year,
+        })
+        
+        graph_send_mail(subject, html_message, requester_email)
+        return f"Transfer rejected email sent successfully to {requester_email}"
+    except VehicleTransfer.DoesNotExist:
+        return f"Transfer {transfer_id} not found"
+    except Exception as e:
+        return f"Failed to send transfer rejected email: {str(e)}"
+
+
+@shared_task
+def expire_old_transfers():
+    """Expire transfer requests that are older than 7 days"""
+    from main.models import VehicleTransfer
+    
+    try:
+        now = timezone.now()
+        expired_transfers = VehicleTransfer.objects.filter(
+            status='pending',
+            expires_at__lt=now
+        )
+        
+        count = expired_transfers.count()
+        expired_transfers.update(status='expired', responded_at=now)
+        
+        # Send notifications to requesters about expired transfers
+        for transfer in expired_transfers:
+            if transfer.to_owner.allow_push_notifications and transfer.to_owner.notification_token:
+                send_push_notification.delay(
+                    transfer.to_owner.id,
+                    "Transfer Request Expired",
+                    f"Your transfer request for {transfer.vehicle.registration_number} has expired. You can submit a new request.",
+                    "transfer_expired"
+                )
+        
+        return f"Expired {count} transfer requests"
+    except Exception as e:
+        return f"Failed to expire old transfers: {str(e)}"
+
+
+@shared_task
+def send_trial_ending_soon_email(user_email, fleet_name, trial_end_date, plan_name, billing_amount):
+    """Send email notification 7 days before trial ends"""
+    try:
+        from datetime import datetime
+        
+        subject = "Your trial ends in 7 days - Prisma Fleet Subscription"
+        
+        # Parse trial end date if it's a string
+        if isinstance(trial_end_date, str):
+            trial_end_dt = parse_datetime(trial_end_date)
+        else:
+            trial_end_dt = trial_end_date
+        
+        # Calculate billing start date (day after trial ends)
+        if trial_end_dt:
+            billing_start_date = trial_end_dt + timedelta(days=1)
+        else:
+            billing_start_date = None
+        
+        html_message = render_to_string('trial_ending_soon.html', {
+            'fleet_name': fleet_name,
+            'trial_end_date': trial_end_dt.strftime('%B %d, %Y') if trial_end_dt else 'N/A',
+            'billing_start_date': billing_start_date.strftime('%B %d, %Y') if billing_start_date else 'N/A',
+            'plan_name': plan_name,
+            'billing_amount': billing_amount,
+        })
+        
+        graph_send_mail(subject, html_message, user_email)
+        return f"Trial ending soon email sent successfully to {user_email}"
+    except Exception as e:
+        return f"Failed to send trial ending soon email: {str(e)}"
+
+
+@shared_task
+def send_trial_ended_email(user_email, fleet_name, plan_name, billing_amount, next_billing_date):
+    """Send email notification when trial ends and billing starts"""
+    try:
+        from datetime import datetime
+        
+        subject = "Trial ended - Your subscription is now active"
+        
+        # Parse next billing date if it's a string
+        if isinstance(next_billing_date, str):
+            next_billing_dt = parse_datetime(next_billing_date)
+        else:
+            next_billing_dt = next_billing_date
+        
+        html_message = render_to_string('trial_ended.html', {
+            'fleet_name': fleet_name,
+            'plan_name': plan_name,
+            'billing_amount': billing_amount,
+            'next_billing_date': next_billing_dt.strftime('%B %d, %Y') if next_billing_dt else 'N/A',
+        })
+        
+        graph_send_mail(subject, html_message, user_email)
+        return f"Trial ended email sent successfully to {user_email}"
+    except Exception as e:
+        return f"Failed to send trial ended email: {str(e)}"
+
+
+@shared_task
+def send_subscription_cancelled_email(user_email, fleet_name, plan_name, cancellation_date, access_until_date):
+    """Send email notification when subscription is cancelled"""
+    try:
+        from datetime import datetime
+        
+        subject = "Subscription cancelled - Prisma Fleet"
+        
+        # Parse dates if they're strings
+        if isinstance(cancellation_date, str):
+            cancellation_dt = parse_datetime(cancellation_date)
+        else:
+            cancellation_dt = cancellation_date
+        
+        if isinstance(access_until_date, str):
+            access_until_dt = parse_datetime(access_until_date)
+        else:
+            access_until_dt = access_until_date
+        
+        html_message = render_to_string('subscription_cancelled.html', {
+            'fleet_name': fleet_name,
+            'plan_name': plan_name,
+            'cancellation_date': cancellation_dt.strftime('%B %d, %Y') if cancellation_dt else 'N/A',
+            'access_until_date': access_until_dt.strftime('%B %d, %Y') if access_until_dt else 'N/A',
+        })
+        
+        graph_send_mail(subject, html_message, user_email)
+        return f"Subscription cancelled email sent successfully to {user_email}"
+    except Exception as e:
+        return f"Failed to send subscription cancelled email: {str(e)}"
+
+
+@shared_task
+def send_payment_failed_email(user_email, fleet_name, plan_name, failed_amount, retry_date, update_payment_url, grace_period_until):
+    """Send email notification when subscription payment fails"""
+    try:
+        from datetime import datetime
+        
+        subject = "Payment failed - Update your payment method"
+        
+        # Parse dates if they're strings
+        if isinstance(retry_date, str):
+            retry_dt = parse_datetime(retry_date)
+        else:
+            retry_dt = retry_date
+        
+        if isinstance(grace_period_until, str):
+            grace_period_dt = parse_datetime(grace_period_until)
+        else:
+            grace_period_dt = grace_period_until
+        
+        html_message = render_to_string('payment_failed.html', {
+            'fleet_name': fleet_name,
+            'plan_name': plan_name,
+            'failed_amount': failed_amount,
+            'retry_date': retry_dt.strftime('%B %d, %Y at %I:%M %p') if retry_dt else 'N/A',
+            'update_payment_url': update_payment_url,
+            'grace_period_until': grace_period_dt.strftime('%B %d, %Y') if grace_period_dt else 'N/A',
+        })
+        
+        graph_send_mail(subject, html_message, user_email)
+        return f"Payment failed email sent successfully to {user_email}"
+    except Exception as e:
+        return f"Failed to send payment failed email: {str(e)}"
+
+
+@shared_task
+def send_payment_method_updated_email(user_email, fleet_name):
+    """Send email notification when payment method is updated"""
+    try:
+        subject = "Payment method updated successfully"
+        
+        html_message = render_to_string('payment_method_updated.html', {
+            'fleet_name': fleet_name,
+        })
+        
+        graph_send_mail(subject, html_message, user_email)
+        return f"Payment method updated email sent successfully to {user_email}"
+    except Exception as e:
+        return f"Failed to send payment method updated email: {str(e)}"
+
+
+@shared_task
+def send_trial_subscription_welcome_email(user_email, fleet_name, plan_name, trial_days, trial_end_date):
+    """Send welcome email when trial subscription is activated"""
+    try:
+        from datetime import datetime
+        
+        subject = f"Welcome to {plan_name} - Your Trial Has Started! 🎉"
+        
+        # Parse trial end date if it's a string
+        if isinstance(trial_end_date, str):
+            trial_end_dt = parse_datetime(trial_end_date)
+        else:
+            trial_end_dt = trial_end_date
+        
+        html_message = render_to_string('trial_subscription_welcome.html', {
+            'fleet_name': fleet_name,
+            'plan_name': plan_name,
+            'trial_days': trial_days,
+            'trial_end_date': trial_end_dt.strftime('%B %d, %Y') if trial_end_dt else 'N/A',
+        })
+        
+        graph_send_mail(subject, html_message, user_email)
+        return f"Trial subscription welcome email sent successfully to {user_email}"
+    except Exception as e:
+        return f"Failed to send trial subscription welcome email: {str(e)}"

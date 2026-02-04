@@ -72,9 +72,29 @@ export default function WelcomeScreen() {
     },
   ];
 
+  const fleetFeatures = [
+    {
+      icon: "images-outline",
+      title: "Track Service Images",
+      description:
+        "View before/after photos for every service. Fleets can access and download images for each vehicle and booking.",
+    },
+    {
+      icon: "business-outline",
+      title: "Fleet Dashboard & Branches",
+      description:
+        "Manage multiple branches, track spend, booking activity, and vehicle health scores in one place.",
+    },
+    {
+      icon: "document-text-outline",
+      title: "Vehicle History & Reports",
+      description:
+        "Detailed vehicle history, inspections, and reports. Unlock full history and before/after images with a fleet subscription.",
+    },
+  ];
+
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#1e3c72" />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
@@ -86,7 +106,7 @@ export default function WelcomeScreen() {
           >
             <View style={styles.heroContent}>
               <View style={styles.logoContainer}>
-                <StyledText variant="displayMedium">Prisma Valet</StyledText>
+                <StyledText variant="displaySmall" style={{ fontWeight: "bold" }}>Prisma Car Care</StyledText>
                 <StyledText variant="bodyMedium" style={{ fontSize: 12 }}>
                   Professional Car Care at Your Doorstep
                 </StyledText>
@@ -122,7 +142,7 @@ export default function WelcomeScreen() {
         {/* Benefits Section */}
         <View style={styles.featuresSection}>
           <StyledText style={[styles.sectionTitle, { color: textColor }]}>
-            Why Choose Prisma Car Valet?
+            Why Choose Prisma Car Care?
           </StyledText>
 
           <StyledText style={[styles.sectionSubtitle, { color: textColor }]}>
@@ -133,7 +153,7 @@ export default function WelcomeScreen() {
           <View style={styles.featuresGrid}>
             {benefits.map((benefit, index) => (
               <View
-                key={index}
+                key={index} 
                 style={[
                   styles.featureCard,
                   {
@@ -208,6 +228,52 @@ export default function WelcomeScreen() {
           </View>
         </View>
 
+        {/* For Fleets & Businesses Section */}
+        <View style={styles.fleetSection}>
+          <StyledText style={[styles.sectionTitle, { color: textColor }]}>
+            For Fleets & Businesses
+          </StyledText>
+
+          <StyledText style={[styles.sectionSubtitle, { color: textColor }]}>
+            Track every vehicle, service, and image across your branches
+          </StyledText>
+
+          <View style={styles.fleetGrid}>
+            {fleetFeatures.map((feature, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.fleetCard,
+                  {
+                    backgroundColor: cardColor,
+                    borderColor: borderColor,
+                  },
+                ]}
+              >
+                <View style={styles.fleetIcon}>
+                  <Ionicons
+                    name={feature.icon as any}
+                    size={28}
+                    color="#1e3c72"
+                  />
+                </View>
+
+                <View style={styles.fleetTextContainer}>
+                  <StyledText style={[styles.fleetTitle, { color: textColor }]}>
+                    {feature.title}
+                  </StyledText>
+
+                  <StyledText
+                    style={[styles.fleetDescription, { color: textColor }]}
+                  >
+                    {feature.description}
+                  </StyledText>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
         {/* How It Works Section */}
         <View style={styles.howItWorksSection}>
           <StyledText style={[styles.sectionTitle, { color: textColor }]}>
@@ -267,7 +333,7 @@ export default function WelcomeScreen() {
           </View>
         </View>
 
-        {/* CTA Section */}
+        {/* CTA Section - Vehicle History (VIN Lookup) */}
         <View
           style={[
             styles.ctaSection,
@@ -275,18 +341,18 @@ export default function WelcomeScreen() {
           ]}
         >
           <StyledText variant="titleMedium">
-            Ready to Give Your Car the Care It Deserves?
+            Look Up Vehicle History by VIN
           </StyledText>
 
           <StyledText variant="bodySmall">
-            Join thousands of satisfied customers who trust Prisma Car Wash for
-            their vehicle care needs.
+            Enter a 17-character VIN to see ownership history, service records,
+            incidents, recalls, and more. Available for any car.
           </StyledText>
 
           <StyledButton
             variant="medium"
-            onPress={() => router.push("/onboarding/OnboardingScreen")}
-            title="Book Your First Wash"
+            onPress={() => router.push("/vehiclehistory/VehicleDataInputScreen")}
+            title="Look Up Vehicle History"
           />
         </View>
 
@@ -473,6 +539,44 @@ const styles = StyleSheet.create({
     textAlign: "center",
     opacity: 0.7,
     lineHeight: 16,
+  },
+  fleetSection: {
+    paddingHorizontal: 24,
+    paddingVertical: 48,
+  },
+  fleetGrid: {
+    gap: 20,
+  },
+  fleetCard: {
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 16,
+  },
+  fleetIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  fleetTextContainer: {
+    flex: 1,
+    minWidth: 0,
+  },
+  fleetTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
+  fleetDescription: {
+    fontSize: 14,
+    opacity: 0.7,
+    lineHeight: 20,
   },
   howItWorksSection: {
     paddingHorizontal: 24,

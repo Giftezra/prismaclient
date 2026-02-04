@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { Stack } from "expo-router";
 
-const TabsLayout = () => {
+const ProfileLayout = () => {
   return (
     <Stack
       screenOptions={{
@@ -10,10 +10,13 @@ const TabsLayout = () => {
       }}
     >
       <Stack.Screen name="ProfileScreen" />
+      <Stack.Screen name="FleetOwnerProfileScreen" />
+      <Stack.Screen name="BranchAdminProfileScreen" />
+      <Stack.Screen name="SubscriptionPlanScreen" />
     </Stack>
   );
 };
 
-export default TabsLayout;
+export default ProfileLayout;
 
 const styles = StyleSheet.create({});

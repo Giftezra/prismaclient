@@ -9,7 +9,8 @@ import { MyAddressProps } from "./ProfileInterfaces";
 
 export default interface UpcomingAppointmentProps {
   booking_reference: string;
-  detailer: DetailerProfileProps;
+  detailer: DetailerProfileProps; // Keep for backward compatibility
+  detailers?: DetailerProfileProps[]; // Array for express service support
   vehicle: MyVehiclesProps;
   address: MyAddressProps;
   service_type: ServiceTypeProps;
@@ -29,7 +30,8 @@ export interface RecentServicesProps {
   vehicle_name: string;
   status: string;
   cost: number;
-  detailer: DetailerProfileProps;
+  detailer: DetailerProfileProps; // Keep for backward compatibility
+  detailers?: DetailerProfileProps[]; // Array for express service support
   valet_type: string;
   service_type: string;
   tip: number;

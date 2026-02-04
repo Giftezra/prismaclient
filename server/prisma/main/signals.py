@@ -1,11 +1,11 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.utils import timezone
 from django.db.models import Sum
 from decimal import Decimal
-from main.models import PaymentTransaction, User, BookedAppointment, LoyaltyProgram, Promotions,Notification, JobChatRoom
-from main.tasks import send_promotional_email, send_push_notification
+from main.models import PaymentTransaction, User, BookedAppointment, LoyaltyProgram, Promotions, Notification, JobChatRoom, VehicleEvent, BookedAppointmentImage, FleetMember, FleetSubscription
+from main.tasks import send_promotional_email, send_push_notification, send_trial_subscription_welcome_email
 from main.tasks import cleanup_job_chat, create_job_chat_room
 
 @receiver(post_save, sender=BookedAppointment)
@@ -21,10 +21,11 @@ def handle_booking_completion(sender, instance, created, **kwargs):
             loyalty.completed_bookings += 1
             loyalty.last_booking_date = now.date()
             
-            # Check for tier upgrade - different thresholds for fleet owners vs regular users
+            # Check for tier upgrade - different thresholds for fleet admins/managers vs regular users
             old_tier = loyalty.current_tier
             
-            if user.is_fleet_owner:
+            is_fleet_user = user.is_fleet_admin_or_manager()
+            if is_fleet_user:
                 # Fleet owner tier thresholds
                 if loyalty.completed_bookings >= 100:
                     loyalty.current_tier = 'platinum'
@@ -177,6 +178,41 @@ def handle_booking_status_change(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=BookedAppointment)
+def handle_booking_completion_create_event(sender, instance, created, **kwargs):
+    """
+    Create VehicleEvent when booking is completed.
+    Links images to the event.
+    """
+    if not created and instance.status == 'completed' and instance.vehicle:
+        # Check if event already exists for this booking
+        if not VehicleEvent.objects.filter(booking=instance).exists():
+            # Use appointment_date (when service was actually performed) instead of updated_at
+            # Convert date to datetime at start of day
+            if instance.appointment_date:
+                event_date = timezone.make_aware(
+                    datetime.combine(instance.appointment_date, datetime.min.time())
+                )
+            else:
+                event_date = instance.updated_at or timezone.now()
+            
+            event = VehicleEvent.objects.create(
+                vehicle=instance.vehicle,
+                event_type='wash',
+                booking=instance,
+                performed_by=instance.user,
+                event_date=event_date,
+                metadata={
+                    'service_type': instance.service_type.name,
+                    'valet_type': instance.valet_type.name,
+                    'total_amount': str(instance.total_amount),
+                    'detailer': instance.detailer.name if instance.detailer else None,
+                }
+            )
+            # Link existing images to the event
+            BookedAppointmentImage.objects.filter(booking=instance).update(vehicle_event=event)
+
+
+@receiver(post_save, sender=BookedAppointment)
 def handle_booking_completion_referral(sender, instance, created, **kwargs):
     """Handle referral rewards when booking is completed"""
     if not created and instance.status == 'completed':
@@ -252,3 +288,26 @@ def check_referral_rewards(user):
                         f"Your friend {user.name} has completed services worth €100+! You've earned a 10% discount on your next service!",
                         "referral_reward"
                     )
+
+
+@receiver(post_save, sender=FleetSubscription)
+def handle_trial_subscription_activation(sender, instance, created, **kwargs):
+    """Send welcome email when a trial subscription is activated"""
+    if created and instance.status == 'trialing':
+        # Get the fleet owner
+        fleet_owner = instance.fleet.owner
+        
+        # Check if user has allowed email notifications
+        if fleet_owner.allow_email_notifications:
+            # Get plan details
+            plan_name = instance.plan.tier.name if instance.plan and instance.plan.tier else "Subscription"
+            trial_days = instance.trial_days or 30  # Default to 30 if not set
+            
+            # Send welcome email
+            send_trial_subscription_welcome_email.delay(
+                fleet_owner.email,
+                instance.fleet.name,
+                plan_name,
+                trial_days,
+                instance.trial_end_date.isoformat() if instance.trial_end_date else None
+            )

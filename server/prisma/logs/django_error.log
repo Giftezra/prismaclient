@@ -1262,3 +1262,915 @@ ERROR 2025-11-13 19:36:23,921 log 1271 133793877845696 Internal Server Error: /a
 ERROR 2025-11-13 19:36:23,923 runserver 1271 133793905112768 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.01, 172.18.0.10:40806]
 ERROR 2025-11-13 19:36:26,257 log 1271 133793877845696 Internal Server Error: /api/v1/payment/stripe-webhook/
 ERROR 2025-11-13 19:36:26,259 runserver 1271 133793905112768 HTTP POST /api/v1/payment/stripe-webhook/ 500 [0.03, 172.18.0.10:40816]
+ERROR 2026-01-17 22:29:03,210 log 1 136628521662144 Internal Server Error: /admin/main/subscriptiontier/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/sqlite3/base.py", line 360, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: main_subscriptiontier
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 2024, in changelist_view
+    cl = self.get_changelist_instance(request)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 867, in get_changelist_instance
+    return ChangeList(
+           ^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/views/main.py", line 146, in __init__
+    self.get_results(request)
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/views/main.py", line 313, in get_results
+    result_count = paginator.count
+                   ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/paginator.py", line 110, in count
+    return c()
+           ^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 606, in count
+    return self.query.get_count(using=self.db)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 644, in get_count
+    return obj.get_aggregation(using, {"__count": Count("*")})["__count"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/sqlite3/base.py", line 360, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such table: main_subscriptiontier
+ERROR 2026-01-18 00:32:49,856 fleet 198 128013018592960 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 123, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-18 00:34:03,532 fleet 218 138004022687424 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 127, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-18 00:34:14,899 fleet 218 138004022687424 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 127, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-18 00:34:46,719 fleet 218 138004022687424 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 127, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-18 00:34:49,681 fleet 218 138004022687424 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 127, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-18 00:34:51,161 fleet 218 138004022687424 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 127, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-18 00:34:55,031 fleet 218 138004022687424 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 127, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-18 00:35:02,517 fleet 218 138004022687424 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 127, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-18 00:35:22,632 fleet 218 138003926210240 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 127, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-18 00:35:39,061 fleet 218 138004022687424 Error in get_branches: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+Traceback (most recent call last):
+  File "/app/main/views/fleet.py", line 127, in get_branches
+    branches = Branch.objects.filter(fleet=fleet).annotate(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1654, in annotate
+    return self._annotate(args, kwargs, select=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1706, in _annotate
+    clone.query.add_annotation(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1218, in add_annotation
+    annotation = annotation.resolve_expression(self, allow_joins=True, reuse=None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 176, in resolve_expression
+    result = super().resolve_expression(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/aggregates.py", line 63, in resolve_expression
+    c = super().resolve_expression(query, allow_joins, reuse, summarize)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 298, in resolve_expression
+    source_expressions = [
+                         ^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/expressions.py", line 300, in <listcomp>
+    expr.resolve_expression(query, allow_joins, reuse, summarize, for_save)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query_utils.py", line 95, in resolve_expression
+    clause, joins = query._add_q(
+                    ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/query.py", line 1806, in names_to_path
+    raise FieldError(
+django.core.exceptions.FieldError: Cannot resolve keyword 'role' into field. Choices are: address, branch_vehicles, city, country, created_at, fleet, fleet_id, fleet_members, id, name, postcode, updated_at, vehicle_count
+
+ERROR 2026-01-22 03:26:03,589 log 1409 139178570401472 Internal Server Error: /admin/main/bookedappointment/add/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/sqlite3/base.py", line 360, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.IntegrityError: UNIQUE constraint failed: main_bookedappointment.booking_reference
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1984, in add_view
+    return self.changeform_view(request, None, form_url, extra_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1843, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1894, in _changeform_view
+    self.save_model(request, new_object, form, not add)
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1314, in save_model
+    obj.save()
+  File "/app/main/models.py", line 698, in save
+    super().save(*args, **kwargs)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1008, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1210, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1873, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1882, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/sqlite3/base.py", line 360, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: UNIQUE constraint failed: main_bookedappointment.booking_reference
+ERROR 2026-01-22 03:26:03,605 runserver 1409 139178722506432 HTTP POST /admin/main/bookedappointment/add/ 500 [0.14, 172.18.0.10:42710]
+ERROR 2026-01-22 03:26:38,870 log 1409 139178570401472 Internal Server Error: /admin/main/bookedappointment/add/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/sqlite3/base.py", line 360, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.IntegrityError: UNIQUE constraint failed: main_bookedappointment.booking_reference
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1984, in add_view
+    return self.changeform_view(request, None, form_url, extra_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1843, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1894, in _changeform_view
+    self.save_model(request, new_object, form, not add)
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1314, in save_model
+    obj.save()
+  File "/app/main/models.py", line 698, in save
+    super().save(*args, **kwargs)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1008, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1210, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1873, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1882, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/sqlite3/base.py", line 360, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: UNIQUE constraint failed: main_bookedappointment.booking_reference
+ERROR 2026-01-22 03:26:38,876 runserver 1409 139178722506432 HTTP POST /admin/main/bookedappointment/add/ 500 [0.06, 172.18.0.10:59580]
+ERROR 2026-01-22 03:28:24,639 log 1409 139178570401472 Internal Server Error: /admin/main/bookedappointment/add/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/sqlite3/base.py", line 360, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.IntegrityError: UNIQUE constraint failed: main_bookedappointment.booking_reference
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 555, in thread_handler
+    raise exc_info[1]
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 504, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/asgiref/sync.py", line 559, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1984, in add_view
+    return self.changeform_view(request, None, form_url, extra_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1843, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1894, in _changeform_view
+    self.save_model(request, new_object, form, not add)
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/admin/options.py", line 1314, in save_model
+    obj.save()
+  File "/app/main/models.py", line 698, in save
+    super().save(*args, **kwargs)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1008, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1210, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1873, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1882, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/sqlite3/base.py", line 360, in execute
+    return super().execute(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: UNIQUE constraint failed: main_bookedappointment.booking_reference
+ERROR 2026-01-22 03:28:24,646 runserver 1409 139178722506432 HTTP POST /admin/main/bookedappointment/add/ 500 [0.06, 172.18.0.10:40350]
+ERROR 2026-01-22 03:32:36,099 log 1675 139048744117952 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:32:36,101 runserver 1675 139048879163072 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.02, 172.18.0.10:51756]
+ERROR 2026-01-22 03:32:42,785 log 1675 139048744117952 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:32:42,786 runserver 1675 139048879163072 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.02, 172.18.0.10:51778]
+ERROR 2026-01-22 03:33:03,247 log 1696 135616566126272 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:33:03,248 runserver 1696 135616699561664 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.03, 172.18.0.10:56286]
+ERROR 2026-01-22 03:33:28,938 log 1696 135616566126272 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:33:28,940 runserver 1696 135616699561664 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.03, 172.18.0.10:58588]
+ERROR 2026-01-22 03:33:37,175 log 1696 135616566126272 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:33:37,176 runserver 1696 135616699561664 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.03, 172.18.0.10:33690]
+ERROR 2026-01-22 03:34:01,171 log 1696 135616566126272 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:34:01,172 runserver 1696 135616699561664 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.02, 172.18.0.10:58006]
+ERROR 2026-01-22 03:43:04,230 log 1846 139011867776704 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:43:04,231 runserver 1846 139012193793728 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.15, 172.18.0.10:54428]
+ERROR 2026-01-22 03:43:07,759 log 1846 139011876169408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:43:07,760 runserver 1846 139012193793728 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.04, 172.18.0.10:54454]
+ERROR 2026-01-22 03:44:02,862 log 1846 139011892954816 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:44:02,864 runserver 1846 139012193793728 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.04, 172.18.0.10:35976]
+ERROR 2026-01-22 03:44:19,495 log 1846 139011884562112 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:44:19,498 runserver 1846 139012193793728 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.11, 172.18.0.10:52694]
+ERROR 2026-01-22 03:48:48,411 log 2002 130939451598528 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:48:48,413 runserver 2002 130939590227648 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.05, 172.18.0.10:55230]
+ERROR 2026-01-22 03:48:50,549 log 2002 130939451598528 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:48:50,551 runserver 2002 130939590227648 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.05, 172.18.0.10:55260]
+ERROR 2026-01-22 03:48:52,341 log 2002 130939451598528 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:48:52,343 runserver 2002 130939590227648 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.05, 172.18.0.10:55288]
+ERROR 2026-01-22 03:49:02,645 log 2022 140702113588928 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:49:02,651 runserver 2022 140702478960320 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.11, 172.18.0.10:50224]
+ERROR 2026-01-22 03:55:42,385 log 2161 127773901309632 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:55:42,387 runserver 2161 127774053447360 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.04, 172.18.0.10:33184]
+ERROR 2026-01-22 03:55:44,762 log 2161 127773901309632 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:55:44,763 runserver 2161 127774053447360 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.03, 172.18.0.10:40884]
+ERROR 2026-01-22 03:59:09,551 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 03:59:09,551 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.03, 172.18.0.10:53026]
+ERROR 2026-01-22 04:00:20,685 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:00:20,686 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.02, 172.18.0.10:60884]
+ERROR 2026-01-22 04:00:26,939 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:00:26,940 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.02, 172.18.0.10:47378]
+ERROR 2026-01-22 04:01:50,383 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:01:50,385 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.03, 172.18.0.10:59420]
+ERROR 2026-01-22 04:01:57,795 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:01:57,797 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.06, 172.18.0.10:59494]
+ERROR 2026-01-22 04:03:30,445 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:03:30,447 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.04, 172.18.0.10:55298]
+ERROR 2026-01-22 04:03:50,768 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:03:50,775 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.08, 172.18.0.10:47390]
+ERROR 2026-01-22 04:03:57,263 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:03:57,264 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.03, 172.18.0.10:55846]
+ERROR 2026-01-22 04:04:01,999 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:04:02,001 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.04, 172.18.0.10:55858]
+ERROR 2026-01-22 04:04:47,807 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:04:47,809 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.04, 172.18.0.10:36414]
+ERROR 2026-01-22 04:04:54,611 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:04:54,613 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.05, 172.18.0.10:36422]
+ERROR 2026-01-22 04:05:02,886 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:05:02,891 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.11, 172.18.0.10:48556]
+ERROR 2026-01-22 04:05:04,334 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:05:04,340 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.11, 172.18.0.10:48572]
+ERROR 2026-01-22 04:05:31,651 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:05:31,652 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.03, 172.18.0.10:58416]
+ERROR 2026-01-22 04:05:34,882 log 2227 130888054601408 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:05:34,884 runserver 2227 130888185931456 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.03, 172.18.0.10:58434]
+ERROR 2026-01-22 04:07:40,467 log 2434 130739114862272 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:07:40,471 runserver 2434 130739247400640 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.10, 172.18.0.10:39330]
+ERROR 2026-01-22 04:09:28,897 log 2472 134496422717120 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:09:28,898 runserver 2472 134496562099904 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.06, 172.18.0.10:59982]
+ERROR 2026-01-22 04:09:34,823 log 2472 134496422717120 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:09:34,824 runserver 2472 134496562099904 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.10, 172.18.0.10:57588]
+ERROR 2026-01-22 04:11:47,652 log 2517 134773406160576 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:11:47,654 runserver 2517 134773546108608 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.10, 172.18.0.10:49036]
+ERROR 2026-01-22 04:12:10,257 log 2531 136904792073920 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:12:10,260 runserver 2531 136904924251840 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.08, 172.18.0.10:49686]
+ERROR 2026-01-22 04:12:16,218 log 2536 126402393269952 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:12:16,220 runserver 2536 126402528360128 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.05, 172.18.0.10:49724]
+ERROR 2026-01-22 04:12:23,263 log 2536 126402393269952 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-22 04:12:23,265 runserver 2536 126402528360128 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.08, 172.18.0.10:51776]
+ERROR 2026-01-23 23:39:12,680 log 13116 128828919756480 Internal Server Error: /api/v1/dashboard/get_user_stats/
+ERROR 2026-01-23 23:39:12,684 runserver 13116 128829317150400 HTTP GET /api/v1/dashboard/get_user_stats/ 500 [0.08, 172.18.0.10:54374]
+ERROR 2026-01-23 23:39:12,705 log 13116 128828936541888 Internal Server Error: /api/v1/dashboard/get_upcoming_appointments/
+ERROR 2026-01-23 23:39:12,708 runserver 13116 128829317150400 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 500 [0.10, 172.18.0.10:54372]
+ERROR 2026-01-23 23:39:12,712 log 13116 128828928149184 Internal Server Error: /api/v1/dashboard/get_recent_services/
+ERROR 2026-01-23 23:39:12,715 runserver 13116 128829317150400 HTTP GET /api/v1/dashboard/get_recent_services/ 500 [0.11, 172.18.0.10:54362]
+ERROR 2026-01-23 23:41:37,056 log 13116 128828928149184 Internal Server Error: /api/v1/subscription/create_subscription/
+ERROR 2026-01-23 23:41:37,058 runserver 13116 128829317150400 HTTP POST /api/v1/subscription/create_subscription/ 500 [2.42, 172.18.0.10:36188]

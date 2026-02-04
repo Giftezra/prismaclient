@@ -9,7 +9,7 @@ import {
   useGetPaymentMethodsQuery,
   useDeletePaymentMethodMutation,
   PaymentMethod,
-} from "@/app/store/api/bookingApi";
+} from "@/app/store/api/eventApi";
 import { useAlertContext } from "@/app/contexts/AlertContext";
 import { useSnackbar } from "@/app/contexts/SnackbarContext";
 

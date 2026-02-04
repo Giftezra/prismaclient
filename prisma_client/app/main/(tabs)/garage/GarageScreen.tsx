@@ -1,38 +1,34 @@
 import {
-  Modal,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import StyledText from "@/app/components/helpers/StyledText";
-import MyVehicleStatsComponent from "@/app/components/garage/MyVehicleStatsComponent";
-import PromotionsCardComponent from "@/app/components/booking/PromotionsCard";
 import useGarage from "@/app/app-hooks/useGarage";
 import GarageVehicleComponent from "@/app/components/garage/GarageVehicleComponent";
-import StyledButton from "@/app/components/helpers/StyledButton";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { router } from "expo-router";
 import ModalServices from "@/app/utils/ModalServices";
 import AddNewVehicle from "@/app/components/garage/AddNewVehicle";
+import { useAppSelector, RootState } from "@/app/store/main_store";
 
 const GarageScreen = () => {
   const {
-    vehicleStats,
     vehicles,
-    isModalVisible,
-    setIsModalVisible,
+    vehiclesByBranch,
     isLoadingVehicles,
     handleDeleteVehicle,
     refetchVehicles,
-    handleVehicleStatsSelection,
     handleViewDetailsPress,
   } = useGarage();
+
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  const isFleetOwner = user?.is_fleet_owner;
+  const isAuthenticated = useAppSelector((state: RootState) => state.auth.isAuthenticated);
 
   const backgroundColor = useThemeColor({}, "background");
   const iconColor = useThemeColor({}, "icons");
@@ -44,14 +40,6 @@ const GarageScreen = () => {
     useState(false);
   const [loadingVehicleId, setLoadingVehicleId] = useState<string | null>(null);
 
-  const vehicleStatsSelection = useCallback(
-    (vehicleId: string) => {
-      handleVehicleStatsSelection(vehicleId);
-      setIsModalVisible(true);
-    },
-    [handleVehicleStatsSelection, setIsModalVisible]
-  );
-
   return (
     <View style={[styles.maincontainer, { backgroundColor }]}>
       <ScrollView
@@ -62,7 +50,7 @@ const GarageScreen = () => {
           />
         }
       >
-        {/* Display the list of cars the user has added in a 2-column grid */}
+        {/* Display the list of cars the user has added */}
         <View style={styles.myvehiclecontainer}>
           {isLoadingVehicles ? (
             <StyledText
@@ -71,7 +59,57 @@ const GarageScreen = () => {
             >
               Loading vehicles...
             </StyledText>
+          ) : isFleetOwner && vehiclesByBranch && vehiclesByBranch.length > 0 ? (
+            // Fleet owner: Display vehicles grouped by branch
+            <View style={styles.branchesContainer}>
+              {vehiclesByBranch.map((branch) => (
+                <View key={branch.branch_id} style={styles.branchSection}>
+                  <View style={[styles.branchHeader, { borderBottomColor: borderColor }]}>
+                    <StyledText
+                      variant="titleMedium"
+                      style={[styles.branchHeaderText, { color: textColor }]}
+                    >
+                      {branch.branch_name}
+                    </StyledText>
+                    <StyledText
+                      variant="bodySmall"
+                      style={[styles.branchVehicleCount, { color: textColor }]}
+                    >
+                      {branch.vehicles.length} {branch.vehicles.length === 1 ? "vehicle" : "vehicles"}
+                    </StyledText>
+                  </View>
+                  <View style={styles.vehiclesGrid}>
+                    {branch.vehicles.map((vehicle, index) => (
+                      <GarageVehicleComponent
+                        key={`${branch.branch_id}-${vehicle.id}-${index}`}
+                        vehicle={vehicle}
+                        onViewDetailsPress={async () => {
+                          setLoadingVehicleId(vehicle.id);
+                          const success = await handleViewDetailsPress(vehicle.id);
+                          setLoadingVehicleId(null);
+                          if (success) {
+                            router.push({
+                              pathname: "/main/(tabs)/garage/VehicleDetailsScreen",
+                              params: { vehicleId: vehicle.id },
+                            });
+                          }
+                        }}
+                        onUploadDataPress={() => {
+                          router.push({
+                            pathname: "/main/(tabs)/garage/VehicleDataUploadScreen",
+                            params: { vehicleId: vehicle.id },
+                          });
+                        }}
+                        onDeletePress={() => handleDeleteVehicle(vehicle.id)}
+                        isLoadingVehicleStats={loadingVehicleId === vehicle.id}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </View>
           ) : vehicles && vehicles.length > 0 ? (
+            // Branch admin or regular user: Display flat list
             <View style={styles.vehiclesGrid}>
               {vehicles.map((vehicle, index) => (
                 <GarageVehicleComponent
@@ -82,11 +120,17 @@ const GarageScreen = () => {
                     const success = await handleViewDetailsPress(vehicle.id);
                     setLoadingVehicleId(null);
                     if (success) {
-                      setIsModalVisible(true);
+                      router.push({
+                        pathname: "/main/(tabs)/garage/VehicleDetailsScreen",
+                        params: { vehicleId: vehicle.id },
+                      });
                     }
                   }}
-                  onBookServicePress={() => {
-                    router.push("/main/(tabs)/bookings/BookingScreen");
+                  onUploadDataPress={() => {
+                    router.push({
+                      pathname: "/main/(tabs)/garage/VehicleDataUploadScreen",
+                      params: { vehicleId: vehicle.id },
+                    });
                   }}
                   onDeletePress={() => handleDeleteVehicle(vehicle.id)}
                   isLoadingVehicleStats={loadingVehicleId === vehicle.id}
@@ -119,8 +163,6 @@ const GarageScreen = () => {
         </View>
       </ScrollView>
 
-      {/* This component will display a mopre detailed information about the clients car and how the car has been services overtime. this is a more detailed view. */}
-
       <ModalServices
         visible={isAddVehicleModalVisible}
         onClose={() => setIsAddVehicleModalVisible(false)}
@@ -135,24 +177,37 @@ const GarageScreen = () => {
         title="Add New Vehicle"
       />
 
-      <ModalServices
-        visible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
-        component={
-          <MyVehicleStatsComponent
-            onBookWash={() => {
-              router.push("/main/(tabs)/bookings/BookingScreen");
-            }}
-            vehicleStats={vehicleStats}
-          />
-        }
-        modalType="sheet"
-        animationType="slide"
-        showCloseButton={true}
-        title="More Indepth details about your vehicle"
-      />
+      {/* Floating action buttons */}
+      {/* VIN Lookup Button (for authenticated users) */}
+      {isAuthenticated && (
+        <TouchableOpacity
+          style={[
+            {
+              position: "absolute",
+              bottom: 20,
+              left: 20,
+              borderRadius: 30,
+              padding: 10,
+              borderWidth: 1,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 3,
+            },
+            {
+              backgroundColor: primaryColor,
+              borderColor: borderColor,
+            },
+          ]}
+          onPress={() => {
+            router.push("/vehiclehistory/VehicleDataInputScreen");
+          }}
+        >
+          <MaterialIcons name="search" size={24} color={textColor} />
+        </TouchableOpacity>
+      )}
 
-      {/* Displa a floating action button to add a new vehicle */}
+      {/* Add Vehicle Button */}
       <TouchableOpacity
         style={[
           {
@@ -193,7 +248,8 @@ const styles = StyleSheet.create({
   vehiclesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 5,
+    justifyContent: "space-between",
+    gap: 2,
   },
   modalHeader: {
     flexDirection: "row",
@@ -222,5 +278,27 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
     opacity: 0.8,
+  },
+  branchesContainer: {
+    gap: 20,
+    paddingBottom: 10,
+  },
+  branchSection: {
+    gap: 5,
+  },
+  branchHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 3,
+    borderBottomWidth: 1,
+    marginBottom: 2,
+  },
+  branchHeaderText: {
+    fontWeight: "600",
+    fontSize: 18,
+  },
+  branchVehicleCount: {
+    fontSize: 12,
   },
 });

@@ -3,7 +3,8 @@ from main.views.authentication import CustomTokenObtainPairView, AuthenticationV
 from rest_framework_simplejwt.views import TokenRefreshView
 from main.views.profile import ProfileView
 from main.views.garage import GarageView
-from main.views.booking import BookingView
+from main.views.vinlookup import VinLookupView
+from main.views.events import EventsView, VehicleTransferView
 from main.views.dashboard import DashboardView
 from main.views.payment import PaymentView, StripeWebhookView
 from main.views.terms import TermsView
@@ -11,6 +12,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from main.views.notifications import NotificationsView
 from main.views.password_reset import RequestPasswordResetView, ResetPasswordView, ValidateResetTokenView, WebResetPasswordView
+from main.views.vehicle_transfer import WebTransferActionView
+from main.views.fleet import FleetView
+from main.views.subcription import SubscriptionView
+from main.views.service_history import ServiceHistoryView
 
 
 app_name = 'main'
@@ -22,11 +27,13 @@ urlpatterns = [
     path('profile/<action>/', ProfileView.as_view(), name='profile'),
     path('garage/<action>/', GarageView.as_view(), name='garage'),
     path('garage/<action>/<vehicle_id>/', GarageView.as_view(), name='garage'),
-    path('booking/<action>/', BookingView.as_view(), name='booking'),
+    path('vin-lookup/<action>/', VinLookupView.as_view(), name='vin_lookup'),
+    path('vin-lookup/<action>/<purchase_reference>/', VinLookupView.as_view(), name='vin_lookup'),
+    path('events/<action>/', EventsView.as_view(), name='events'),
+    path('events/vehicle-transfer/', VehicleTransferView.as_view(), name='vehicle_transfer'),
     path('dashboard/<action>/', DashboardView.as_view(), name='dashboard'),
     path('notifications/<action>/', NotificationsView.as_view(), name='notifications'),
     path('terms/<action>/', TermsView.as_view(), name='terms'),
-    
     # Payment and webhook endpoints
     path('payment/stripe-webhook/', StripeWebhookView.as_view(), name='stripe_webhook'),
     path('payment/<action>/', PaymentView.as_view(), name='payment'),
@@ -36,6 +43,20 @@ urlpatterns = [
     path('auth/validate-reset-token/', ValidateResetTokenView.as_view(), name='validate_reset_token'),
     path('auth/reset-password/', ResetPasswordView.as_view(), name='reset_password'),
     path('auth/web-reset-password/', WebResetPasswordView.as_view(), name='web_reset_password'),
+    
+    # Vehicle transfer web endpoints
+    path('garage/web-transfer-action/<uuid:transfer_id>/', WebTransferActionView.as_view(), name='web_transfer_action'),
+    
+    # Fleet management endpoints
+    path('fleet/<action>/', FleetView.as_view(), name='fleet'),
+    path('fleet/<action>/<uuid:branch_id>/', FleetView.as_view(), name='fleet'),
+    path('fleet/<action>/<uuid:vehicle_id>/', FleetView.as_view(), name='fleet'),
+    
+    # Subscription endpoints
+    path('subscription/<action>/', SubscriptionView.as_view(), name='subscription'),
+    
+    # Service history endpoints
+    path('service-history/<action>/', ServiceHistoryView.as_view(), name='service_history'),
 ]
 
 

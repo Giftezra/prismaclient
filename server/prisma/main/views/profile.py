@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
-from main.models import Address, BookedAppointment, User
+from main.models import Address, BookedAppointment, User, Fleet, Branch, FleetMember
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -13,7 +13,6 @@ class ProfileView(APIView):
         "add_new_address": "add_address",
         "update_address": "update_address",
         "delete_address": "delete_address",
-        'get_service_history': 'get_service_history',
         'update_push_notification_token': 'update_push_notification_token',
         'update_email_notification_token': 'update_email_notification_token',
         'update_marketing_email_token': 'update_marketing_email_token',
@@ -185,6 +184,10 @@ class ProfileView(APIView):
 
     def get_addresses(self, request):
         """ Get all the addresses for the user.
+        For fleet owners: Returns addresses from all their fleet branches
+        For fleet admins: Returns address from their managed branch
+        For regular users: Returns their saved addresses
+        
         RETURNS:
             A response object containing the data of the action to route the url to the appropriate function
             {
@@ -200,73 +203,60 @@ class ProfileView(APIView):
             }
         """
         try:
-            # Get all the addresses for the user
-            addresses = Address.objects.filter(user=request.user)
-            # Create the list of addresses to return
             addresses_list = []
-            for address in addresses:
-                addresses_list.append({
-                    'id': address.id,
-                    'address': address.address,
-                    'post_code': address.post_code,
-                    'city': address.city,
-                    'country': address.country,
-                    'latitude': address.latitude,
-                    'longitude': address.longitude
-                })
+            
+            # Check if user is a fleet owner
+            if request.user.is_fleet_owner:
+                # Get all branches from the fleet owner's fleet
+                fleet = Fleet.objects.filter(owner=request.user).first()
+                if fleet:
+                    branches = Branch.objects.filter(fleet=fleet)
+                    for branch in branches:
+                        addresses_list.append({
+                            'id': str(branch.id),
+                            'address': branch.address or '',
+                            'post_code': branch.postcode or '',
+                            'city': branch.city or '',
+                            'country': branch.country or '',
+                            'latitude': None,
+                            'longitude': None
+                        })
+            
+            # Check if user is a fleet admin (branch admin)
+            elif request.user.is_branch_admin:
+                # Get the managed branch for the fleet admin
+                branch = request.user.get_managed_branch()
+                if branch:
+                    addresses_list.append({
+                        'id': str(branch.id),
+                        'address': branch.address or '',
+                        'post_code': branch.postcode or '',
+                        'city': branch.city or '',
+                        'country': branch.country or '',
+                        'latitude': None,
+                        'longitude': None
+                    })
+            
+            # For regular users, return their saved addresses
+            else:
+                # Get all the addresses for the user
+                addresses = Address.objects.filter(user=request.user)
+                for address in addresses:
+                    addresses_list.append({
+                        'id': str(address.id),
+                        'address': address.address,
+                        'post_code': address.post_code,
+                        'city': address.city,
+                        'country': address.country,
+                        'latitude': float(address.latitude) if address.latitude else None,
+                        'longitude': float(address.longitude) if address.longitude else None
+                    })
+            
             return Response({'addresses': addresses_list}, status=status.HTTP_200_OK)
         
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-
-    def get_service_history(self, request):
-        try:
-            # Get all booked appointments for the current user
-            # Include related data to avoid N+1 queries
-            # Order by appointment_date in descending order (most recent first)
-            appointments = BookedAppointment.objects.filter(user=request.user, status__in=["completed", "cancelled"]).order_by('-appointment_date')
-            service_history = []
-            
-            for appointment in appointments:
-                try:
-                    # Format the service history data to match MyServiceHistoryProps interface
-                    service_history_item = {
-                        'id': str(appointment.id),
-                        'booking_date': appointment.booking_date.isoformat(),
-                        'appointment_date': appointment.appointment_date.isoformat(),
-                        'service_type': appointment.service_type.name if appointment.service_type else 'Unknown',
-                        'valet_type': appointment.valet_type.name if appointment.valet_type else 'Unknown',
-                        'vehicle_reg': appointment.vehicle.licence if appointment.vehicle else 'Unknown',
-                        'address': {
-                            'id': str(appointment.address.id) if appointment.address else '',
-                            'address': appointment.address.address if appointment.address else '',
-                            'post_code': appointment.address.post_code if appointment.address else '',
-                            'city': appointment.address.city if appointment.address else '',
-                            'country': appointment.address.country if appointment.address else ''
-                        },
-                        'detailer': {
-                            'id': str(appointment.detailer.id) if appointment.detailer else '',
-                            'name': appointment.detailer.name if appointment.detailer else 'Unknown',
-                            'rating': float(appointment.detailer.rating) if appointment.detailer and appointment.detailer.rating else 0.0,
-                            'phone': appointment.detailer.phone if appointment.detailer else '',
-                        },
-                        'status': appointment.status,
-                        'total_amount': float(appointment.total_amount)
-                    }
-                    
-                    service_history.append(service_history_item)
-                except Exception as item_error:
-                    # Log the error for individual items but continue processing
-                    print(f"Error processing appointment {appointment.id}: {str(item_error)}")
-                    continue
-            
-            return Response({'service_history': service_history}, status=status.HTTP_200_OK)
-        except Exception as e:
-            print(f"Service history error: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
 
     def update_push_notification_token(self, request):
         try:

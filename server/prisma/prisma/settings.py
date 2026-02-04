@@ -3,7 +3,6 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from pickle import APPEND
-import dj_database_url
 from celery.schedules import crontab
 from google.oauth2 import service_account
 
@@ -17,9 +16,9 @@ SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
 
 
-ALLOWED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://381a4014244d.ngrok-free.app" ]        
-CSRF_TRUSTED_ORIGINS = [BASE_URL, 'https://prismavalet.com', 'https://www.prismavalet.com', "https://381a4014244d.ngrok-free.app" ]
-CORS_ALLOWED_ORIGINS = ['https://prismavalet.com', 'https://www.prismavalet.com', "https://381a4014244d.ngrok-free.app "]
+ALLOWED_ORIGINS = ['https://1daa-2a02-8084-c80-ea80-50fb-c429-191b-7cb7.ngrok-free.app']        
+CSRF_TRUSTED_ORIGINS = ['https://1daa-2a02-8084-c80-ea80-50fb-c429-191b-7cb7.ngrok-free.app']
+CORS_ALLOWED_ORIGINS = ['https://1daa-2a02-8084-c80-ea80-50fb-c429-191b-7cb7.ngrok-free.app']
 
 CORS_ALLOW_CREDENTIALS = True
 ALLOWED_HOSTS=['*']
@@ -77,40 +76,40 @@ TEMPLATES = [
     },
 ]
 
-GS_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'prisma-6fc48-642e49c334e8.json')
-GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-    GS_CREDENTIALS_PATH,
-    scopes=['https://www.googleapis.com/auth/cloud-platform'],
-)
+# Google Cloud Storage credentials (commented out - using local media storage)
+# GS_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'prisma-6fc48-642e49c334e8.json')
+# GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+#     GS_CREDENTIALS_PATH,
+#     scopes=['https://www.googleapis.com/auth/cloud-platform'],
+# )
 # Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
 DATABASES = {
-    'default': dj_database_url.parse(
-        os.getenv('DATABASE_URL'),
-        conn_max_age=600, 
-        ssl_require=True
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
-# Storage Configuration
 
-GS_BUCKET_NAME = 'prisma-valet-bucket'
-GS_LOCATION = 'main-app'
+
+# Storage Configuration - Using local media storage
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 STORAGES = {
     'default': {
-        'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
-        'OPTIONS': {
-            'bucket_name': GS_BUCKET_NAME,
-            'location': GS_LOCATION,
-            'credentials': GS_CREDENTIALS,
-            'default_acl': None,
-        },
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
         'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     },
 }
 
-MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/{GS_LOCATION}'
+# Google Cloud Storage configuration (commented out - using local media storage)
+# GS_BUCKET_NAME = 'prisma-valet-bucket'
+# GS_LOCATION = 'main-app'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -258,17 +257,24 @@ ASGI_APPLICATION = 'prisma.asgi.application'
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 
-# AWS Configuration
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
-AWS_S3_SIGNATURE_NAME = 's3v4'
-AWS_DEFAULT_ACL = 'None'
-AWS_S3_VERIFY = True
-AWS_S3_FILE_OVERWRITE = False
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
+# VIN Lookup Configuration
+from decimal import Decimal
+VIN_LOOKUP_PRICE = Decimal(os.getenv('VIN_LOOKUP_PRICE', '3.00'))
+VIN_LOOKUP_ACCESS_DURATION_HOURS = int(os.getenv('VIN_LOOKUP_ACCESS_DURATION_HOURS', '24'))
+
+# Detailer app URL for server-to-server communication
+DETAILER_APP_URL = os.environ.get('DETAILER_APP_URL', 'http://detailer_server:8000')
+
+# AWS Configuration (commented out - using local media storage)
+# AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+# AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+# AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+# AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
+# AWS_S3_SIGNATURE_NAME = 's3v4'
+# AWS_DEFAULT_ACL = 'None'
+# AWS_S3_VERIFY = True
+# AWS_S3_FILE_OVERWRITE = False
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # Logging Configuration
 LOGGING = {

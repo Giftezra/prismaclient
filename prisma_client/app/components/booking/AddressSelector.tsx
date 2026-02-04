@@ -10,6 +10,7 @@ interface AddressSelectorProps {
   selectedAddress: MyAddressProps | null;
   onSelectAddress: (address: MyAddressProps) => void;
   onAddAddress: () => void;
+  showAddButton?: boolean;
 }
 
 const AddressSelector: React.FC<AddressSelectorProps> = ({
@@ -17,6 +18,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
   selectedAddress,
   onSelectAddress,
   onAddAddress,
+  showAddButton = true,
 }) => {
   const cardColor = useThemeColor({}, "cards");
   const textColor = useThemeColor({}, "text");
@@ -31,9 +33,11 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
         >
           Service Location
         </StyledText>
-        <TouchableOpacity onPress={onAddAddress} style={styles.addButton}>
-          <Ionicons name="add-circle" size={24} color={primaryPurpleColor} />
-        </TouchableOpacity>
+        {showAddButton && (
+          <TouchableOpacity onPress={onAddAddress} style={styles.addButton}>
+            <Ionicons name="add-circle" size={24} color={primaryPurpleColor} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView
@@ -114,21 +118,23 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
           >
             Add an address for service location
           </StyledText>
-          <TouchableOpacity
-            style={[
-              styles.addAddressButton,
-              { backgroundColor: primaryPurpleColor },
-            ]}
-            onPress={onAddAddress}
-          >
-            <Ionicons name="add" size={20} color="white" />
-            <StyledText
-              variant="bodyMedium"
-              style={styles.addAddressButtonText}
+          {showAddButton && (
+            <TouchableOpacity
+              style={[
+                styles.addAddressButton,
+                { backgroundColor: primaryPurpleColor },
+              ]}
+              onPress={onAddAddress}
             >
-              Add Address
-            </StyledText>
-          </TouchableOpacity>
+              <Ionicons name="add" size={20} color="white" />
+              <StyledText
+                variant="bodyMedium"
+                style={styles.addAddressButtonText}
+              >
+                Add Address
+              </StyledText>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </View>

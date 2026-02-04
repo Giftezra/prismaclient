@@ -16,12 +16,15 @@ import {
 import { useThemeColor } from "@/hooks/useThemeColor";
 import StyledText from "@/app/components/helpers/StyledText";
 import { Ionicons } from "@expo/vector-icons";
-import useProfile from "@/app/app-hooks/useProfile";
+import useServiceHistory from "@/app/app-hooks/useServiceHistory";
 import ServiceHistoryComponent from "@/app/components/profile/ServiceHistoryComponent";
 import StyledButton from "@/app/components/helpers/StyledButton";
 import LinearGradientComponent from "@/app/components/helpers/LinearGradientComponent";
-import { useModalService } from "@/app/contexts/ModalServiceProvider";
-import ServiceImagesModal from "@/app/components/profile/ServiceImagesModal";
+import { router } from "expo-router";
+import ModalServices from "@/app/utils/ModalServices";
+import ReviewComponent from "@/app/components/booking/ReviewComponent";
+import { RecentServicesProps } from "@/app/interfaces/DashboardInterfaces";
+import { useAppSelector, RootState } from "@/app/store/main_store";
 
 const HistoryScreen = () => {
   const {
@@ -29,9 +32,9 @@ const HistoryScreen = () => {
     isLoadingServiceHistory,
     errorServiceHistory,
     refetchServiceHistory,
-  } = useProfile();
+  } = useServiceHistory();
 
-  const { showFullscreenModal } = useModalService();
+  const user = useAppSelector((state: RootState) => state.auth.user);
 
   /* Import the theme colors */
   const backgroundColor = useThemeColor({}, "background");
@@ -49,6 +52,17 @@ const HistoryScreen = () => {
   const [contentHeight, setContentHeight] = useState(0);
   const [hasMeasuredHeight, setHasMeasuredHeight] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] =
+    useState<RecentServicesProps | null>(null);
+
+  /* Get the currency symbol by getting the user's country */
+  let currencySymbol = "$";
+  if (user?.address?.country === "United Kingdom") {
+    currencySymbol = "£";
+  } else if (user?.address?.country === "Ireland") {
+    currencySymbol = "€";
+  }
 
   /**
    * Reset animation values when component unmounts
@@ -185,20 +199,48 @@ const HistoryScreen = () => {
   );
 
   /**
-   * Handle service history item press - opens image gallery modal
+   * Handle service history item press - navigates to service detail screen
    */
   const handleServiceHistoryPress = useCallback(
     (item: any) => {
-      showFullscreenModal(
-        <ServiceImagesModal bookingId={item.id} />,
-        "Service Images",
-        () => {
-          // Modal closed callback
-        }
-      );
+      router.push({
+        pathname: "/main/(tabs)/history/ServiceHistoryDetailScreen",
+        params: { bookingId: item.id },
+      });
     },
-    [showFullscreenModal]
+    []
   );
+
+  /**
+   * Handle unrated service press - opens review modal
+   */
+  const handleUnratedPress = useCallback((item: any) => {
+    // Convert service history item to RecentServicesProps format
+    const bookingData: RecentServicesProps = {
+      date: item.appointment_date,
+      vehicle_name: item.vehicle_reg,
+      status: item.status,
+      cost: item.total_amount,
+      detailer: item.detailer,
+      valet_type: item.valet_type,
+      service_type: item.service_type,
+      tip: item.tip || 0,
+      rating: item.rating || 0,
+      is_reviewed: item.is_reviewed,
+      booking_reference: item.booking_reference || item.id, // Use booking_reference if available, fallback to id
+    };
+    setSelectedBooking(bookingData);
+    setShowReviewModal(true);
+  }, []);
+
+  /**
+   * Handle review submission - closes modal and refreshes data
+   */
+  const handleReviewSubmitted = useCallback(() => {
+    setShowReviewModal(false);
+    setSelectedBooking(null);
+    refetchServiceHistory();
+  }, [refetchServiceHistory]);
 
   /**
    * Render item for SectionList
@@ -208,9 +250,10 @@ const HistoryScreen = () => {
       <ServiceHistoryComponent
         {...item}
         onPress={() => handleServiceHistoryPress(item)}
+        onUnratedPress={() => handleUnratedPress(item)}
       />
     ),
-    [handleServiceHistoryPress]
+    [handleServiceHistoryPress, handleUnratedPress]
   );
 
   /**
@@ -318,29 +361,51 @@ const HistoryScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      <SectionList
-        sections={groupedServiceHistory}
-        renderItem={renderServiceHistoryItem}
-        renderSectionHeader={renderSectionHeader}
-        keyExtractor={(item, index) => item.id || index.toString()}
-        ListHeaderComponent={ListHeaderComponent}
-        ListEmptyComponent={ListEmptyComponent}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor={iconColor}
-            colors={[iconColor]}
+    <>
+      <View style={[styles.container, { backgroundColor }]}>
+        <SectionList
+          sections={groupedServiceHistory}
+          renderItem={renderServiceHistoryItem}
+          renderSectionHeader={renderSectionHeader}
+          keyExtractor={(item, index) => item.id || index.toString()}
+          ListHeaderComponent={ListHeaderComponent}
+          ListEmptyComponent={ListEmptyComponent}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={iconColor}
+              colors={[iconColor]}
+            />
+          }
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          stickySectionHeadersEnabled={false}
+          style={styles.flatList}
+        />
+      </View>
+
+      {/* Review Modal */}
+      <ModalServices
+        visible={showReviewModal}
+        onClose={() => {
+          setShowReviewModal(false);
+          setSelectedBooking(null);
+        }}
+        component={
+          <ReviewComponent
+            currencySymbol={currencySymbol}
+            bookingData={selectedBooking || undefined}
+            onReviewSubmitted={handleReviewSubmitted}
           />
         }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        stickySectionHeadersEnabled={false}
-        style={styles.flatList}
+        showCloseButton={true}
+        animationType="slide"
+        title="Review"
+        modalType="fullscreen"
       />
-    </View>
+    </>
   );
 };
 
@@ -351,7 +416,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   flatList: {
-    flex: 1,
+    flex:1
   },
   scrollContent: {
     flexGrow: 1,
