@@ -1,5 +1,5 @@
 """
-Redis Streams helper for job_events and job_chat streams.
+Redis Streams helper for job_events stream.
 Uses consumer groups for at-least-once delivery and no message loss during restarts.
 """
 import os
@@ -10,7 +10,6 @@ REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
 REDIS_DB = int(os.environ.get("REDIS_DB", "0"))
 
 STREAM_JOB_EVENTS = "job_events"
-STREAM_JOB_CHAT = "job_chat"
 MAXLEN_DEFAULT = 10000
 
 

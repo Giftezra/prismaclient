@@ -224,7 +224,6 @@ const HistoryScreen = () => {
       detailer: item.detailer,
       valet_type: item.valet_type,
       service_type: item.service_type,
-      tip: item.tip || 0,
       rating: item.rating || 0,
       is_reviewed: item.is_reviewed,
       booking_reference: item.booking_reference || item.id, // Use booking_reference if available, fallback to id

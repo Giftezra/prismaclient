@@ -99,7 +99,7 @@ const VehicleSelector: React.FC<VehicleSelectorProps> = ({
                 variant="bodySmall"
                 style={[styles.licensePlate, { color: textColor }]}
               >
-                {vehicle.licence}
+                {vehicle.licence?.toUpperCase() ?? ""}
               </StyledText>
             </LinearGradientComponent>
 
@@ -153,7 +153,7 @@ const VehicleSelector: React.FC<VehicleSelectorProps> = ({
       )}
 
       {selectedVehicle && (
-        <View style={[styles.suvSection, { backgroundColor: cardColor }]}>
+        <View style={[styles.suvSection,]}>
           <StyledText variant="titleMedium" style={[styles.suvTitle]}>
             Vehicle Type
           </StyledText>
@@ -194,7 +194,7 @@ const VehicleSelector: React.FC<VehicleSelectorProps> = ({
       )}
 
       {selectedVehicle && (
-        <View style={[styles.suvSection, { backgroundColor: cardColor }]}>
+        <View style={[styles.suvSection,]}>
           <StyledText variant="titleMedium" style={[styles.suvTitle]}>
             Service Options
           </StyledText>
@@ -335,9 +335,10 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   suvSection: {
-    borderRadius: 5,
-    padding: 8,
-    marginTop: 8,
+    borderRadius: 20,
+    padding: 10,
+    marginVertical: 8,
+
   },
   suvTitle: {
     fontWeight: "600",

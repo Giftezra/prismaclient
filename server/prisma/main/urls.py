@@ -16,6 +16,7 @@ from main.views.vehicle_transfer import WebTransferActionView
 from main.views.fleet import FleetView
 from main.views.subcription import SubscriptionView
 from main.views.service_history import ServiceHistoryView
+from main.views.partner import PartnerView
 
 
 app_name = 'main'
@@ -57,6 +58,9 @@ urlpatterns = [
     
     # Service history endpoints
     path('service-history/<action>/', ServiceHistoryView.as_view(), name='service_history'),
+
+    # Partner (Dealership) endpoints
+    path('partner/<action>/', PartnerView.as_view(), name='partner'),
 ]
 
 

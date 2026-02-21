@@ -66,7 +66,7 @@ const MyVehicleStatsComponent = ({
             <View style={styles.detailItem}>
               <Ionicons name="card-outline" size={16} color="#6c757d" />
               <StyledText variant="labelMedium" style={styles.detailText}>
-                {vehicleStats.vehicle?.licence || "N/A"}
+                {vehicleStats.vehicle?.licence?.toUpperCase() ?? "N/A"}
               </StyledText>
             </View>
           </View>

@@ -41,25 +41,31 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     }
   };
 
-  const getStatusColor = (status: string | undefined) => {
+  const getStatusColor = (status: string | undefined, hasCurrentPlan?: boolean) => {
     switch (status) {
       case "active":
         return successColor;
+      case "trialing":
+        return successColor; // trial is active
       case "pending":
         return warningColor;
       case "past_due":
+        return warningColor;
       case "expired":
       case "canceled":
+      case "cancelled":
         return errorColor;
       default:
-        return textColor;
+        return hasCurrentPlan ? successColor : textColor;
     }
   };
 
-  const getStatusText = (status: string | undefined) => {
+  const getStatusText = (status: string | undefined, hasCurrentPlan?: boolean) => {
     switch (status) {
       case "active":
         return "Active";
+      case "trialing":
+        return "Trialing";
       case "pending":
         return "Pending Payment";
       case "past_due":
@@ -67,9 +73,11 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       case "expired":
         return "Expired";
       case "canceled":
-        return "Canceled";
+      case "cancelled":
+        return "Cancelled";
       default:
-        return "No Subscription";
+        // If we have a plan name but no/unknown status, treat as active
+        return hasCurrentPlan ? "Active" : "No Subscription";
     }
   };
 
@@ -136,21 +144,21 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: getStatusColor(subscription.status) + "20" },
+                  { backgroundColor: getStatusColor(subscription.status, !!subscription.currentPlan) + "20" },
                 ]}
               >
                 <View
                   style={[
                     styles.statusDot,
-                    { backgroundColor: getStatusColor(subscription.status) },
+                    { backgroundColor: getStatusColor(subscription.status, !!subscription.currentPlan) },
                   ]}
                 />
                 <StyledText
                   style={[
                     styles.statusText,
-                    { color: getStatusColor(subscription.status) },
+                    { color: getStatusColor(subscription.status, !!subscription.currentPlan) },
                   ]}
-                  children={getStatusText(subscription.status)}
+                  children={getStatusText(subscription.status, !!subscription.currentPlan)}
                 />
               </View>
             </View>

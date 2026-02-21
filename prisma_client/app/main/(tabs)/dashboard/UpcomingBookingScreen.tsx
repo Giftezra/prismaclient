@@ -25,8 +25,6 @@ import { useAlertContext } from "@/app/contexts/AlertContext";
 const UpcomingBookingScreen = () => {
   const [isRescheduleModalVisible, setIsRescheduleModalVisible] =
     useState(false);
-  const [isJobChatModalVisible, setIsJobChatModalVisible] = useState(false);
-
   const backgroundColor = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
   const cardColor = useThemeColor({}, "cards");
@@ -406,9 +404,11 @@ const UpcomingBookingScreen = () => {
           <View style={styles.vehicleImageContainer}>
             <Image
               source={
-                appointment.vehicle.image
+                appointment.vehicle.image && typeof appointment.vehicle.image === "string"
                   ? { uri: appointment.vehicle.image }
-                  : require("@/assets/images/car.jpg")
+                  : appointment.vehicle.image?.uri
+                    ? { uri: appointment.vehicle.image.uri }
+                    : require("@/assets/images/car.jpg")
               }
               style={styles.vehicleImage}
               resizeMode="cover"
@@ -449,7 +449,7 @@ const UpcomingBookingScreen = () => {
                 variant="bodySmall"
                 style={[styles.licenseText, { color: textColor }]}
               >
-                {appointment.vehicle.licence}
+                {appointment.vehicle.licence?.toUpperCase() ?? ""}
               </StyledText>
             </View>
           </View>
@@ -839,6 +839,8 @@ const UpcomingBookingScreen = () => {
               appointmentId={appointment.booking_reference}
               userCountry={appointment.address.country}
               userCity={appointment.address.city}
+              userLatitude={appointment.address.latitude}
+              userLongitude={appointment.address.longitude}
               serviceDuration={appointment.service_type.duration}
               isLoading={isLoadingRescheduleBooking}
             />

@@ -36,10 +36,6 @@ interface BookingSummaryProps {
   originalPrice?: number;
   finalPrice?: number;
   loyaltyDiscount?: number;
-  // VAT breakdown
-  subtotal?: number;
-  vat?: number;
-  vatRate?: number;
   total?: number;
 }
 
@@ -64,10 +60,6 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
   originalPrice,
   finalPrice,
   loyaltyDiscount = 0,
-  // VAT breakdown
-  subtotal,
-  vat,
-  vatRate = 23,
   total,
 }) => {
   const cardColor = useThemeColor({}, "cards");
@@ -79,7 +71,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
   // Calculate loyalty discount based on user's loyalty benefits
   const calculateLoyaltyDiscount = (): number => {
     if (!user?.loyalty_benefits?.discount) return 0;
-    const totalBeforeDiscount = basePrice + addonPrice + suvPrice;
+    const totalBeforeDiscount = basePrice + addonPrice + suvPrice + (expressServicePrice ?? 0);
     return totalBeforeDiscount * (user.loyalty_benefits.discount / 100);
   };
 
@@ -95,16 +87,12 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
     loyaltyDiscount || calculateLoyaltyDiscount();
   const calculatedPromotionDiscount = calculatePromotionDiscount();
   const calculatedOriginalPrice =
-    originalPrice || basePrice + addonPrice + suvPrice;
-  
-  // Use provided breakdown if available, otherwise calculate from legacy props
-  const calculatedSubtotal = subtotal !== undefined 
-    ? subtotal 
-    : (finalPrice || calculatedOriginalPrice - calculatedLoyaltyDiscount - calculatedPromotionDiscount);
-  const calculatedVat = vat !== undefined ? vat : 0;
-  const calculatedTotal = total !== undefined 
-    ? total 
-    : (finalPrice || calculatedOriginalPrice - calculatedLoyaltyDiscount - calculatedPromotionDiscount);
+    originalPrice ?? basePrice + addonPrice + suvPrice + (expressServicePrice ?? 0);
+
+  // Total (VAT inclusive) - use provided total or calculate from legacy props
+  const calculatedTotal = total !== undefined
+    ? total
+    : (finalPrice ?? calculatedOriginalPrice - calculatedLoyaltyDiscount - calculatedPromotionDiscount);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-GB", {
@@ -158,7 +146,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
               variant="bodyMedium"
               style={[styles.vehicleDetails, { color: textColor }]}
             >
-              {vehicle.year} • {vehicle.color} • {vehicle.licence}
+              {vehicle.year} • {vehicle.color} • {vehicle.licence?.toUpperCase() ?? ""}
             </StyledText>
           </View>
         </View>
@@ -563,58 +551,6 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
               </View>
             )}
 
-            {/* Show subtotal after discounts */}
-            {subtotal !== undefined && (
-              <View
-                style={[
-                  styles.priceRow,
-                  {
-                    borderTopWidth: 1,
-                    borderTopColor: textColor + "20",
-                    paddingTop: 8,
-                    marginTop: 8,
-                  },
-                ]}
-              >
-                <StyledText
-                  variant="bodyMedium"
-                  style={[
-                    styles.priceLabel,
-                    { color: textColor, fontWeight: "600" },
-                  ]}
-                >
-                  Subtotal (ex VAT):
-                </StyledText>
-                <StyledText
-                  variant="bodyMedium"
-                  style={[
-                    styles.priceValue,
-                    { color: textColor, fontWeight: "600" },
-                  ]}
-                >
-                  {formatPrice(calculatedSubtotal)}
-                </StyledText>
-              </View>
-            )}
-
-            {/* Show VAT breakdown */}
-            {calculatedVat > 0 && (
-              <View style={styles.priceRow}>
-                <StyledText
-                  variant="bodyMedium"
-                  style={[styles.priceLabel, { color: textColor }]}
-                >
-                  VAT ({vatRate}%):
-                </StyledText>
-                <StyledText
-                  variant="bodyMedium"
-                  style={[styles.priceValue, { color: textColor }]}
-                >
-                  {formatPrice(calculatedVat)}
-                </StyledText>
-              </View>
-            )}
-
             <View
               style={[
                 styles.totalRow,
@@ -631,7 +567,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                   variant="titleMedium"
                   style={[styles.totalLabel, { color: textColor }]}
                 >
-                  Total Amount:
+                  Total Amount (VAT incl):
                 </StyledText>
               </View>
               <StyledText

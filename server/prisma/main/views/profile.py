@@ -77,16 +77,34 @@ class ProfileView(APIView):
         """
         try:
             address = request.data.get('address')
-            post_code = request.data.get('post_code')
+            post_code = request.data.get('post_code') or ''
             city = request.data.get('city')
             country = request.data.get('country')
 
-            # Validate required fields
-            if not all([address, post_code, city, country]):
+            # Validate required fields (post_code is optional)
+            if not all([address, city, country]):
                 return Response(
-                    {'error': 'All fields (address, post_code, city, country) are required'}, 
+                    {'error': 'Address, city, and country are required'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
+            # Parse optional latitude and longitude
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
+            if latitude is not None:
+                try:
+                    latitude = float(latitude)
+                    if not -90 <= latitude <= 90:
+                        latitude = None
+                except (TypeError, ValueError):
+                    latitude = None
+            if longitude is not None:
+                try:
+                    longitude = float(longitude)
+                    if not -180 <= longitude <= 180:
+                        longitude = None
+                except (TypeError, ValueError):
+                    longitude = None
 
             # Create a new address object and save the address to the database
             new_address = Address.objects.create(
@@ -94,6 +112,8 @@ class ProfileView(APIView):
                 post_code=post_code,
                 city=city,
                 country=country,
+                latitude=latitude,
+                longitude=longitude,
                 user=request.user
             )
             new_address.save()
@@ -146,6 +166,24 @@ class ProfileView(APIView):
             address_to_update.city = city if city else address_to_update.city
             address_to_update.country = country if country else address_to_update.country
 
+            # Update optional latitude and longitude
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
+            if latitude is not None:
+                try:
+                    lat_val = float(latitude)
+                    if -90 <= lat_val <= 90:
+                        address_to_update.latitude = lat_val
+                except (TypeError, ValueError):
+                    pass
+            if longitude is not None:
+                try:
+                    lon_val = float(longitude)
+                    if -180 <= lon_val <= 180:
+                        address_to_update.longitude = lon_val
+                except (TypeError, ValueError):
+                    pass
+
             # Save the updated address object
             address_to_update.save()
             return Response({
@@ -153,7 +191,9 @@ class ProfileView(APIView):
                 'address': address_to_update.address,
                 'post_code': address_to_update.post_code,
                 'city': address_to_update.city,
-                'country': address_to_update.country
+                'country': address_to_update.country,
+                'latitude': float(address_to_update.latitude) if address_to_update.latitude else None,
+                'longitude': float(address_to_update.longitude) if address_to_update.longitude else None,
             }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -343,11 +383,27 @@ class ProfileView(APIView):
             loyalty = LoyaltyProgram.objects.filter(user=user).first()
             loyalty_benefits = loyalty.get_tier_benefits() if loyalty else None
             
+            from main.models import Partner
+            try:
+                partner_profile = user.partner_profile
+                is_dealership = partner_profile is not None
+                partner_referral_code = partner_profile.referral_code if is_dealership else None
+                partner_business_name = partner_profile.business_name if is_dealership else None
+            except Partner.DoesNotExist:
+                is_dealership = False
+                partner_referral_code = None
+                partner_business_name = None
+
             user_profile = {
                 'id': user.id,
                 'name': user.name,
                 'email': user.email,
                 'phone': user.phone,
+                'is_fleet_owner': user.is_fleet_owner,
+                'is_branch_admin': user.is_branch_admin,
+                'is_dealership': is_dealership,
+                'partner_referral_code': partner_referral_code,
+                'business_name': partner_business_name,
                 'address': {
                     'address': address.address if address else '',
                     'post_code': address.post_code if address else '',

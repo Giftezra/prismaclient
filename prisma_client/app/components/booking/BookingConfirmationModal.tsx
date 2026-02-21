@@ -82,6 +82,12 @@ const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
+      >
       {/* Success Header */}
       <View style={[styles.card, { backgroundColor: cardColor }]}>
         <View
@@ -250,7 +256,7 @@ const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> = ({
               variant="bodyMedium"
               style={[styles.detailValue, { color: textColor }]}
             >
-              License: {vehicle?.licence}
+              License: {vehicle?.licence?.toUpperCase() ?? ""}
             </StyledText>
           </View>
         </View>
@@ -416,6 +422,7 @@ const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> = ({
           We'll send you updates about your booking status
         </StyledText>
       </View>
+      </ScrollView>
 
       {/* Action Buttons - Fixed at bottom */}
       <View
@@ -452,8 +459,13 @@ const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     padding: 8,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   card: {
     padding: 16,

@@ -14,6 +14,9 @@ export interface UserProfileProps {
   phone: string;
   is_fleet_owner?: boolean;
   is_branch_admin?: boolean;
+  is_dealership?: boolean;
+  partner_referral_code?: string;
+  business_name?: string;
   managed_branch?: BranchProps | null;
   address: MyAddressProps | null;
   push_notification_token: boolean;
@@ -49,7 +52,6 @@ export interface MyServiceHistoryProps {
   status: string;
   total_amount: number;
   rating: number;
-  tip: number;
   is_reviewed: boolean;
 }
 

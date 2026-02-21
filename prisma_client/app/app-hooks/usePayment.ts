@@ -16,7 +16,7 @@ import { useSnackbar } from "../contexts/SnackbarContext";
  * This hook provides a comprehensive interface for handling payment operations,
  * including payment sheet initialization, payment processing, and error handling.
  * It can be used across the application for various payment scenarios like
- * booking payments, tips, subscriptions, etc.
+ * booking payments, subscriptions, etc.
  *
  * Features:
  * - Payment sheet initialization with Stripe
@@ -90,18 +90,19 @@ const usePayment = () => {
       merchantDisplayName: string = "Prisma Valet",
       bookingData?: any,
       detailerBookingData?: any
-    ): Promise<{ paymentIntentId: string }> => {
+    ): Promise<{
+      paymentIntentId: string;
+      freeBooking?: boolean;
+      booking_reference?: string;
+    }> => {
       const address = addresses[0];
-      let countryCode = "";
-      let currencyCode = "";
-
-      if (address?.country === "Ireland") {
-        countryCode = "IE";
-        currencyCode = "EUR";
-      } else {
-        countryCode = "GB";
-        currencyCode = "GBP";
-      }
+      const country = (address?.country ?? "").trim();
+      const isUK =
+        country === "United Kingdom" ||
+        country === "UK" ||
+        country === "Great Britain";
+      let countryCode = isUK ? "GB" : "IE";
+      let currencyCode = isUK ? "GBP" : "EUR";
 
       console.log("Google Pay Config:", {
         countryCode,
@@ -111,13 +112,24 @@ const usePayment = () => {
       });
 
       try {
+        const response = await fetchPaymentSheetDetailsFromServer(
+          finalPrice,
+          bookingReference,
+          bookingData,
+          detailerBookingData
+        );
+
+        // Free Quick Sparkle - booking already created on server
+        if (response?.free_booking) {
+          return {
+            paymentIntentId: "FREE_BOOKING",
+            freeBooking: true,
+            booking_reference: response.booking_reference,
+          };
+        }
+
         const { paymentIntent, paymentIntentId, ephemeralKey, customer } =
-          await fetchPaymentSheetDetailsFromServer(
-            finalPrice,
-            bookingReference,
-            bookingData,
-            detailerBookingData
-          );
+          response;
 
         const { error } = await initPaymentSheet({
           paymentIntentClientSecret: paymentIntent,
@@ -171,16 +183,31 @@ const usePayment = () => {
       bookingReference: string,
       bookingData?: any,
       detailerBookingData?: any
-    ): Promise<{ success: boolean; paymentIntentId?: string }> => {
+    ): Promise<{
+      success: boolean;
+      paymentIntentId?: string;
+      freeBooking?: boolean;
+    }> => {
       try {
         // Initialize payment sheet first
-        const { paymentIntentId } = await initializePaymentSheet(
+        const initResult = await initializePaymentSheet(
           finalPrice,
           bookingReference,
           merchantDisplayName,
           bookingData,
           detailerBookingData
         );
+
+        // Free booking - already created on server
+        if (initResult.freeBooking) {
+          return {
+            success: true,
+            paymentIntentId: initResult.paymentIntentId,
+            freeBooking: true,
+          };
+        }
+
+        const { paymentIntentId } = initResult;
 
         // Present payment sheet
         const { error } = await presentPaymentSheet();
@@ -347,66 +374,6 @@ const usePayment = () => {
     [confirmPaymentIntent]
   );
 
-  /**
-   * Processes a tip payment
-   *
-   * @param tipAmount - The tip amount to charge
-   * @param bookingReference - The booking reference for the tip
-   * @returns Promise that resolves to true if payment successful, false if cancelled, throws error if failed
-   */
-  const processTipPayment = useCallback(
-    async (
-      tipAmount: number,
-      bookingReference: string
-    ): Promise<{ success: boolean; paymentIntentId?: string }> => {
-      // Create minimal booking_data for tip payment (required by backend)
-      const minimalBookingData = {
-        total_amount: tipAmount,
-        booking_reference: bookingReference,
-        is_tip: true, // Flag to indicate this is a tip payment
-      };
-      
-      // Open payment sheet and get payment intent ID
-      const paymentResult = await openPaymentSheet(
-        tipAmount,
-        "Prisma Valet - Tip",
-        bookingReference,
-        minimalBookingData,
-        undefined // No detailer booking data needed for tips
-      );
-      
-      // If payment sheet failed or was cancelled, return failure
-      if (!paymentResult.success || !paymentResult.paymentIntentId) {
-        return { success: false };
-      }
-      
-      // Wait for webhook confirmation that payment was processed
-      try {
-        console.log(`Waiting for webhook confirmation for tip payment: ${paymentResult.paymentIntentId}`);
-        const confirmation = await waitForPaymentConfirmation(
-          paymentResult.paymentIntentId,
-          60000, // 60 second timeout
-          2500   // Poll every 2.5 seconds
-        );
-        
-        if (confirmation.confirmed) {
-          console.log(`Tip payment confirmed via webhook: ${paymentResult.paymentIntentId}`);
-          return { 
-            success: true, 
-            paymentIntentId: paymentResult.paymentIntentId 
-          };
-        } else {
-          console.error(`Tip payment not confirmed within timeout: ${paymentResult.paymentIntentId}`);
-          return { success: false };
-        }
-      } catch (error) {
-        console.error("Error waiting for payment confirmation:", error);
-        return { success: false };
-      }
-    },
-    [openPaymentSheet, waitForPaymentConfirmation]
-  );
-
   return {
     // Core payment methods
     fetchPaymentSheetDetailsFromServer,
@@ -416,9 +383,6 @@ const usePayment = () => {
     // Payment confirmation methods
     confirmPaymentIntent,
     waitForPaymentConfirmation,
-
-    // Specialized payment methods
-    processTipPayment,
   };
 };
 

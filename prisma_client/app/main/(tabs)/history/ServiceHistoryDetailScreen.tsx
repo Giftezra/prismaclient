@@ -60,8 +60,8 @@ const ServiceHistoryDetailScreen = () => {
 
   const tabs: Array<{ id: TabType; label: string }> = [
     { id: "before-interior", label: "Before - Interior" },
-    { id: "before-exterior", label: "Before - Exterior" },
     { id: "after-interior", label: "After - Interior" },
+    { id: "before-exterior", label: "Before - Exterior" },
     { id: "after-exterior", label: "After - Exterior" },
   ];
 
@@ -78,12 +78,12 @@ const ServiceHistoryDetailScreen = () => {
         return imagesData.after_images_exterior || [];
       default:
         return [];
-    }
-  };
+      }
+    };
 
-  const activeTabImages = getTabImages(activeTab);
+    const activeTabImages = getTabImages(activeTab);
 
-  if (isLoading) {
+    if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor }]}>
         <View style={styles.header}>
@@ -290,8 +290,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
     borderBottomWidth: 1,
   },
   backButton: {
@@ -313,15 +313,18 @@ const styles = StyleSheet.create({
   tabsContent: {
     paddingHorizontal: 5,
     alignItems: "center",
+    flexDirection: "row",
   },
   tab: {
     paddingHorizontal: 12,
-    paddingVertical: 2,
+    paddingVertical: 8,
     marginRight: 8,
     borderRadius: 20,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
+    flexShrink: 0,
+    minWidth: 130,
   },
   tabActive: {
     elevation: 2,

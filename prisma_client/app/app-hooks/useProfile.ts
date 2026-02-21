@@ -27,6 +27,7 @@ import {
   updateUserInStorage,
 } from "@/app/utils/helpers/storage";
 import * as SecureStore from "expo-secure-store";
+import * as Location from "expo-location";
 const image = require("@/assets/images/user_image.jpg");
 
 const useProfile = () => {
@@ -269,7 +270,7 @@ const useProfile = () => {
    * @param field is of interface MyAddressProps which contains the fields to be collected
    * @param value is the value of the field to be collected
    */
-  const collectNewAddress = (field: keyof MyAddressProps, value: string) => {
+  const collectNewAddress = (field: keyof MyAddressProps, value: string | number) => {
     const currentAddress = newAddress || {
       address: "",
       post_code: "",
@@ -278,6 +279,32 @@ const useProfile = () => {
     };
     dispatch(setNewAddress({ ...currentAddress, [field]: value }));
   };
+
+  /**
+   * Set the full address from Google Places (includes latitude and longitude).
+   */
+  const setFullNewAddress = useCallback(
+    (result: {
+      address: string;
+      post_code: string;
+      city: string;
+      country: string;
+      latitude: number;
+      longitude: number;
+    }) => {
+      dispatch(
+        setNewAddress({
+          address: result.address,
+          post_code: result.post_code,
+          city: result.city,
+          country: result.country,
+          latitude: result.latitude,
+          longitude: result.longitude,
+        })
+      );
+    },
+    [dispatch]
+  );
 
   /**
    * Save a new address to the user's profile on the server.
@@ -307,8 +334,8 @@ const useProfile = () => {
     const isDuplicate = addresses.some(
       (address: MyAddressProps) =>
         address.address.toLowerCase() === newAddress.address.toLowerCase() &&
-        address.post_code.toLowerCase() ===
-          newAddress.post_code.toLowerCase() &&
+        (address.post_code || "").toLowerCase() ===
+          (newAddress.post_code || "").toLowerCase() &&
         address.city.toLowerCase() === newAddress.city.toLowerCase() &&
         address.country.toLowerCase() === newAddress.country.toLowerCase()
     );
@@ -326,10 +353,37 @@ const useProfile = () => {
     }
 
     try {
-      /* Send the address data to the server
-       */
-      console.log(newAddress);
-      const response = await addNewAddress(newAddress).unwrap();
+      /* Geocode manual entries that don't have lat/long */
+      let addressToSave = { ...newAddress };
+      if (
+        (addressToSave.latitude == null || addressToSave.longitude == null) &&
+        addressToSave.address
+      ) {
+        const fullAddress = [
+          addressToSave.address,
+          addressToSave.city,
+          addressToSave.post_code,
+          addressToSave.country,
+        ]
+          .filter(Boolean)
+          .join(", ");
+        if (fullAddress) {
+          try {
+            const results = await Location.geocodeAsync(fullAddress);
+            if (results.length > 0) {
+              addressToSave = {
+                ...addressToSave,
+                latitude: results[0].latitude,
+                longitude: results[0].longitude,
+              };
+            }
+          } catch {
+            /* Continue without lat/long if geocoding fails */
+          }
+        }
+      }
+
+      const response = await addNewAddress(addressToSave).unwrap();
 
       if (response && response.id && response.address) {
         showSnackbarWithConfig({
@@ -429,16 +483,12 @@ const useProfile = () => {
   };
 
   /**
-   * Validates the form before saving sending it to the server
-   * If any part of the form is empty, return false
-   * If all parts of the form are filled, return true
+   * Validates the form before saving sending it to the server.
+   * Address, city, and country are required. Post code is optional.
    * @returns boolean
    */
   const validateForm = (): boolean => {
     if (!newAddress?.address?.trim()) {
-      return false;
-    }
-    if (!newAddress?.post_code?.trim()) {
       return false;
     }
     if (!newAddress.city?.trim()) {
@@ -504,6 +554,7 @@ const useProfile = () => {
     userProfile,
     addresses,
     collectNewAddress,
+    setFullNewAddress,
     newAddress,
     saveNewAddress,
     deleteAddress,

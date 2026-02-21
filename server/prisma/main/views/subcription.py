@@ -108,14 +108,20 @@ class SubscriptionView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            # Get the current active subscription (includes trialing status)
+            # Get the current subscription: prefer active/trialing/past_due, else most recent (any status)
             subscription = FleetSubscription.objects.filter(
                 fleet=fleet,
                 status__in=['active', 'trialing', 'past_due']
             ).select_related('plan', 'plan__tier').order_by('-created_at').first()
 
             if not subscription:
-                # Return subscription data with trial eligibility info
+                # No active subscription: return most recent subscription if any (cancelled/expired/pending)
+                subscription = FleetSubscription.objects.filter(
+                    fleet=fleet
+                ).select_related('plan', 'plan__tier').order_by('-created_at').first()
+
+            if not subscription:
+                # No subscription at all
                 return Response({
                     'subscription': None,
                     'canStartTrial': not fleet.has_used_trial
@@ -130,12 +136,10 @@ class SubscriptionView(APIView):
             if billing_cycle not in ['monthly', 'yearly']:
                 billing_cycle = 'monthly'
 
-            # Map status: "cancelled" -> "canceled"
+            # Map status for frontend: active, pending, trialing, past_due, canceled, expired
             subscription_status = subscription_data['status']
             if subscription_status == 'cancelled':
                 subscription_status = 'canceled'
-            elif subscription_status == 'trialing':
-                subscription_status = 'trialing'
 
             # Calculate trial days remaining
             trial_days_remaining = None
@@ -160,9 +164,10 @@ class SubscriptionView(APIView):
                     'failureCount': subscription.payment_failure_count,
                 }
 
-            # Build response data
+            # Build response data (id + extended statuses: active, pending, trialing, past_due, canceled, expired)
             response_data = {
                 'subscription': {
+                    'id': str(subscription.id),
                     'currentPlan': subscription.plan.tier.name if subscription.plan and subscription.plan.tier else None,
                     'status': subscription_status,
                     'renewsOn': subscription.end_date.isoformat() if subscription.end_date else None,
@@ -336,12 +341,15 @@ class SubscriptionView(APIView):
             else:
                 initial_status = 'pending'
 
+            # For trialing subscriptions, end_date should match trial_end_date so "renewsOn" and trial end are consistent
+            subscription_end_date = trial_end_date if trial_days > 0 else dates['end_date']
+
             # Create FleetSubscription with appropriate status
             subscription = FleetSubscription.objects.create(
                 fleet=fleet,
                 plan=plan,
                 start_date=dates['start_date'],
-                end_date=dates['end_date'],
+                end_date=subscription_end_date,
                 status=initial_status,
                 auto_renew=True,
                 is_early_adopter=is_early_adopter,

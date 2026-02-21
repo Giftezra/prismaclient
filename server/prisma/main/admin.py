@@ -2,7 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from django.utils import timezone
-from .models import User, Vehicle, VehicleOwnership, VehicleEvent, Fleet, FleetMember, FleetVehicle, VehicleTransfer, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification, LoyaltyProgram, Promotions, PaymentTransaction, RefundRecord, TermsAndConditions, Referral, Branch, SubscriptionTier, SubscriptionPlan, FleetSubscription, SubscriptionBilling, EventDataManagement, BookedAppointmentImage
+from .models import User, Vehicle, VehicleOwnership, VehicleEvent, Fleet, FleetMember, FleetVehicle, VehicleTransfer, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification, LoyaltyProgram, Promotions, PaymentTransaction, RefundRecord, TermsAndConditions, Referral, Branch, SubscriptionTier, SubscriptionPlan, FleetSubscription, SubscriptionBilling, EventDataManagement, BookedAppointmentImage, Partner, PartnerBankAccount, PartnerPayoutRequest, ReferralAttribution, CommissionEarning, CommissionPayout, PartnerMetricsCache, CommissionAdminLog
 
 
 
@@ -381,3 +381,116 @@ class SubscriptionBillingAdmin(admin.ModelAdmin):
     search_fields = ('subscription__fleet__name', 'transaction_id', 'subscription__stripe_subscription_id')
     readonly_fields = ('id', 'created_at', 'updated_at')
     date_hierarchy = 'billing_date'
+
+
+@admin.register(Partner)
+class PartnerAdmin(admin.ModelAdmin):
+    list_display = ('business_name', 'partner_type', 'referral_code', 'user', 'commission_rate', 'is_active', 'created_at')
+    list_filter = ('partner_type', 'is_active', 'created_at')
+    search_fields = ('business_name', 'referral_code', 'user__email', 'user__name')
+    readonly_fields = ('id', 'referral_code', 'created_at', 'updated_at')
+    raw_id_fields = ('user',)
+
+
+@admin.register(PartnerBankAccount)
+class PartnerBankAccountAdmin(admin.ModelAdmin):
+    list_display = ('partner', 'account_holder_name', 'created_at')
+    search_fields = ('partner__business_name', 'account_holder_name')
+    readonly_fields = ('id', 'created_at', 'updated_at')
+    raw_id_fields = ('partner',)
+
+
+@admin.register(PartnerPayoutRequest)
+class PartnerPayoutRequestAdmin(admin.ModelAdmin):
+    list_display = ('partner', 'amount_requested', 'status', 'requested_at', 'paid_at')
+    list_filter = ('status', 'requested_at')
+    search_fields = ('partner__business_name', 'partner__user__email')
+    readonly_fields = ('id', 'requested_at', 'created_at')
+    raw_id_fields = ('partner',)
+    date_hierarchy = 'requested_at'
+    list_editable = ('status',)
+
+
+@admin.register(ReferralAttribution)
+class ReferralAttributionAdmin(admin.ModelAdmin):
+    list_display = ('partner', 'referred_user', 'source', 'attribution_type', 'attributed_at', 'expires_at')
+    list_filter = ('source', 'attribution_type', 'attributed_at')
+    search_fields = ('partner__business_name', 'referred_user__email', 'referred_user__name')
+    readonly_fields = ('id', 'attributed_at', 'created_at', 'updated_at')
+    raw_id_fields = ('partner', 'referred_user')
+
+
+@admin.register(CommissionEarning)
+class CommissionEarningAdmin(admin.ModelAdmin):
+    list_display = ('partner', 'booking', 'referred_user', 'gross_amount', 'commission_rate', 'commission_amount', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('partner__business_name', 'booking__booking_reference', 'referred_user__email')
+    readonly_fields = ('id', 'created_at')
+    raw_id_fields = ('partner', 'booking', 'referred_user', 'payout')
+    date_hierarchy = 'created_at'
+    actions = ['reverse_commission', 'approve_commission']
+
+    def reverse_commission(self, request, queryset):
+        from main.models import CommissionAdminLog
+        count = 0
+        for earning in queryset.exclude(status='reversed'):
+            prev_status = earning.status
+            prev_amount = earning.commission_amount
+            CommissionAdminLog.objects.create(
+                commission_earning=earning,
+                admin_user=request.user,
+                action='reverse',
+                reason='Admin reversal',
+                previous_status=prev_status,
+                previous_amount=prev_amount,
+            )
+            earning.status = 'reversed'
+            earning.save(update_fields=['status'])
+            count += 1
+        self.message_user(request, f'Reversed {count} commission(s)')
+    reverse_commission.short_description = 'Reverse selected commissions'
+
+    def approve_commission(self, request, queryset):
+        from main.models import CommissionAdminLog
+        count = 0
+        for earning in queryset.filter(status='pending'):
+            prev_status = earning.status
+            CommissionAdminLog.objects.create(
+                commission_earning=earning,
+                admin_user=request.user,
+                action='approve',
+                reason='Admin approval',
+                previous_status=prev_status,
+            )
+            earning.status = 'approved'
+            earning.save(update_fields=['status'])
+            count += 1
+        self.message_user(request, f'Approved {count} commission(s)')
+    approve_commission.short_description = 'Approve selected pending commissions'
+
+
+@admin.register(CommissionAdminLog)
+class CommissionAdminLogAdmin(admin.ModelAdmin):
+    list_display = ('commission_earning', 'admin_user', 'action', 'previous_status', 'previous_amount', 'reason', 'created_at')
+    list_filter = ('action', 'created_at')
+    search_fields = ('commission_earning__booking__booking_reference', 'admin_user__email', 'reason')
+    readonly_fields = ('id', 'created_at')
+    raw_id_fields = ('commission_earning', 'admin_user')
+    date_hierarchy = 'created_at'
+
+
+@admin.register(CommissionPayout)
+class CommissionPayoutAdmin(admin.ModelAdmin):
+    list_display = ('partner', 'total_amount', 'period_start', 'period_end', 'status', 'paid_at', 'created_at')
+    list_filter = ('status', 'period_start', 'period_end')
+    search_fields = ('partner__business_name', 'stripe_payout_id')
+    readonly_fields = ('id', 'created_at')
+    raw_id_fields = ('partner',)
+    date_hierarchy = 'period_start'
+
+
+@admin.register(PartnerMetricsCache)
+class PartnerMetricsCacheAdmin(admin.ModelAdmin):
+    list_display = ('partner', 'total_referred_users', 'active_referred_users', 'total_revenue_from_referrals', 'total_commission_earned', 'pending_commission', 'last_updated')
+    search_fields = ('partner__business_name',)
+    readonly_fields = ('last_updated',)

@@ -21,7 +21,7 @@ import {
   useRescheduleBookingMutation,
   useFetchPromotionsQuery,
   useMarkPromotionAsUsedMutation,
-  useCheckFreeWashQuery,
+  useLazyCheckFreeWashQuery,
 } from "@/app/store/api/eventApi";
 import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "@/app/contexts/AlertContext";
@@ -98,10 +98,8 @@ const useBooking = () => {
     useRescheduleBookingMutation();
   const [markPromotionAsUsed] = useMarkPromotionAsUsedMutation();
 
-  // Lazy query for checking free wash - only called when needed
-  const { refetch: checkFreeWash } = useCheckFreeWashQuery(undefined, {
-    skip: true,
-  });
+  // Lazy query for checking free wash - only runs when trigger is called
+  const [checkFreeWash] = useLazyCheckFreeWashQuery();
 
   const { setAlertConfig, setIsVisible } = useAlertContext();
   const { showSnackbarWithConfig, showSnackbar } = useSnackbar();
@@ -253,6 +251,20 @@ const useBooking = () => {
         url.searchParams.append("country", selectedAddress?.country || "");
         url.searchParams.append("city", selectedAddress?.city || "");
         url.searchParams.append("is_express_service", isExpressService.toString());
+        // Pass lat/lng for geographic fallback (30km radius) when city match fails
+        if (
+          selectedAddress?.latitude != null &&
+          selectedAddress?.longitude != null
+        ) {
+          url.searchParams.append(
+            "latitude",
+            selectedAddress.latitude.toString()
+          );
+          url.searchParams.append(
+            "longitude",
+            selectedAddress.longitude.toString()
+          );
+        }
 
         const response = await fetch(url.toString(), {
           method: "GET",
@@ -754,6 +766,20 @@ const useBooking = () => {
           );
           url.searchParams.append("country", selectedAddress?.country || "");
           url.searchParams.append("city", selectedAddress?.city || "");
+          // Pass lat/lng for geographic fallback (30km radius) when city match fails
+          if (
+            selectedAddress?.latitude != null &&
+            selectedAddress?.longitude != null
+          ) {
+            url.searchParams.append(
+              "latitude",
+              selectedAddress.latitude.toString()
+            );
+            url.searchParams.append(
+              "longitude",
+              selectedAddress.longitude.toString()
+            );
+          }
 
           const response = await fetch(url.toString(), {
             method: "GET",
@@ -1193,7 +1219,8 @@ const useBooking = () => {
     );
     const totalBeforeSurcharge = basePrice + addonCosts;
     const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
-    const totalBeforeDiscount = totalBeforeSurcharge + suvSurcharge;
+    const expressServiceFee = isExpressService ? 30 : 0;
+    const totalBeforeDiscount = totalBeforeSurcharge + suvSurcharge + expressServiceFee;
 
     return totalBeforeDiscount * (user.loyalty_benefits.discount / 100);
   }, [
@@ -1203,6 +1230,7 @@ const useBooking = () => {
     selectedServiceType,
     selectedAddons,
     isSUV,
+    isExpressService,
   ]);
 
   /**
@@ -1236,7 +1264,8 @@ const useBooking = () => {
     );
     const totalBeforeSurcharge = basePrice + addonCosts;
     const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
-    const totalBeforeDiscount = totalBeforeSurcharge + suvSurcharge;
+    const expressServiceFee = isExpressService ? 30 : 0;
+    const totalBeforeDiscount = totalBeforeSurcharge + suvSurcharge + expressServiceFee;
 
     return totalBeforeDiscount * (promotions.discount_percentage / 100);
   }, [
@@ -1247,6 +1276,7 @@ const useBooking = () => {
     selectedServiceType,
     selectedAddons,
     isSUV,
+    isExpressService,
   ]);
   /**
    * Gets the SUV surcharge amount
@@ -1316,9 +1346,10 @@ const useBooking = () => {
     );
     const totalBeforeSurcharge = basePrice + addonCosts;
     const suvSurcharge = isSUV ? totalBeforeSurcharge * 0.15 : 0;
+    const expressServiceFee = isExpressService ? 30 : 0;
 
-    return totalBeforeSurcharge + suvSurcharge;
-  }, [selectedServiceType, user?.is_fleet_owner, user?.is_branch_admin, isSUV, selectedAddons]);
+    return totalBeforeSurcharge + suvSurcharge + expressServiceFee;
+  }, [selectedServiceType, user?.is_fleet_owner, user?.is_branch_admin, isSUV, isExpressService, selectedAddons]);
 
   /**
    * Calculate final price with option to exclude service base price (for free washes)
@@ -1379,8 +1410,11 @@ const useBooking = () => {
         ? subtotal * 0.15
         : 0;
 
+      // Step 4b: Add express service fee (NO fee when free wash is applied)
+      const expressServiceFee = excludeServicePrice ? 0 : isExpressService ? 30 : 0;
+
       // Step 5: Total before loyalty/promotion discounts
-      const totalBeforeDiscounts = subtotal + suvSurcharge;
+      const totalBeforeDiscounts = subtotal + suvSurcharge + expressServiceFee;
 
       // Step 6: Calculate loyalty discount (applied to current total)
       // Fleet owners and admins should NOT get loyalty discounts
@@ -1415,6 +1449,7 @@ const useBooking = () => {
       selectedServiceType,
       selectedAddons,
       isSUV,
+      isExpressService,
       user?.loyalty_benefits,
       promotions,
     ]
@@ -1663,27 +1698,25 @@ const useBooking = () => {
       // Generate a booking reference
       const bookingReference = `APT${Date.now()}`;
 
-      // Check if this is a Quick Sparkle and user can use free wash
+      // Check if this is a Quick Sparkle - always call checkFreeWash; backend decides eligibility (loyalty or partner)
       const isQuickSparkle = selectedServiceType?.name === "The Quick Sparkle";
-      const canUseFreeWash =
-        isQuickSparkle && user?.loyalty_tier === "platinum";
       let priceBreakdown = calculateFinalPrice(false);
       let applyFreeQuickSparkle = false;
 
-      if (canUseFreeWash && isQuickSparkle) {
+      if (isQuickSparkle) {
         try {
-          // Use RTK Query to check free wash availability
           const checkResult = await checkFreeWash();
 
           if (checkResult.data && checkResult.data.can_use_free_wash) {
-            // Calculate price excluding service base price and SUV surcharge
-            // Only charge for addons with discounts applied
             priceBreakdown = calculateFinalPrice(true);
             applyFreeQuickSparkle = true;
 
-            // Show user they're getting free wash
+            const message = checkResult.data.partner_free_wash
+              ? "Partner free Quick Sparkle applied!"
+              : `Free Quick Sparkle applied! You have ${checkResult.data.remaining_quick_sparkles} left this month.`;
+
             showSnackbarWithConfig({
-              message: `Free Quick Sparkle applied! You have ${checkResult.data.remaining_quick_sparkles} left this month.`,
+              message,
               type: "success",
               duration: 3000,
             });
@@ -1733,8 +1766,8 @@ const useBooking = () => {
         city: selectedAddress?.city || "",
         postcode: selectedAddress?.post_code || "",
         country: selectedAddress?.country || "",
-        latitude: user?.latitude || 0,
-        longitude: user?.longitude || 0,
+        latitude: selectedAddress?.latitude ?? 0,
+        longitude: selectedAddress?.longitude ?? 0,
         valet_type: selectedValetType?.name || "",
         addons: selectedAddons.map((addon) => addon.name || ""),
         special_instructions: specialInstructions || "",
@@ -1761,39 +1794,80 @@ const useBooking = () => {
       );
 
       // If payment was cancelled, don't proceed
-      if (!paymentResult.success || !paymentResult.paymentIntentId) {
+      if (!paymentResult.success) {
         setIsProcessingPayment(false);
         setPaymentConfirmationStatus("failed");
         return;
       }
 
+      // Free booking - already created on server, skip payment confirmation
+      if (paymentResult.freeBooking) {
+        setPaymentConfirmationStatus("confirmed");
+        setIsProcessingPayment(false);
+
+        // Mark promotion as used if there's an active promotion (best-effort; 404 is non-fatal)
+        if (promotions?.is_active && promotions?.id) {
+          try {
+            await markPromotionAsUsed({
+              promotion_id: String(promotions.id),
+              booking_reference: bookingReference,
+            }).unwrap();
+          } catch (error: any) {
+            const status = error?.status ?? error?.data?.status;
+            if (status === 404) {
+              console.warn(
+                "Promotion could not be marked as used (not found or already used). Booking succeeded."
+              );
+            } else {
+              console.error("Failed to mark promotion as used:", error);
+            }
+          }
+        }
+
+        setConfirmationBookingReference(bookingReference);
+        setConfirmationBookingData({
+          success: true,
+          booking_reference: bookingReference,
+        } as ReturnBookingProps);
+        setIsConfirmationModalVisible(true);
+        return;
+      }
+
       // Wait for webhook confirmation (webhook creates bookings automatically)
+      if (!paymentResult.paymentIntentId) {
+        setIsProcessingPayment(false);
+        setPaymentConfirmationStatus("failed");
+        return;
+      }
+
       setPaymentConfirmationStatus("confirming");
       try {
-        const confirmationResult = await waitForPaymentConfirmation(
-          paymentResult.paymentIntentId
-        );
+        await waitForPaymentConfirmation(paymentResult.paymentIntentId);
         setPaymentConfirmationStatus("confirmed");
         setIsProcessingPayment(false);
 
         console.log("Payment confirmed, webhook should have created bookings");
 
-        // Mark promotion as used if there's an active promotion
+        // Mark promotion as used if there's an active promotion (best-effort; 404 is non-fatal)
         if (promotions?.is_active && promotions?.id) {
           try {
             await markPromotionAsUsed({
-              promotion_id: promotions.id,
+              promotion_id: String(promotions.id),
               booking_reference: bookingReference,
             }).unwrap();
-          } catch (error) {
-            console.error("Failed to mark promotion as used:", error);
+          } catch (error: any) {
+            const status = error?.status ?? error?.data?.status;
+            if (status === 404) {
+              console.warn(
+                "Promotion could not be marked as used (not found or already used). Booking succeeded."
+              );
+            } else {
+              console.error("Failed to mark promotion as used:", error);
+            }
           }
         }
 
-        // Show success modal with booking reference
-        // Webhook has already created bookings, so we just need to show confirmation
         setConfirmationBookingReference(bookingReference);
-        // Create a simple booking data object for the modal
         setConfirmationBookingData({
           success: true,
           booking_reference: bookingReference,

@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Modal,
   FlatList,
 } from "react-native";
@@ -22,7 +21,11 @@ import {
 import StyledButton from "@/app/components/helpers/StyledButton";
 import StyledTextInput from "@/app/components/helpers/StyledTextInput";
 import { useSubscriptionLimits } from "@/app/hooks/useSubscriptionLimits";
+import { useAlertContext } from "@/app/contexts/AlertContext";
 // import { Picker } from "@react-native-picker/picker";
+
+const dismissAlert = (setAlertConfig: (c: object) => void) =>
+  setAlertConfig({ isVisible: false, title: "", message: "", type: "error" as const });
 
 const CreateBranchAdminScreen = () => {
   const backgroundColor = useThemeColor({}, "background");
@@ -31,6 +34,8 @@ const CreateBranchAdminScreen = () => {
   const borderColor = useThemeColor({}, "borders");
   const primaryColor = useThemeColor({}, "primary");
   const buttonColor = useThemeColor({}, "button");
+
+  const { setAlertConfig } = useAlertContext();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -58,31 +63,31 @@ const CreateBranchAdminScreen = () => {
   const handleSubmit = async () => {
     // Validation
     if (!name.trim()) {
-      Alert.alert("Error", "Name is required");
+      setAlertConfig({ isVisible: true, title: "Error", message: "Name is required", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
       return;
     }
     if (!email.trim()) {
-      Alert.alert("Error", "Email is required");
+      setAlertConfig({ isVisible: true, title: "Error", message: "Email is required", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
       return;
     }
     if (!phone.trim()) {
-      Alert.alert("Error", "Phone is required");
+      setAlertConfig({ isVisible: true, title: "Error", message: "Phone is required", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
       return;
     }
     if (!password) {
-      Alert.alert("Error", "Password is required");
+      setAlertConfig({ isVisible: true, title: "Error", message: "Password is required", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
       return;
     }
     if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
+      setAlertConfig({ isVisible: true, title: "Error", message: "Password must be at least 6 characters", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      setAlertConfig({ isVisible: true, title: "Error", message: "Passwords do not match", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
       return;
     }
     if (!selectedBranchId) {
-      Alert.alert("Error", "Please select a branch");
+      setAlertConfig({ isVisible: true, title: "Error", message: "Please select a branch", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
       return;
     }
 
@@ -95,17 +100,25 @@ const CreateBranchAdminScreen = () => {
         branch_id: selectedBranchId,
       }).unwrap();
 
-      Alert.alert("Success", "Branch admin created successfully", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
+      setAlertConfig({
+        isVisible: true,
+        title: "Success",
+        message: "Branch admin created successfully",
+        type: "success",
+        onConfirm: () => {
+          dismissAlert(setAlertConfig);
+          router.back();
         },
-      ]);
-    } catch (error: any) {
-      Alert.alert(
-        "Error",
-        error?.data?.error || "Failed to create branch admin"
-      );
+      });
+    } catch (error: unknown) {
+      const err = error as { data?: { error?: string } };
+      setAlertConfig({
+        isVisible: true,
+        title: "Error",
+        message: err?.data?.error || "Failed to create branch admin",
+        type: "error",
+        onConfirm: () => dismissAlert(setAlertConfig),
+      });
     }
   };
 

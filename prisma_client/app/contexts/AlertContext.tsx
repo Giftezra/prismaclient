@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import AlertModal from "../components/helpers/AlertModal";
 
 interface AlertState {
@@ -24,17 +24,20 @@ export const AlertProvider = ({ children }: { children: React.ReactNode }) => {
     undefined
   );
 
-  // Custom setAlertConfig that also sets isVisible
-  const handleSetAlertConfig = (config: AlertState) => {
+  // Stable setter so consumers can safely use it in useEffect deps (avoids maximum update depth)
+  const handleSetAlertConfig = useCallback((config: AlertState) => {
     setAlertConfig(config);
     setIsVisible(config.isVisible);
-  };
+  }, []);
 
-  const value: AlertContextType = {
-    alertConfig,
-    setAlertConfig: handleSetAlertConfig,
-    setIsVisible,
-  };
+  const value: AlertContextType = useMemo(
+    () => ({
+      alertConfig,
+      setAlertConfig: handleSetAlertConfig,
+      setIsVisible,
+    }),
+    [alertConfig, handleSetAlertConfig]
+  );
 
   return (
     <AlertContext.Provider value={value}>

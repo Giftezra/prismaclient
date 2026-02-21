@@ -186,19 +186,60 @@ export function parseAddressComponents(placeDetails: PlaceDetails): {
   const post_code =
     postalCodeComponent?.long_name || postcodeComponent?.long_name || "";
 
-  // Extract city (prefer locality, fallback to administrative_area_level_1, then sublocality)
-  const localityComponent = findComponent("locality");
-  const sublocalityComponent = findComponent("sublocality");
-  const cityComponent =
-    localityComponent ||
-    sublocalityComponent ||
-    findComponent("administrative_area_level_1") ||
-    findComponent("administrative_area_level_2");
-  const city = cityComponent?.long_name || "";
-
-  // Extract country
+  // Extract country first (needed for Ireland normalization)
   const countryComponent = findComponent("country");
   const country = countryComponent?.long_name || "";
+
+  // Extract city with neighborhood-aware logic for service area matching
+  // When locality is a neighborhood (e.g. Ballentree Village), prefer admin areas for broader city
+  const NEIGHBORHOOD_INDICATORS = [
+    "Village",
+    "Park",
+    "Gardens",
+    "Heights",
+    "Lodge",
+    "Wood",
+    "Green",
+    "Estate",
+    "Meadow",
+  ];
+  const localityComponent = findComponent("locality");
+  const sublocalityComponent = findComponent("sublocality");
+  const adminLevel1 = findComponent("administrative_area_level_1");
+  const adminLevel2 = findComponent("administrative_area_level_2");
+  const localityName = localityComponent?.long_name || "";
+  const isLikelyNeighborhood = NEIGHBORHOOD_INDICATORS.some((ind) =>
+    localityName.toLowerCase().includes(ind.toLowerCase())
+  );
+
+  let cityComponent;
+  if (isLikelyNeighborhood) {
+    // Prefer administrative area for neighborhoods (broader service area)
+    cityComponent = adminLevel2 || adminLevel1 || localityComponent;
+  } else {
+    cityComponent =
+      localityComponent ||
+      sublocalityComponent ||
+      adminLevel2 ||
+      adminLevel1;
+  }
+  let city = cityComponent?.long_name || "";
+
+  // Normalize Irish Dublin counties to "Dublin" for matching
+  const DUBLIN_COUNTIES = [
+    "South Dublin",
+    "Dún Laoghaire-Rathdown",
+    "Dun Laoghaire-Rathdown",
+    "Fingal",
+    "Dublin City",
+    "County Dublin",
+  ];
+  if (
+    country === "Ireland" &&
+    DUBLIN_COUNTIES.some((c) => city.toLowerCase().includes(c.toLowerCase()))
+  ) {
+    city = "Dublin";
+  }
 
   return {
     address,

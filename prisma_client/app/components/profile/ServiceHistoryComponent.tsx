@@ -27,7 +27,6 @@ const ServiceHistoryComponent = ({
   status,
   total_amount,
   detailer,
-  tip,
   is_reviewed,
   rating,
   onPress,
@@ -121,18 +120,6 @@ const ServiceHistoryComponent = ({
           )
         )}
       </View>
-
-      {/* Tip Information */}
-      {tip > 0 && (
-        <View style={styles.section}>
-          <StyledText variant="labelMedium" children="Tip Amount" />
-          <StyledText
-            style={[styles.tipAmount, { color: "#4CAF50" }]}
-            variant="labelSmall"
-            children={formatCurrency(tip)}
-          />
-        </View>
-      )}
 
       {/* Footer with Price */}
       <View style={[styles.footer, { borderTopColor: borderColor }]}>
@@ -239,10 +226,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 4,
     fontWeight: "500",
-  },
-  tipAmount: {
-    fontSize: 14,
-    fontWeight: "600",
   },
   unratedContainer: {
     marginTop: 8,

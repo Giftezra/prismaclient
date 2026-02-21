@@ -4,8 +4,6 @@ import {
   ScrollView,
   View,
   TouchableOpacity,
-  TextInput,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -22,9 +20,14 @@ import {
   useGetBranchAdminsQuery,
 } from "@/app/store/api/fleetApi";
 import StyledTextInput from "@/app/components/helpers/StyledTextInput";
+import AddressSearchInput from "@/app/components/shared/AddressSearchInput";
 import { useSubscriptionLimits } from "@/app/hooks/useSubscriptionLimits";
 import StyledButton from "@/app/components/helpers/StyledButton";
+import { useAlertContext } from "@/app/contexts/AlertContext";
 import { formatCurrency } from "@/app/utils/methods";
+
+const dismissAlert = (setAlertConfig: (c: object) => void) =>
+  setAlertConfig({ isVisible: false, title: "", message: "", type: "error" as const });
 
 // Component to render a vehicle card with booking indicator
 const VehicleCard = ({
@@ -127,10 +130,13 @@ const BranchManagementScreen = () => {
   const [newBranchPostcode, setNewBranchPostcode] = useState("");
   const [newBranchCity, setNewBranchCity] = useState("");
   const [newBranchCountry, setNewBranchCountry] = useState("");
+  const [newBranchLatitude, setNewBranchLatitude] = useState<number | undefined>();
+  const [newBranchLongitude, setNewBranchLongitude] = useState<number | undefined>();
   const [capPeriod, setCapPeriod] = useState<"weekly" | "monthly">("monthly");
   const [capAmount, setCapAmount] = useState("");
   const [isSavingCap, setIsSavingCap] = useState(false);
 
+  const { setAlertConfig } = useAlertContext();
   const { data: branchesData, refetch: refetchBranches } = useGetBranchesQuery();
   const [createBranch, { isLoading: isCreating }] = useCreateBranchMutation();
   const [updateBranch, { isLoading: isUpdating }] = useUpdateBranchMutation();
@@ -145,9 +151,35 @@ const BranchManagementScreen = () => {
     { skip: !selectedBranchId }
   );
 
+  const handleBranchAddressSelect = (result: {
+    address: string;
+    post_code: string;
+    city: string;
+    country: string;
+    latitude: number;
+    longitude: number;
+  }) => {
+    setNewBranchAddress(result.address);
+    setNewBranchPostcode(result.post_code);
+    setNewBranchCity(result.city);
+    setNewBranchCountry(result.country);
+    setNewBranchLatitude(result.latitude);
+    setNewBranchLongitude(result.longitude);
+  };
+
+  const clearBranchForm = () => {
+    setNewBranchName("");
+    setNewBranchAddress("");
+    setNewBranchPostcode("");
+    setNewBranchCity("");
+    setNewBranchCountry("");
+    setNewBranchLatitude(undefined);
+    setNewBranchLongitude(undefined);
+  };
+
   const handleCreateBranch = async () => {
     if (!newBranchName.trim()) {
-      Alert.alert("Error", "Branch name is required");
+      setAlertConfig({ isVisible: true, title: "Error", message: "Branch name is required", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
       return;
     }
 
@@ -158,18 +190,17 @@ const BranchManagementScreen = () => {
         postcode: newBranchPostcode.trim() || undefined,
         city: newBranchCity.trim() || undefined,
         country: newBranchCountry.trim() || undefined,
+        latitude: newBranchLatitude,
+        longitude: newBranchLongitude,
       }).unwrap();
 
       setShowCreateForm(false);
-      setNewBranchName("");
-      setNewBranchAddress("");
-      setNewBranchPostcode("");
-      setNewBranchCity("");
-      setNewBranchCountry("");
+      clearBranchForm();
       refetchBranches();
-      Alert.alert("Success", "Branch created successfully");
-    } catch (error: any) {
-      Alert.alert("Error", error?.data?.error || "Failed to create branch");
+      setAlertConfig({ isVisible: true, title: "Success", message: "Branch created successfully", type: "success", onConfirm: () => dismissAlert(setAlertConfig) });
+    } catch (error: unknown) {
+      const err = error as { data?: { error?: string } };
+      setAlertConfig({ isVisible: true, title: "Error", message: err?.data?.error || "Failed to create branch", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
     }
   };
 
@@ -185,45 +216,40 @@ const BranchManagementScreen = () => {
         postcode: newBranchPostcode.trim() || branch.postcode,
         city: newBranchCity.trim() || branch.city,
         country: newBranchCountry.trim() || branch.country,
+        latitude: newBranchLatitude,
+        longitude: newBranchLongitude,
       }).unwrap();
 
       setEditingBranch(null);
-      setNewBranchName("");
-      setNewBranchAddress("");
-      setNewBranchPostcode("");
-      setNewBranchCity("");
-      setNewBranchCountry("");
+      clearBranchForm();
       refetchBranches();
-      Alert.alert("Success", "Branch updated successfully");
-    } catch (error: any) {
-      Alert.alert("Error", error?.data?.error || "Failed to update branch");
+      setAlertConfig({ isVisible: true, title: "Success", message: "Branch updated successfully", type: "success", onConfirm: () => dismissAlert(setAlertConfig) });
+    } catch (error: unknown) {
+      const err = error as { data?: { error?: string } };
+      setAlertConfig({ isVisible: true, title: "Error", message: err?.data?.error || "Failed to update branch", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
     }
   };
 
   const handleDeleteBranch = (branchId: string, branchName: string) => {
-    Alert.alert(
-      "Delete Branch",
-      `Are you sure you want to delete ${branchName}? This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteBranch({ branch_id: branchId }).unwrap();
-              refetchBranches();
-              Alert.alert("Success", "Branch deleted successfully");
-            } catch (error: any) {
-              Alert.alert(
-                "Error",
-                error?.data?.error || "Failed to delete branch"
-              );
-            }
-          },
-        },
-      ]
-    );
+    setAlertConfig({
+      isVisible: true,
+      title: "Delete Branch",
+      message: `Are you sure you want to delete ${branchName}? This action cannot be undone.`,
+      type: "warning",
+      onClose: () => dismissAlert(setAlertConfig),
+      onConfirm: async () => {
+        try {
+          await deleteBranch({ branch_id: branchId }).unwrap();
+          refetchBranches();
+          dismissAlert(setAlertConfig);
+          setAlertConfig({ isVisible: true, title: "Success", message: "Branch deleted successfully", type: "success", onConfirm: () => dismissAlert(setAlertConfig) });
+        } catch (error: unknown) {
+          const err = error as { data?: { error?: string } };
+          dismissAlert(setAlertConfig);
+          setAlertConfig({ isVisible: true, title: "Error", message: err?.data?.error || "Failed to delete branch", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
+        }
+      },
+    });
   };
 
   const startEditing = (branch: typeof branches[0]) => {
@@ -233,21 +259,19 @@ const BranchManagementScreen = () => {
     setNewBranchPostcode(branch.postcode || "");
     setNewBranchCity(branch.city || "");
     setNewBranchCountry(branch.country || "");
+    setNewBranchLatitude(branch.latitude ?? undefined);
+    setNewBranchLongitude(branch.longitude ?? undefined);
   };
 
   const cancelEditing = () => {
     setEditingBranch(null);
-    setNewBranchName("");
-    setNewBranchAddress("");
-    setNewBranchPostcode("");
-    setNewBranchCity("");
-    setNewBranchCountry("");
+    clearBranchForm();
   };
 
   const handleSaveCap = async (branchId: string) => {
     const parsed = parseFloat(capAmount);
     if (isNaN(parsed) || parsed < 0) {
-      Alert.alert("Error", "Enter a valid spend limit (0 or greater).");
+      setAlertConfig({ isVisible: true, title: "Error", message: "Enter a valid spend limit (0 or greater).", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
       return;
     }
     setIsSavingCap(true);
@@ -259,9 +283,10 @@ const BranchManagementScreen = () => {
       }).unwrap();
       setCapAmount("");
       refetchBranches();
-      Alert.alert("Success", "Spending cap updated.");
-    } catch (error: any) {
-      Alert.alert("Error", error?.data?.error || "Failed to update cap");
+      setAlertConfig({ isVisible: true, title: "Success", message: "Spending cap updated.", type: "success", onConfirm: () => dismissAlert(setAlertConfig) });
+    } catch (error: unknown) {
+      const err = error as { data?: { error?: string } };
+      setAlertConfig({ isVisible: true, title: "Error", message: err?.data?.error || "Failed to update cap", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
     } finally {
       setIsSavingCap(false);
     }
@@ -276,9 +301,10 @@ const BranchManagementScreen = () => {
       }).unwrap();
       setCapAmount("");
       refetchBranches();
-      Alert.alert("Success", "Spending limit removed.");
-    } catch (error: any) {
-      Alert.alert("Error", error?.data?.error || "Failed to remove limit");
+      setAlertConfig({ isVisible: true, title: "Success", message: "Spending limit removed.", type: "success", onConfirm: () => dismissAlert(setAlertConfig) });
+    } catch (error: unknown) {
+      const err = error as { data?: { error?: string } };
+      setAlertConfig({ isVisible: true, title: "Error", message: err?.data?.error || "Failed to remove limit", type: "error", onConfirm: () => dismissAlert(setAlertConfig) });
     } finally {
       setIsSavingCap(false);
     }
@@ -520,33 +546,10 @@ const BranchManagementScreen = () => {
             placeholder="Enter branch name"
             placeholderTextColor={'black'}
           />
-          <StyledTextInput
-            label="Address"
-            value={newBranchAddress}
-            onChangeText={setNewBranchAddress}
-            placeholder="Enter address"
-            placeholderTextColor={'black'}
-          />
-          <StyledTextInput
-            label="City"
-            value={newBranchCity}
-            onChangeText={setNewBranchCity}
-            placeholder="Enter city"
-            placeholderTextColor={'black'}
-          />
-          <StyledTextInput
-            label="Postcode"
-            value={newBranchPostcode}
-            onChangeText={setNewBranchPostcode}
-            placeholder="Enter postcode"
-            placeholderTextColor={'black'}
-          />
-          <StyledTextInput
-            label="Country"
-            value={newBranchCountry}
-            onChangeText={setNewBranchCountry}
-            placeholder="Enter country"
-            placeholderTextColor={'black'}
+          <AddressSearchInput
+            label="Branch address"
+            placeholder="Search for branch address..."
+            onSelect={handleBranchAddressSelect}
           />
           <View style={styles.formButtons}>
             <StyledButton
@@ -555,11 +558,7 @@ const BranchManagementScreen = () => {
               variant="tonal"
               onPress={() => {
               setShowCreateForm(false);
-              setNewBranchName("");
-              setNewBranchAddress("");
-              setNewBranchPostcode("");
-              setNewBranchCity("");
-              setNewBranchCountry("");
+              clearBranchForm();
             }} />
 
             {limitsReached.branches && (
@@ -588,33 +587,29 @@ const BranchManagementScreen = () => {
           <View key={branch.id}>
             {editingBranch === branch.id ? (
               <View style={[styles.branchCard, { backgroundColor: cardColor, borderColor }]}>
-                <TextInput
-                  style={[styles.input, { backgroundColor, borderColor, color: textColor }]}
+                <StyledTextInput
+                  label="Branch name"
                   value={newBranchName}
                   onChangeText={setNewBranchName}
                   placeholder="Branch name"
                   placeholderTextColor={textColor + "80"}
                 />
-                <TextInput
-                  style={[styles.input, { backgroundColor, borderColor, color: textColor }]}
-                  value={newBranchAddress}
-                  onChangeText={setNewBranchAddress}
-                  placeholder="Address"
-                  placeholderTextColor={textColor + "80"}
-                />
-                <TextInput
-                  style={[styles.input, { backgroundColor, borderColor, color: textColor }]}
-                  value={newBranchCity}
-                  onChangeText={setNewBranchCity}
-                  placeholder="City"
-                  placeholderTextColor={textColor + "80"}
-                />
-                <TextInput
-                  style={[styles.input, { backgroundColor, borderColor, color: textColor }]}
-                  value={newBranchPostcode}
-                  onChangeText={setNewBranchPostcode}
-                  placeholder="Postcode"
-                  placeholderTextColor={textColor + "80"}
+                <AddressSearchInput
+                  label="Branch address"
+                  placeholder="Search for branch address..."
+                  onSelect={handleBranchAddressSelect}
+                  initialSelectedAddress={
+                    branch.address
+                      ? {
+                          address: branch.address || "",
+                          post_code: branch.postcode || "",
+                          city: branch.city || "",
+                          country: branch.country || "",
+                          latitude: branch.latitude ?? 0,
+                          longitude: branch.longitude ?? 0,
+                        }
+                      : null
+                  }
                 />
                 <View style={styles.branchActions}>
                   <StyledButton

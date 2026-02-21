@@ -16,6 +16,7 @@ import fleetApi from "./api/fleetApi";
 import subscriptionApi from "./api/subscriptionApi";
 import vinLookupApi from "./api/vinLookupApi";
 import serviceHistoryApi from "./api/serviceHistoryApi";
+import partnerApi from "./api/partnerApi";
 
 const store = configureStore({
   reducer: {
@@ -35,6 +36,7 @@ const store = configureStore({
     [subscriptionApi.reducerPath]: subscriptionApi.reducer,
     [vinLookupApi.reducerPath]: vinLookupApi.reducer,
     [serviceHistoryApi.reducerPath]: serviceHistoryApi.reducer,
+    [partnerApi.reducerPath]: partnerApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -48,6 +50,7 @@ const store = configureStore({
       subscriptionApi.middleware,
       vinLookupApi.middleware,
       serviceHistoryApi.middleware,
+      partnerApi.middleware,
     ),
 });
 

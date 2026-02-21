@@ -97,13 +97,6 @@ const ServiceCard: React.FC<{
           variant="bodyMedium"
           children={`${booking.valet_type}`}
         />
-        {booking.tip > 0 && (
-          <StyledText
-            style={[styles.serviceType, { color: "#4CAF50" }]}
-            variant="bodyMedium"
-            children={`Tip: ${formatCurrency(booking.tip, user?.address?.country)}`}
-          />
-        )}
       </View>
       <View style={styles.serviceDetailer}>
         <Image

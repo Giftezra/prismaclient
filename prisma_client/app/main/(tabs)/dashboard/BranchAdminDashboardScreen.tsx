@@ -78,7 +78,7 @@ const BranchAdminDashboardScreen = () => {
               variant="bodyMedium"
               style={[styles.appointmentReg, { color: textColor }]}
             >
-              {appointment.vehicle.licence || appointment.vehicle.registration_number}
+              {(appointment.vehicle.licence || appointment.vehicle.registration_number || "")?.toUpperCase()}
             </StyledText>
             <View
               style={[

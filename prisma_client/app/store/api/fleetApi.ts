@@ -8,6 +8,9 @@ import {
   BranchSpendResponse,
   VehicleBookingsResponse,
   BranchAdminsResponse,
+  FleetAdminsResponse,
+  FleetAdmin,
+  UpdateBranchAdminProps,
 } from "@/app/interfaces/FleetInterfaces";
 
 const fleetApi = createApi({
@@ -21,7 +24,7 @@ const fleetApi = createApi({
      */
     createBranch: builder.mutation<
       { message: string; branch: BranchProps },
-      { name: string; address?: string; postcode?: string; city?: string; country?: string }
+      { name: string; address?: string; postcode?: string; city?: string; country?: string; latitude?: number; longitude?: number }
     >({
       query: (data) => ({
         url: "/api/v1/fleet/create_branch/",
@@ -125,6 +128,8 @@ const fleetApi = createApi({
         postcode?: string;
         city?: string;
         country?: string;
+        latitude?: number;
+        longitude?: number;
         spend_limit?: number;
         spend_limit_period?: "weekly" | "monthly";
       }
@@ -197,6 +202,47 @@ const fleetApi = createApi({
         method: "GET",
       }),
     }),
+
+    /**
+     * Get all branch admins for the fleet (fleet owner only)
+     * RESPONSE: FleetAdminsResponse
+     */
+    getFleetAdmins: builder.query<FleetAdminsResponse, void>({
+      query: () => ({
+        url: "/api/v1/fleet/get_fleet_admins/",
+        method: "GET",
+      }),
+    }),
+
+    /**
+     * Update a branch admin (name, phone, optional branch_id). Fleet owner only.
+     * ARGS: UpdateBranchAdminProps
+     */
+    updateBranchAdmin: builder.mutation<
+      { message: string; admin: FleetAdmin },
+      UpdateBranchAdminProps
+    >({
+      query: (data) => ({
+        url: "/api/v1/fleet/update_branch_admin/",
+        method: "PATCH",
+        data,
+      }),
+    }),
+
+    /**
+     * Remove a branch admin from the fleet. Fleet owner only.
+     * ARGS: { admin_id: string }
+     */
+    removeBranchAdmin: builder.mutation<
+      { message: string },
+      { admin_id: string }
+    >({
+      query: ({ admin_id }) => ({
+        url: "/api/v1/fleet/remove_branch_admin/",
+        method: "DELETE",
+        data: { admin_id },
+      }),
+    }),
   }),
 });
 
@@ -211,6 +257,9 @@ export const {
   useDeleteBranchMutation,
   useGetVehicleBookingsQuery,
   useGetBranchAdminsQuery,
+  useGetFleetAdminsQuery,
+  useUpdateBranchAdminMutation,
+  useRemoveBranchAdminMutation,
 } = fleetApi;
 
 export default fleetApi;

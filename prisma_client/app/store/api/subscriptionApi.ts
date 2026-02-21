@@ -124,7 +124,8 @@ export const {
   useGetSubscriptionBillingHistoryQuery,
   useCancelSubscriptionMutation,
   useUpdatePaymentMethodMutation,
-  useGetSetupIntentMutation,
+  useGetSetupIntentQuery,
+  useLazyGetSetupIntentQuery,
 } = subscriptionApi;
 
 export default subscriptionApi;

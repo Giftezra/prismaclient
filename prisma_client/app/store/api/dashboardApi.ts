@@ -63,7 +63,6 @@ export const dashboardApi = createApi({
       {
         booking_reference: string;
         rating: number;
-        tip_amount: number;
       }
     >({
       query: (data) => ({

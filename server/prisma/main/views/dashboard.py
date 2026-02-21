@@ -123,7 +123,7 @@ class DashboardView(APIView):
                         "year": appointment.vehicle.year if appointment.vehicle else None,
                         "color": appointment.vehicle.color if appointment.vehicle else None,
                         "licence": appointment.vehicle.registration_number if appointment.vehicle else None,
-                        "image": None,
+                        "image": get_full_media_url(appointment.vehicle.image.url) if (appointment.vehicle and appointment.vehicle.image) else None,
                     },
                     "address": {
                         "address": appointment.address.address if appointment.address else None,
@@ -349,7 +349,6 @@ class DashboardView(APIView):
                 },
                 "valet_type": recent_service.valet_type.name if recent_service.valet_type else None,
                 "service_type": recent_service.service_type.name if recent_service.service_type else None,
-                "tip": float(recent_service.review_tip) if recent_service.review_tip else 0.0,
                 "is_reviewed": recent_service.is_reviewed,
                 "rating": float(recent_service.review_rating) if recent_service.review_rating else 0.0,
                 "booking_reference": str(recent_service.booking_reference),
@@ -431,9 +430,8 @@ class DashboardView(APIView):
             
             booking_reference = request.data.get('booking_reference')
             rating = request.data.get('rating')
-            tip_amount = request.data.get('tip_amount', 0.00)
 
-            print(f"DEBUG: booking_reference={booking_reference}, rating={rating}, tip_amount={tip_amount}")
+            print(f"DEBUG: booking_reference={booking_reference}, rating={rating}")
 
             if not booking_reference or not rating:
                 return Response(
@@ -468,17 +466,12 @@ class DashboardView(APIView):
             # Update the booking with review data
             booking.is_reviewed = True
             booking.review_rating = rating
-            booking.review_tip = tip_amount
             booking.review_submitted_at = timezone.now()
             booking.save()
             print(f"DEBUG: Booking updated successfully")
 
             # Publish to Redis for detailer notification
-            publish_review_to_detailer.delay(
-                booking_reference,
-                rating,
-                tip_amount
-            )
+            publish_review_to_detailer.delay(booking_reference, rating)
             print(f"DEBUG: Celery task queued")
             
             return Response({

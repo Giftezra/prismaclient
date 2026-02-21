@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React from "react";
 import {
   StyleSheet,
   View,
@@ -8,24 +8,12 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import StyledText from "@/app/components/helpers/StyledText";
 import SubscriptionTierCard from "@/app/components/profile/SubscriptionTierCard";
-import {
-  useGetSubscriptionPlansQuery,
-  useGetCurrentSubscriptionQuery,
-  useCreateSubscriptionMutation,
-  useCancelSubscriptionMutation,
-  useUpdatePaymentMethodMutation,
-  useGetSetupIntentMutation,
-} from "@/app/store/api/subscriptionApi";
+import { useFleetSubscription } from "@/app/hooks/useFleetSubscription";
 import { SubscriptionTierProps } from "@/app/interfaces/SubscriptionInterfaces";
-import { useStripe } from "@stripe/stripe-react-native";
-import { useSnackbar } from "@/app/contexts/SnackbarContext";
-import { useAddresses } from "@/app/app-hooks/useAddresses";
-import usePayment from "@/app/app-hooks/usePayment";
 
 const SubscriptionPlanScreen = () => {
   const backgroundColor = useThemeColor({}, "background");
@@ -34,378 +22,28 @@ const SubscriptionPlanScreen = () => {
   const tintColor = useThemeColor({}, "tint");
   const errorColor = useThemeColor({}, "error");
 
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
-  const { showSnackbarWithConfig } = useSnackbar();
-  const { addresses } = useAddresses();
-  const { waitForPaymentConfirmation } = usePayment();
-
-  const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
-  const [selectedBillingCycle, setSelectedBillingCycle] = useState<
-    "monthly" | "yearly"
-  >("monthly");
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [isCanceling, setIsCanceling] = useState(false);
-  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
-
   const {
-    data: plans,
-    isLoading: isLoadingPlans,
-    error: plansError,
-  } = useGetSubscriptionPlansQuery();
-
-  const {
-    data: currentSubscription,
-    isLoading: isLoadingSubscription,
-    refetch: refetchSubscription,
-  } = useGetCurrentSubscriptionQuery();
-
-  const [createSubscription, { isLoading: isCreatingSubscription }] =
-    useCreateSubscriptionMutation();
-  const [cancelSubscription] = useCancelSubscriptionMutation();
-  const [updatePaymentMethod] = useUpdatePaymentMethodMutation();
-  const [getSetupIntent] = useGetSetupIntentMutation();
-
-  const handleTierSelect = useCallback((tierId: string) => {
-    setSelectedTierId(tierId);
-  }, []);
-
-  const handleBillingCycleChange = useCallback(
-    (tierId: string, cycle: "monthly" | "yearly") => {
-      if (selectedTierId === tierId) {
-        setSelectedBillingCycle(cycle);
-      }
-    },
-    [selectedTierId]
-  );
-
-  const initializeSubscriptionPaymentSheet = useCallback(
-    async (
-      paymentIntentOrSetupIntent: string,
-      ephemeralKey: string,
-      customer: string,
-      isTrial: boolean = false
-    ): Promise<boolean> => {
-      try {
-        const address = addresses?.[0];
-        let countryCode = "";
-        let currencyCode = "";
-
-        if (address?.country === "Ireland") {
-          countryCode = "IE";
-          currencyCode = "EUR";
-        } else {
-          countryCode = "GB";
-          currencyCode = "GBP";
-        }
-
-        const paymentSheetParams: any = {
-          merchantDisplayName: "Prisma Valet",
-          customerEphemeralKeySecret: ephemeralKey,
-          customerId: customer,
-          returnURL: "prismaclient://payment-success",
-          applePay: {
-            merchantCountryCode: countryCode,
-          },
-          googlePay: {
-            merchantCountryCode: countryCode,
-            testEnv: __DEV__,
-            currencyCode: currencyCode,
-          },
-          allowsDelayedPaymentMethods: true,
-        };
-
-        // Use setupIntentClientSecret for trials, paymentIntentClientSecret otherwise
-        if (isTrial) {
-          paymentSheetParams.setupIntentClientSecret = paymentIntentOrSetupIntent;
-        } else {
-          paymentSheetParams.paymentIntentClientSecret = paymentIntentOrSetupIntent;
-        }
-
-        const { error } = await initPaymentSheet(paymentSheetParams);
-
-        if (error) {
-          console.error("Payment sheet initialization error:", error);
-          showSnackbarWithConfig({
-            message: `Payment initialization failed: ${error.message}`,
-            type: "error",
-            duration: 5000,
-          });
-          return false;
-        }
-
-        return true;
-      } catch (error: any) {
-        console.error("Error initializing payment sheet:", error);
-        showSnackbarWithConfig({
-          message: error.message || "Failed to initialize payment. Please try again.",
-          type: "error",
-          duration: 5000,
-        });
-        return false;
-      }
-    },
-    [initPaymentSheet, addresses, showSnackbarWithConfig]
-  );
-
-  const handleSubscribe = useCallback(async () => {
-    if (!selectedTierId) {
-      showSnackbarWithConfig({
-        message: "Please select a subscription plan",
-        type: "warning",
-        duration: 3000,
-      });
-      return;
-    }
-
-    setIsProcessingPayment(true);
-
-    try {
-      // Create subscription
-      const response = await createSubscription({
-        tierId: selectedTierId,
-        billingCycle: selectedBillingCycle,
-      }).unwrap();
-
-      // Check if payment is required
-      if (response.paymentSheet) {
-        const isTrial = response.isTrial || false;
-        const paymentSecret = isTrial 
-          ? response.paymentSheet.setupIntent 
-          : response.paymentSheet.paymentIntent;
-
-        if (!paymentSecret) {
-          showSnackbarWithConfig({
-            message: "Payment details not available",
-            type: "error",
-            duration: 5000,
-          });
-          setIsProcessingPayment(false);
-          return;
-        }
-
-        // Initialize payment sheet
-        const initialized = await initializeSubscriptionPaymentSheet(
-          paymentSecret,
-          response.paymentSheet.ephemeralKey,
-          response.paymentSheet.customer,
-          isTrial
-        );
-
-        if (!initialized) {
-          setIsProcessingPayment(false);
-          return;
-        }
-
-        // Present payment sheet
-        const { error } = await presentPaymentSheet();
-
-        if (error) {
-          if (error.code === "Canceled") {
-            showSnackbarWithConfig({
-              message: isTrial ? "Payment method setup was canceled" : "Payment was canceled",
-              type: "info",
-              duration: 3000,
-            });
-          } else {
-            showSnackbarWithConfig({
-              message: isTrial ? `Payment method setup failed: ${error.message}` : `Payment failed: ${error.message}`,
-              type: "error",
-              duration: 5000,
-            });
-          }
-          setIsProcessingPayment(false);
-          return;
-        }
-
-        if (isTrial) {
-          // For trial subscriptions, no payment confirmation needed
-          // Just refetch subscription to get updated status
-          await refetchSubscription();
-          showSnackbarWithConfig({
-            message: "Trial started successfully! Your subscription will begin after the trial period.",
-            type: "success",
-            duration: 5000,
-          });
-          router.back();
-        } else {
-          // For non-trial subscriptions, wait for payment confirmation
-          const paymentIntentId = response.billing?.transaction_id || 
-            paymentSecret.split("_secret_")[0];
-
-          showSnackbarWithConfig({
-            message: "Payment successful! Activating subscription...",
-            type: "success",
-            duration: 3000,
-          });
-
-          try {
-            const confirmation = await waitForPaymentConfirmation(
-              paymentIntentId,
-              60000, // maxWaitTime: 60 seconds
-              2500   // pollInterval: 2.5 seconds
-            );
-
-            if (confirmation.confirmed) {
-              await refetchSubscription();
-              showSnackbarWithConfig({
-                message: "Subscription activated successfully!",
-                type: "success",
-                duration: 3000,
-              });
-              router.back();
-            }
-          } catch (error: any) {
-            console.error("Payment confirmation error:", error);
-            showSnackbarWithConfig({
-              message: error.message || "Payment received. Subscription is being activated. Please check back in a moment.",
-              type: "info",
-              duration: 5000,
-            });
-            await refetchSubscription();
-            router.back();
-          }
-        }
-      } else {
-        // Free plan - no payment required
-        showSnackbarWithConfig({
-          message: response.message || "Subscription activated successfully!",
-          type: "success",
-          duration: 3000,
-        });
-        await refetchSubscription();
-        setTimeout(() => {
-          router.back();
-        }, 1500);
-      }
-    } catch (error: any) {
-      console.error("Error creating subscription:", error);
-      showSnackbarWithConfig({
-        message:
-          error?.data?.error ||
-          error?.message ||
-          "Failed to create subscription. Please try again.",
-        type: "error",
-        duration: 5000,
-      });
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  }, [
+    plans,
+    currentSubscription,
+    isLoadingPlans,
+    isLoadingSubscription,
+    plansError,
     selectedTierId,
     selectedBillingCycle,
-    createSubscription,
-    initializeSubscriptionPaymentSheet,
-    presentPaymentSheet,
-    refetchSubscription,
-    showSnackbarWithConfig,
-  ]);
+    isProcessingPayment,
+    isCreatingSubscription,
+    isCanceling,
+    isUpdatingPayment,
+    showCancelModal,
+    setShowCancelModal,
+    handleTierSelect,
+    handleBillingCycleChange,
+    handleSubscribe,
+    handleCancelSubscription,
+    handleUpdatePaymentMethod,
+  } = useFleetSubscription();
 
-  const handleCancelSubscription = useCallback(async (cancelAtPeriodEnd: boolean = true) => {
-    setIsCanceling(true);
-    try {
-      await cancelSubscription({ cancel_at_period_end: cancelAtPeriodEnd }).unwrap();
-      await refetchSubscription();
-      setShowCancelModal(false);
-      showSnackbarWithConfig({
-        message: cancelAtPeriodEnd 
-          ? "Subscription will be cancelled at the end of the billing period."
-          : "Subscription cancelled successfully.",
-        type: "success",
-        duration: 5000,
-      });
-    } catch (error: any) {
-      showSnackbarWithConfig({
-        message: error?.data?.error || error?.message || "Failed to cancel subscription.",
-        type: "error",
-        duration: 5000,
-      });
-    } finally {
-      setIsCanceling(false);
-    }
-  }, [cancelSubscription, refetchSubscription, showSnackbarWithConfig]);
-
-  const handleUpdatePaymentMethod = useCallback(async () => {
-    setIsUpdatingPayment(true);
-    try {
-      // Get SetupIntent from backend
-      const { setupIntent, ephemeralKey, customer } = await getSetupIntent().unwrap();
-
-      // Initialize payment sheet with SetupIntent
-      const address = addresses?.[0];
-      let countryCode = "";
-      let currencyCode = "";
-
-      if (address?.country === "Ireland") {
-        countryCode = "IE";
-        currencyCode = "EUR";
-      } else {
-        countryCode = "GB";
-        currencyCode = "GBP";
-      }
-
-      const { error: initError } = await initPaymentSheet({
-        setupIntentClientSecret: setupIntent,
-        merchantDisplayName: "Prisma Valet",
-        customerEphemeralKeySecret: ephemeralKey,
-        customerId: customer,
-        returnURL: "prismaclient://payment-success",
-        applePay: {
-          merchantCountryCode: countryCode,
-        },
-        googlePay: {
-          merchantCountryCode: countryCode,
-          testEnv: __DEV__,
-          currencyCode: currencyCode,
-        },
-        allowsDelayedPaymentMethods: true,
-      });
-
-      if (initError) {
-        throw new Error(initError.message);
-      }
-
-      // Present payment sheet
-      const { error: presentError, setupIntent: resultSetupIntent } = await presentPaymentSheet();
-
-      if (presentError) {
-        if (presentError.code === "Canceled") {
-          showSnackbarWithConfig({
-            message: "Payment method setup was canceled",
-            type: "info",
-            duration: 3000,
-          });
-          return;
-        }
-        throw new Error(presentError.message);
-      }
-
-      // Get payment method ID from the result
-      if (resultSetupIntent?.paymentMethodId) {
-        // Update payment method on backend
-        await updatePaymentMethod({ payment_method_id: resultSetupIntent.paymentMethodId }).unwrap();
-        await refetchSubscription();
-        showSnackbarWithConfig({
-          message: "Payment method updated successfully!",
-          type: "success",
-          duration: 5000,
-        });
-      } else {
-        throw new Error("Payment method ID not found");
-      }
-    } catch (error: any) {
-      console.error("Error updating payment method:", error);
-      showSnackbarWithConfig({
-        message: error?.data?.error || error?.message || "Failed to update payment method.",
-        type: "error",
-        duration: 5000,
-      });
-    } finally {
-      setIsUpdatingPayment(false);
-    }
-  }, [addresses, showSnackbarWithConfig, initPaymentSheet, presentPaymentSheet, updatePaymentMethod, refetchSubscription, getSetupIntent]);
-
-  const selectedTier = plans?.find((tier) => tier.id === selectedTierId);
+  const selectedTier = plans?.find((tier: SubscriptionTierProps) => tier.id === selectedTierId);
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
@@ -537,7 +175,7 @@ const SubscriptionPlanScreen = () => {
                 />
               </View>
 
-              {currentSubscription.renewsOn && (
+              {((currentSubscription.isTrialing && currentSubscription.trialEndDate) || currentSubscription.renewsOn) && (
                 <View style={styles.managementRow}>
                   <StyledText
                     style={[styles.managementLabel, { color: textColor }]}
@@ -547,7 +185,13 @@ const SubscriptionPlanScreen = () => {
                   <StyledText
                     style={[styles.managementValue, { color: textColor }]}
                     variant="bodyMedium"
-                    children={new Date(currentSubscription.renewsOn).toLocaleDateString()}
+                    children={
+                      currentSubscription.isTrialing && currentSubscription.trialEndDate
+                        ? new Date(currentSubscription.trialEndDate).toLocaleDateString()
+                        : currentSubscription.renewsOn
+                          ? new Date(currentSubscription.renewsOn).toLocaleDateString()
+                          : "N/A"
+                    }
                   />
                 </View>
               )}
@@ -592,7 +236,7 @@ const SubscriptionPlanScreen = () => {
                     <StyledText
                       style={[styles.managementButtonText, { color: tintColor }]}
                       variant="bodyMedium"
-                      children="Update Payment Method"
+                      children="Update Payment"
                     />
                   </>
                 )}

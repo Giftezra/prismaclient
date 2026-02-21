@@ -1,4 +1,4 @@
-import { SignUpScreenProps } from "../interfaces/AuthInterface";
+import { SignUpScreenProps, BusinessAddress } from "../interfaces/AuthInterface";
 import { RootState, useAppDispatch, useAppSelector } from "../store/main_store";
 import {
   setSignUpData,
@@ -31,7 +31,10 @@ const useOnboarding = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   /* Handle the collection of the users data to create an account */
-  const collectSignupData = (field: string, value: string | boolean) => {
+  const collectSignupData = (
+    field: keyof SignUpScreenProps,
+    value: string | boolean | BusinessAddress | undefined
+  ) => {
     dispatch(setSignUpData({ field, value }));
   };
 

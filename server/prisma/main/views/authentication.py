@@ -3,7 +3,11 @@ from rest_framework.permissions import AllowAny
 from ..serializer import UserSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
-from ..models import User, Address, LoyaltyProgram
+from datetime import timedelta
+
+from django.utils import timezone
+
+from ..models import User, Address, LoyaltyProgram, Partner, Promotions, Referral, ReferralAttribution
 from ..serializer import CustomTokenObtainPairSerializer
 from rest_framework.response import Response
 from rest_framework import status
@@ -33,22 +37,52 @@ class AuthenticationView(CreateAPIView):
     def register(self, request):
         try:
             data = request.data.get('credentials')
-            referral_code = data.get('referred_code', None)
+            referral_code = data.get('referred_code') or data.get('referredCode')
             is_fleet_owner = data.get('isFleetOwner', False)
+            is_dealership = data.get('isDealership', False)
+            business_name = data.get('business_name') or data.get('businessName', '').strip()
+            business_address = data.get('business_address') or data.get('businessAddress')
 
-            print(data)
-            print(referral_code)
-            print(is_fleet_owner)
-            
-            # Handle referral if code provided
-            referred_by = None
+            if is_fleet_owner or is_dealership:
+                if not business_name:
+                    return Response(
+                        {'error': 'Business name is required when signing up as a fleet owner or dealership'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                if not business_address or not isinstance(business_address, dict):
+                    return Response(
+                        {'error': 'Business address is required when signing up as a fleet owner or dealership'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                addr = business_address
+                if not addr.get('address') or not addr.get('city') or not addr.get('country'):
+                    return Response(
+                        {'error': 'Please provide a complete business address (address, city, country)'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            # Resolve referral code: Partner first (DP prefix), then User. Prevent self-referral.
+            referred_by_user = None
+            referrer_partner = None
             if referral_code:
-                try:
-                    referrer = User.objects.get(referral_code=referral_code)
-                    referred_by = referrer
-                except User.DoesNotExist:
-                    return Response({'error': 'Invalid referral code'}, status=status.HTTP_400_BAD_REQUEST)
-            
+                referral_code = str(referral_code).strip().upper()
+                # Try Partner first (codes start with DP)
+                if referral_code.startswith('DP'):
+                    try:
+                        referrer_partner = Partner.objects.get(referral_code=referral_code)
+                        if referrer_partner.user.email.lower() == data.get('email', '').strip().lower():
+                            return Response({'error': 'You cannot use your own referral code'}, status=status.HTTP_400_BAD_REQUEST)
+                    except Partner.DoesNotExist:
+                        return Response({'error': 'Invalid referral code'}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    try:
+                        referrer_user = User.objects.get(referral_code=referral_code)
+                        if referrer_user.email.lower() == data.get('email', '').strip().lower():
+                            return Response({'error': 'You cannot use your own referral code'}, status=status.HTTP_400_BAD_REQUEST)
+                        referred_by_user = referrer_user
+                    except User.DoesNotExist:
+                        return Response({'error': 'Invalid referral code'}, status=status.HTTP_400_BAD_REQUEST)
+
             # Call the user model to create a new user
             user = User.objects.create_user(
                 name=data['name'],
@@ -56,12 +90,60 @@ class AuthenticationView(CreateAPIView):
                 phone=data['phone'],
                 password=data['password']
             )
-            
-            # Set fleet owner status and referral relationship
+
+            # Set fleet owner status and user-to-user referral
             user.is_fleet_owner = is_fleet_owner
-            if referred_by:
-                user.referred_by = referred_by
+            if referred_by_user:
+                user.referred_by = referred_by_user
             user.save()
+
+            if referred_by_user:
+                Referral.objects.get_or_create(referrer=referred_by_user, referred=user)
+
+            # Update fleet with business name and create first Branch if business data provided
+            if is_fleet_owner and (business_name or business_address):
+                user.create_fleet(business_name=business_name or None, business_address=business_address)
+
+            # Create Partner if dealership
+            if is_dealership:
+                partner_kwargs = {
+                    'user': user,
+                    'partner_type': 'dealership',
+                    'business_name': business_name or f"{user.name}'s Dealership",
+                    'is_active': True,
+                }
+                if business_address and isinstance(business_address, dict):
+                    from decimal import Decimal
+                    partner_kwargs['business_address'] = business_address.get('address') or ''
+                    partner_kwargs['business_postcode'] = business_address.get('post_code') or ''
+                    partner_kwargs['business_city'] = business_address.get('city') or ''
+                    partner_kwargs['business_country'] = business_address.get('country') or ''
+                    if business_address.get('latitude') is not None:
+                        partner_kwargs['business_latitude'] = Decimal(str(business_address['latitude']))
+                    if business_address.get('longitude') is not None:
+                        partner_kwargs['business_longitude'] = Decimal(str(business_address['longitude']))
+                partner = Partner.objects.create(**partner_kwargs)
+                # Create PartnerMetricsCache for new partner
+                from ..models import PartnerMetricsCache
+                PartnerMetricsCache.objects.create(partner=partner)
+
+            # Create ReferralAttribution if referred by partner (after user exists)
+            if referrer_partner:
+                ReferralAttribution.objects.create(
+                    referred_user=user,
+                    partner=referrer_partner,
+                    source='partner',
+                    expires_at=timezone.now() + timedelta(days=60)
+                )
+                Promotions.objects.create(
+                    user=user,
+                    title="Partner Referral Discount",
+                    description=f"40% off washes for 60 days (referred by {referrer_partner.business_name})",
+                    discount_percentage=40,
+                    valid_until=(timezone.now() + timedelta(days=60)).date(),
+                    is_active=True,
+                    terms_conditions="Valid for 60 days from signup. Partner referral. Cannot be combined with other offers.",
+                )
             # Send the welcome and promotional emails to the user even if they have not allowed them as this is a new user
             send_welcome_email.apply_async(args=[user.email], countdown=60)
             send_promotional_email.apply_async(args=[user.email, user.name], countdown=300)
@@ -89,6 +171,18 @@ class AuthenticationView(CreateAPIView):
                         'city': managed_branch_obj.city,
                     }
             
+            # Partner profile data for dealership users
+            is_dealership = False
+            partner_referral_code = None
+            partner_business_name = None
+            try:
+                partner_profile = user.partner_profile
+                is_dealership = True
+                partner_referral_code = partner_profile.referral_code
+                partner_business_name = partner_profile.business_name
+            except Partner.DoesNotExist:
+                pass
+
             return Response({
                 'message': 'Welcome to PRISMA VALLET. Your account has been created successfully.\n\nPlease check your email for further updates',
                 'user': {
@@ -97,6 +191,9 @@ class AuthenticationView(CreateAPIView):
                     'phone': user.phone,
                     'is_fleet_owner': user.is_fleet_owner,
                     'is_branch_admin': user.is_branch_admin,
+                    'is_dealership': is_dealership,
+                    'partner_referral_code': partner_referral_code,
+                    'business_name': partner_business_name,
                     'managed_branch': managed_branch,
                     'address': {
                         'address': address.address if address else None,

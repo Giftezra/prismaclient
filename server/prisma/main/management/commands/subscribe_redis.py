@@ -199,7 +199,7 @@ class Command(BaseCommand):
                 send_push_notification.delay(
                     booking.user.id,
                     "Service Completed! ✨",
-                    f"Your valet service has been completed! Thank you for choosing PRISMA VALET. Total: {self.get_currency_symbol(booking.user.id)}{booking.total_amount}",
+                    f"Your valet service has been completed! Thank you for choosing PRISMA VALET.",
                     {"type": "cleaning_completed", "booking_reference": booking.booking_reference, "screen": "service_history"},
                 )
                 self.create_notification(

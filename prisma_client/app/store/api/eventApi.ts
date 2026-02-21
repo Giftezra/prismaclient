@@ -167,9 +167,13 @@ const createBookingApi = createApi({
      * }
      */
     fetchPaymentSheetDetails: builder.mutation<
-      PaymentSheetResponse & {
+      (PaymentSheetResponse & {
         paymentIntentId: string;
         booking_reference: string;
+      }) & {
+        free_booking?: boolean;
+        success?: boolean;
+        appointment_id?: string;
       },
       {
         amount: number;
@@ -283,13 +287,15 @@ const createBookingApi = createApi({
     }),
 
     /**
-     * Check if user can use a free Quick Sparkle this month
+     * Check if user can use a free Quick Sparkle (loyalty or partner referral)
      * ARGS : void
      * RESPONSE : {
      *   can_use_free_wash: boolean
      *   remaining_quick_sparkles: number
      *   total_monthly_limit: number
      *   resets_in_days: number
+     *   free_wash_source?: 'loyalty' | 'partner'
+     *   partner_free_wash?: boolean
      * }
      */
     checkFreeWash: builder.query<
@@ -298,6 +304,8 @@ const createBookingApi = createApi({
         remaining_quick_sparkles: number;
         total_monthly_limit: number;
         resets_in_days: number;
+        free_wash_source?: "loyalty" | "partner";
+        partner_free_wash?: boolean;
       },
       void
     >({
@@ -322,6 +330,7 @@ export const {
   useGetPaymentMethodsQuery,
   useDeletePaymentMethodMutation,
   useCheckFreeWashQuery,
+  useLazyCheckFreeWashQuery,
   useConfirmPaymentIntentMutation,
 } = createBookingApi;
 export default createBookingApi;

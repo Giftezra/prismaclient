@@ -27,6 +27,7 @@ import { useAppSelector, RootState } from "@/app/store/main_store";
 import ReferralSection from "@/app/components/dashboard/ReferralSection";
 import FleetDashboardScreen from "./FleetDashboardScreen";
 import BranchAdminDashboardScreen from "./BranchAdminDashboardScreen";
+import DealershipPartnerDashboardScreen from "@/app/main/(tabs)/dashboard/DealershipPartnerDashboardScreen";
 const image = require("@/assets/images/user_image.jpg");
 const vehicleImage = require("@/assets/images/car.jpg");
 
@@ -105,7 +106,9 @@ const DashboardScreen = () => {
   };
 
   // Route to appropriate dashboard based on user type (AFTER all hooks)
-  if (user?.is_fleet_owner) {
+  if (user?.is_dealership || user?.partner_referral_code) {
+    return <DealershipPartnerDashboardScreen />;
+  } else if (user?.is_fleet_owner) {
     return <FleetDashboardScreen />;
   } else if (user?.is_branch_admin) {
     return <BranchAdminDashboardScreen />;
@@ -156,7 +159,7 @@ const DashboardScreen = () => {
               variant="bodyMedium"
               style={[styles.appointmentReg, { color: textColor }]}
             >
-              {appointment.vehicle.licence}
+              {appointment.vehicle.licence?.toUpperCase() ?? ""}
             </StyledText>
             <View
               style={[

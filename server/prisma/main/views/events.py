@@ -1,8 +1,8 @@
-﻿from rest_framework.views import APIView
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from main.models import BookedAppointment, BookedAppointmentImage, ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicle, Promotions, PaymentTransaction, RefundRecord, User, LoyaltyProgram, Branch
+from main.models import BookedAppointment, BookedAppointmentImage, ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicle, Promotions, PaymentTransaction, RefundRecord, User, LoyaltyProgram, Branch, ReferralAttribution
 import uuid
 import stripe
 from django.conf import settings
@@ -103,6 +103,10 @@ class EventsView(APIView):
             if not promotion_id or not booking_reference:
                 return Response({'error': 'promotion_id and booking_reference are required'}, 
                               status=status.HTTP_400_BAD_REQUEST)
+            try:
+                promotion_id = int(promotion_id)
+            except (TypeError, ValueError):
+                return Response({'error': 'promotion_id must be a number'}, status=status.HTTP_400_BAD_REQUEST)
             
             # Get the promotion
             try:
@@ -494,8 +498,8 @@ class EventsView(APIView):
                             city=branch.city or '',
                             country=branch.country or '',
                             defaults={
-                                'latitude': None,
-                                'longitude': None
+                                'latitude': branch.latitude,
+                                'longitude': branch.longitude
                             }
                         )
                         if created:
@@ -536,18 +540,34 @@ class EventsView(APIView):
                 logger.error(f"Error converting start time: {str(e)}")
                 raise e
             
-            # Check if free Quick Sparkle should be applied
+            # Check if free Quick Sparkle should be applied (loyalty or partner referral)
             applied_free_wash = booking_data.get('applied_free_quick_sparkle', False)
-            if applied_free_wash and service_type.name == 'Quick Sparkle':
+            if applied_free_wash and service_type.name == 'The Quick Sparkle':
+                loyalty_used = False
                 try:
                     loyalty = LoyaltyProgram.objects.get(user=request.user)
                     if loyalty.can_use_free_quick_sparkle():
                         loyalty.use_free_quick_sparkle()
-                        logger.info(f"Free Quick Sparkle applied for user {request.user.id}")
+                        loyalty_used = True
+                        logger.info(f"Free Quick Sparkle applied for user {request.user.id} (loyalty)")
                     else:
                         logger.warning(f"User {request.user.id} tried to use free wash but limit reached")
                 except LoyaltyProgram.DoesNotExist:
-                    logger.error(f"Loyalty program not found for user {request.user.id}")
+                    pass
+
+                if not loyalty_used:
+                    try:
+                        attr = ReferralAttribution.objects.get(
+                            referred_user=request.user, source='partner'
+                        )
+                        if not attr.partner_free_wash_used and (
+                            attr.expires_at is None or attr.expires_at > timezone.now()
+                        ):
+                            attr.partner_free_wash_used = True
+                            attr.save()
+                            logger.info(f"Free Quick Sparkle applied for user {request.user.id} (partner referral)")
+                    except ReferralAttribution.DoesNotExist:
+                        pass
             
             # Create the booking in the database without detailer
             try:
@@ -668,33 +688,48 @@ class EventsView(APIView):
 
 
     def check_free_wash(self, request):
-        """Check if user can use a free basic wash this month"""
+        """Check if user can use a free basic wash - loyalty (Platinum) or partner referral"""
         try:
+            from datetime import timedelta
+
             user = request.user
-            loyalty = LoyaltyProgram.objects.get(user=user)
-            
-            can_use = loyalty.can_use_free_quick_sparkle()
-            remaining_quick_sparkles = loyalty.get_remaining_free_quick_sparkles()
-            
-            # Calculate days until reset
-            if loyalty.free_quick_sparkle_reset_date:
-                from datetime import timedelta
-                reset_date = loyalty.free_quick_sparkle_reset_date + timedelta(days=30)
-                days_until_reset = (reset_date - timezone.now().date()).days
-            else:
-                days_until_reset = 30
-            
+            can_use_loyalty = False
+            remaining_quick_sparkles = 0
+            total_monthly_limit = 0
+            days_until_reset = 30
+
+            try:
+                loyalty = LoyaltyProgram.objects.get(user=user)
+                can_use_loyalty = loyalty.can_use_free_quick_sparkle()
+                remaining_quick_sparkles = loyalty.get_remaining_free_quick_sparkles()
+                total_monthly_limit = loyalty.get_free_wash_limit()
+                if loyalty.free_quick_sparkle_reset_date:
+                    reset_date = loyalty.free_quick_sparkle_reset_date + timedelta(days=30)
+                    days_until_reset = (reset_date - timezone.now().date()).days
+            except LoyaltyProgram.DoesNotExist:
+                pass
+
+            can_use_partner = False
+            try:
+                attr = ReferralAttribution.objects.get(referred_user=user, source='partner')
+                if not attr.partner_free_wash_used and (attr.expires_at is None or attr.expires_at > timezone.now()):
+                    can_use_partner = True
+            except ReferralAttribution.DoesNotExist:
+                pass
+
+            can_use = can_use_loyalty or can_use_partner
+            free_wash_source = 'loyalty' if can_use_loyalty else ('partner' if can_use_partner else None)
+            partner_free_wash = can_use_partner
+
             return Response({
                 'can_use_free_wash': can_use,
                 'remaining_quick_sparkles': remaining_quick_sparkles,
-                'total_monthly_limit': loyalty.get_free_wash_limit(),
-                'resets_in_days': days_until_reset
+                'total_monthly_limit': total_monthly_limit,
+                'resets_in_days': days_until_reset,
+                'free_wash_source': free_wash_source,
+                'partner_free_wash': partner_free_wash,
             }, status=status.HTTP_200_OK)
-            
-        except LoyaltyProgram.DoesNotExist:
-            return Response({
-                'error': 'Loyalty program not found'
-            }, status=status.HTTP_404_NOT_FOUND)
+
         except Exception as e:
             return Response({
                 'error': str(e)

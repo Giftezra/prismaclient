@@ -16,9 +16,9 @@ SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
 
 
-ALLOWED_ORIGINS = ['https://1daa-2a02-8084-c80-ea80-50fb-c429-191b-7cb7.ngrok-free.app']        
-CSRF_TRUSTED_ORIGINS = ['https://1daa-2a02-8084-c80-ea80-50fb-c429-191b-7cb7.ngrok-free.app']
-CORS_ALLOWED_ORIGINS = ['https://1daa-2a02-8084-c80-ea80-50fb-c429-191b-7cb7.ngrok-free.app']
+ALLOWED_ORIGINS = ['https://0c60-2a02-8084-c80-ea80-c1fc-2938-23f4-4da1.ngrok-free.app']        
+CSRF_TRUSTED_ORIGINS = ['https://0c60-2a02-8084-c80-ea80-c1fc-2938-23f4-4da1.ngrok-free.app']
+CORS_ALLOWED_ORIGINS = ['https://0c60-2a02-8084-c80-ea80-c1fc-2938-23f4-4da1.ngrok-free.app']
 
 CORS_ALLOW_CREDENTIALS = True
 ALLOWED_HOSTS=['*']
@@ -262,8 +262,11 @@ from decimal import Decimal
 VIN_LOOKUP_PRICE = Decimal(os.getenv('VIN_LOOKUP_PRICE', '3.00'))
 VIN_LOOKUP_ACCESS_DURATION_HOURS = int(os.getenv('VIN_LOOKUP_ACCESS_DURATION_HOURS', '24'))
 
-# Detailer app URL for server-to-server communication
-DETAILER_APP_URL = os.environ.get('DETAILER_APP_URL', 'http://detailer_server:8000')
+# Detailer app URL for server-to-server communication (client -> detailer booking API).
+# Set DETAILER_APP_URL to the detailer app's full base URL so the client can reach it without
+# relying on Docker DNS. Example: https://YOUR_SUBDOMAIN.ngrok-free.app/detailer
+# or https://detailer.yourdomain.com (no trailing slash).
+DETAILER_APP_URL = os.getenv('DETAILER_APP_URL', '').strip() or None
 
 # AWS Configuration (commented out - using local media storage)
 # AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')

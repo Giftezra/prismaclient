@@ -5,21 +5,24 @@ import {
   ScrollView,
   Platform,
   Dimensions,
-  Pressable,
-  Modal,
   TouchableOpacity,
-  TextInput,
   KeyboardAvoidingView,
+  LayoutAnimation,
+  UIManager,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import StyledButton from "../components/helpers/StyledButton";
 import StyledText from "../components/helpers/StyledText";
 import StyledTextInput from "../components/helpers/StyledTextInput";
 import TermsAcceptanceModal from "../components/helpers/TermsAcceptanceModal";
+import AddressSearchInput from "../components/shared/AddressSearchInput";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import useOnboarding from "../app-hooks/useOnboarding";
 import { useAlertContext } from "../contexts/AlertContext";
+
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const { width, height } = Dimensions.get("window");
 
@@ -70,6 +73,35 @@ const OnboardingScreen = () => {
           },
         });
         return;
+      }
+      const needsBusinessData = signUpData.isDealership || signUpData.isFleetOwner;
+      if (needsBusinessData) {
+        if (!signUpData.business_name?.trim()) {
+          setAlertConfig({
+            title: "Business Name Required",
+            message: "Please enter your business name when signing up as a fleet owner or dealership.",
+            type: "error",
+            isVisible: true,
+            onConfirm: () => setIsVisible(false),
+          });
+          return;
+        }
+        const addr = signUpData.business_address;
+        if (
+          !addr ||
+          !addr.address ||
+          !addr.city ||
+          !addr.country
+        ) {
+          setAlertConfig({
+            title: "Business Address Required",
+            message: "Please select your business address when signing up as a fleet owner or dealership.",
+            type: "error",
+            isVisible: true,
+            onConfirm: () => setIsVisible(false),
+          });
+          return;
+        }
       }
       if (signUpData.password !== confirmPassword) {
         setPasswordError("Passwords do not match");
@@ -253,9 +285,15 @@ const OnboardingScreen = () => {
               <View style={styles.fleetOwnerContainer}>
                 <TouchableOpacity
                   style={styles.checkboxContainer}
-                  onPress={() =>
-                    handleSignUpData("isFleetOwner", !signUpData?.isFleetOwner)
-                  }
+                  onPress={() => {
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    const newVal = !signUpData?.isFleetOwner;
+                    handleSignUpData("isFleetOwner", newVal);
+                    if (!newVal && !signUpData?.isDealership) {
+                      handleSignUpData("business_name", undefined);
+                      handleSignUpData("business_address", undefined);
+                    }
+                  }}
                 >
                   <View
                     style={[
@@ -281,6 +319,77 @@ const OnboardingScreen = () => {
                   </View>
                 </TouchableOpacity>
               </View>
+
+              {/* Is Dealership Checkbox */}
+              <View style={styles.fleetOwnerContainer}>
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() => {
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    const newVal = !signUpData?.isDealership;
+                    handleSignUpData("isDealership", newVal);
+                    if (!newVal && !signUpData?.isFleetOwner) {
+                      handleSignUpData("business_name", undefined);
+                      handleSignUpData("business_address", undefined);
+                    }
+                  }}
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      {
+                        borderColor: borderColor,
+                        backgroundColor: signUpData?.isDealership
+                          ? buttonColor
+                          : "transparent",
+                      },
+                    ]}
+                  >
+                    {signUpData?.isDealership && (
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <StyledText
+                      style={[styles.fleetOwnerText, { color: textColor }]}
+                    >
+                      Is this a Dealership?
+                    </StyledText>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Business section - shown when Fleet Owner or Dealership is checked */}
+              {(signUpData?.isDealership || signUpData?.isFleetOwner) && (
+                <View style={styles.businessSection}>
+                  <View style={styles.inputContainer}>
+                    <StyledTextInput
+                      label="Business Name"
+                      placeholder="Enter your business name"
+                      value={signUpData?.business_name || ""}
+                      onChangeText={(text) =>
+                        handleSignUpData("business_name", text)
+                      }
+                      keyboardType="default"
+                      autoCapitalize="words"
+                      style={styles.textInput}
+                      placeholderTextColor={
+                        textColor === "#FFFFFF" ? "#B0B0B0" : "#999999"
+                      }
+                    />
+                  </View>
+                  <View style={styles.inputContainer}>
+                    <AddressSearchInput
+                      label="Business Address"
+                      placeholder="Search for your business address..."
+                      onSelect={(result) =>
+                        handleSignUpData("business_address", result)
+                      }
+                      initialSelectedAddress={signUpData?.business_address ?? null}
+                    />
+                  </View>
+                </View>
+              )}
 
               {/* Terms and Conditions Checkbox */}
               <View style={styles.termsContainer}>
@@ -436,6 +545,10 @@ const styles = StyleSheet.create({
   },
   fleetOwnerContainer: {
     marginBottom: 20,
+  },
+  businessSection: {
+    marginBottom: 20,
+    marginTop: 4,
   },
   fleetOwnerText: {
     fontSize: 14,

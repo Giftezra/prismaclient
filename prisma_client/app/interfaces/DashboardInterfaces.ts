@@ -34,7 +34,6 @@ export interface RecentServicesProps {
   detailers?: DetailerProfileProps[]; // Array for express service support
   valet_type: string;
   service_type: string;
-  tip: number;
   rating: number;
   is_reviewed: boolean;
   booking_reference: string;

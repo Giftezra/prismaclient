@@ -38,7 +38,7 @@ const VehicleCard: React.FC<{
         </View>
         <View style={styles.vehicleDetailsSection}>
           <StyledText children="Licence" variant="labelMedium" />
-          <StyledText children={vehicle.licence} variant="labelMedium" />
+          <StyledText children={vehicle.licence?.toUpperCase() ?? ""} variant="labelMedium" />
         </View>
         <View style={styles.vehicleDetailsSection}>
           <StyledText children="Make" variant="labelMedium" />

@@ -28,6 +28,9 @@ class FleetView(APIView):
         'delete_branch': 'delete_branch',
         'get_vehicle_bookings': 'get_vehicle_bookings',
         'get_branch_admins': 'get_branch_admins',
+        'get_fleet_admins': 'get_fleet_admins',
+        'update_branch_admin': 'update_branch_admin',
+        'remove_branch_admin': 'remove_branch_admin',
     }
     
     def get(self, request, *args, **kwargs):
@@ -100,6 +103,24 @@ class FleetView(APIView):
             if not name:
                 return Response({'error': 'Branch name is required'}, status=status.HTTP_400_BAD_REQUEST)
             
+            # Parse optional latitude and longitude
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
+            if latitude is not None:
+                try:
+                    latitude = Decimal(str(latitude))
+                    if not Decimal('-90') <= latitude <= Decimal('90'):
+                        latitude = None
+                except (TypeError, ValueError):
+                    latitude = None
+            if longitude is not None:
+                try:
+                    longitude = Decimal(str(longitude))
+                    if not Decimal('-180') <= longitude <= Decimal('180'):
+                        longitude = None
+                except (TypeError, ValueError):
+                    longitude = None
+            
             # Create branch
             branch = Branch.objects.create(
                 fleet=fleet,
@@ -107,7 +128,9 @@ class FleetView(APIView):
                 address=address,
                 postcode=postcode,
                 city=city,
-                country=country
+                country=country,
+                latitude=latitude,
+                longitude=longitude,
             )
             
             return Response({
@@ -119,6 +142,8 @@ class FleetView(APIView):
                     'postcode': branch.postcode,
                     'city': branch.city,
                     'country': branch.country,
+                    'latitude': float(branch.latitude) if branch.latitude is not None else None,
+                    'longitude': float(branch.longitude) if branch.longitude is not None else None,
                     'fleet': str(fleet.id),
                 }
             }, status=status.HTTP_201_CREATED)
@@ -160,6 +185,8 @@ class FleetView(APIView):
                     'postcode': branch.postcode,
                     'city': branch.city,
                     'country': branch.country,
+                    'latitude': float(branch.latitude) if branch.latitude is not None else None,
+                    'longitude': float(branch.longitude) if branch.longitude is not None else None,
                     'fleet': str(fleet.id),
                     'vehicle_count': branch.vehicle_count,
                     'admin_count': branch.admin_count,
@@ -504,6 +531,24 @@ class FleetView(APIView):
                 branch.city = request.data.get('city')
             if 'country' in request.data:
                 branch.country = request.data.get('country')
+            if 'latitude' in request.data:
+                lat = request.data.get('latitude')
+                if lat is not None:
+                    try:
+                        lat_val = Decimal(str(lat))
+                        if Decimal('-90') <= lat_val <= Decimal('90'):
+                            branch.latitude = lat_val
+                    except (TypeError, ValueError):
+                        pass
+            if 'longitude' in request.data:
+                lon = request.data.get('longitude')
+                if lon is not None:
+                    try:
+                        lon_val = Decimal(str(lon))
+                        if Decimal('-180') <= lon_val <= Decimal('180'):
+                            branch.longitude = lon_val
+                    except (TypeError, ValueError):
+                        pass
             if 'spend_limit' in request.data:
                 sl = request.data.get('spend_limit')
                 if sl is not None:
@@ -541,6 +586,8 @@ class FleetView(APIView):
                     'postcode': branch.postcode,
                     'city': branch.city,
                     'country': branch.country,
+                    'latitude': float(branch.latitude) if branch.latitude is not None else None,
+                    'longitude': float(branch.longitude) if branch.longitude is not None else None,
                     'spend_limit': float(limit) if limit is not None else None,
                     'spend_limit_period': branch.spend_limit_period,
                     'spent': float(spent),
@@ -713,5 +760,95 @@ class FleetView(APIView):
             
             return Response({'admins': admins_data}, status=status.HTTP_200_OK)
             
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_fleet_admins(self, request):
+        """Get all branch admins for the fleet owner's fleet"""
+        try:
+            if not request.user.is_fleet_owner:
+                return Response({'error': 'Only fleet owners can view fleet admins'}, status=status.HTTP_403_FORBIDDEN)
+            fleet = Fleet.objects.filter(owner=request.user).first()
+            if not fleet:
+                return Response({'error': 'No fleet found for this user'}, status=status.HTTP_404_NOT_FOUND)
+            members = FleetMember.objects.filter(fleet=fleet, role='admin').select_related('user', 'branch')
+            admins_data = []
+            for member in members:
+                admins_data.append({
+                    'id': str(member.user.id),
+                    'name': member.user.name,
+                    'email': member.user.email,
+                    'phone': member.user.phone or '',
+                    'joined_at': member.joined_at.isoformat(),
+                    'branch_id': str(member.branch.id),
+                    'branch_name': member.branch.name,
+                })
+            return Response({'admins': admins_data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def update_branch_admin(self, request):
+        """Update a branch admin (name, phone, optional branch reassignment). Fleet owner only."""
+        try:
+            if not request.user.is_fleet_owner:
+                return Response({'error': 'Only fleet owners can update branch admins'}, status=status.HTTP_403_FORBIDDEN)
+            fleet = Fleet.objects.filter(owner=request.user).first()
+            if not fleet:
+                return Response({'error': 'No fleet found for this user'}, status=status.HTTP_404_NOT_FOUND)
+            admin_id = request.data.get('admin_id')
+            if not admin_id:
+                return Response({'error': 'admin_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                member = FleetMember.objects.get(fleet=fleet, user_id=admin_id, role='admin')
+            except FleetMember.DoesNotExist:
+                return Response({'error': 'Admin not found or does not belong to your fleet'}, status=status.HTTP_404_NOT_FOUND)
+            user = member.user
+            name = request.data.get('name')
+            phone = request.data.get('phone')
+            branch_id = request.data.get('branch_id')
+            if name is not None:
+                user.name = name
+            if phone is not None:
+                user.phone = phone
+            if name is not None or phone is not None:
+                user.save()
+            if branch_id is not None:
+                try:
+                    new_branch = Branch.objects.get(id=branch_id, fleet=fleet)
+                except Branch.DoesNotExist:
+                    return Response({'error': 'Branch not found or does not belong to your fleet'}, status=status.HTTP_404_NOT_FOUND)
+                member.branch = new_branch
+                member.save()
+            return Response({
+                'message': 'Branch admin updated successfully',
+                'admin': {
+                    'id': str(user.id),
+                    'name': user.name,
+                    'email': user.email,
+                    'phone': user.phone or '',
+                    'branch_id': str(member.branch.id),
+                    'branch_name': member.branch.name,
+                }
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def remove_branch_admin(self, request):
+        """Remove a branch admin from the fleet. Fleet owner only."""
+        try:
+            if not request.user.is_fleet_owner:
+                return Response({'error': 'Only fleet owners can remove branch admins'}, status=status.HTTP_403_FORBIDDEN)
+            fleet = Fleet.objects.filter(owner=request.user).first()
+            if not fleet:
+                return Response({'error': 'No fleet found for this user'}, status=status.HTTP_404_NOT_FOUND)
+            admin_id = request.data.get('admin_id') if request.data else request.query_params.get('admin_id')
+            if not admin_id:
+                return Response({'error': 'admin_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                member = FleetMember.objects.get(fleet=fleet, user_id=admin_id, role='admin')
+            except FleetMember.DoesNotExist:
+                return Response({'error': 'Admin not found or does not belong to your fleet'}, status=status.HTTP_404_NOT_FOUND)
+            member.delete()
+            return Response({'message': 'Branch admin removed successfully'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

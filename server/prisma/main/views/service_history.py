@@ -118,7 +118,6 @@ class ServiceHistoryView(APIView):
                         'status': appointment.status,
                         'total_amount': float(appointment.total_amount),
                         'rating': float(appointment.review_rating) if appointment.review_rating else 0.0,
-                        'tip': float(appointment.review_tip) if appointment.review_tip else 0.0,
                         'is_reviewed': appointment.review_rating is not None and appointment.review_rating > 0,
                         'booking_reference': str(appointment.booking_reference),
                     }

@@ -40,7 +40,7 @@ const authSlice = createSlice({
       if (!state.signUpData) {
         state.signUpData = { name: "", email: "", phone: "", password: "" };
       }
-      state.signUpData[field as keyof SignUpScreenProps] = value as never;
+      (state.signUpData as Record<string, unknown>)[field] = value;
     },
 
     refreshTokenSuccess: (state, action) => {

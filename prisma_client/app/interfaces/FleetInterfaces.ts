@@ -5,6 +5,8 @@ export interface BranchProps {
   postcode?: string;
   city?: string;
   country?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   fleet: string; // fleet id
   vehicle_count?: number;
   booking_count?: number;
@@ -172,6 +174,22 @@ export interface BranchAdmin {
   email: string;
   phone: string;
   joined_at: string;
+}
+
+export interface FleetAdmin extends BranchAdmin {
+  branch_id: string;
+  branch_name: string;
+}
+
+export interface FleetAdminsResponse {
+  admins: FleetAdmin[];
+}
+
+export interface UpdateBranchAdminProps {
+  admin_id: string;
+  name?: string;
+  phone?: string;
+  branch_id?: string;
 }
 
 export interface BranchAdminsResponse {

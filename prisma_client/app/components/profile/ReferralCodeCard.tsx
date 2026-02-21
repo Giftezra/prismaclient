@@ -26,14 +26,14 @@ const ReferralCodeCard: React.FC<ReferralCodeCardProps> = ({ referral }) => {
       await Clipboard.setStringAsync(promotionalMessage);
       setCopied(true);
       showSnackbarWithConfig({
-        message: "Referral message copied to clipboard",
+        message: "Referral code copied to clipboard",
         type: "success",
         duration: 3000,
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       showSnackbarWithConfig({
-        message: "Failed to copy referral message",
+        message: "Failed to copy referral code",
         type: "error",
         duration: 3000,
       });
@@ -42,12 +42,8 @@ const ReferralCodeCard: React.FC<ReferralCodeCardProps> = ({ referral }) => {
 
   return (
     <View
-      style={[styles.container, { backgroundColor: cardColor, borderColor }]}
+      style={[styles.container]}
     >
-      <StyledText style={[styles.subtitle, { color: textColor }]}>
-        Get 10% off when friends spend €100+
-      </StyledText>
-
       {/* Referral Code Display */}
       <View style={[styles.codeContainer, { backgroundColor, borderColor }]}>
         <View style={styles.codeRow}>
@@ -79,11 +75,9 @@ export default ReferralCodeCard;
 
 const styles = StyleSheet.create({
   container: {
-    margin: 16,
+    margin: 5,
     marginTop: 8,
     padding: 16,
-    borderRadius: 10,
-    borderWidth: 1,
   },
   subtitle: {
     fontSize: 14,

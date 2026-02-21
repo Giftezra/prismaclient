@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from main.models import (
     User, BookedAppointment, PaymentTransaction, RefundRecord, Address, PendingBooking,
-    Vehicle, ValetType, ServiceType, AddOns, LoyaltyProgram, Branch
+    Vehicle, ValetType, ServiceType, AddOns, LoyaltyProgram, Branch, ReferralAttribution
 )
 from main.utils.branch_spend import get_branch_spend_for_period
 from django.views.decorators.csrf import csrf_exempt
@@ -22,6 +22,341 @@ from decimal import Decimal
 
 # Initialize Stripe with your secret key
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+def create_booking_from_pending(pending_booking):
+    """
+    Create actual BookedAppointment from pending booking data.
+    Shared by PaymentView (free Quick Sparkle) and StripeWebhookView (post-payment).
+    """
+    booking_data = pending_booking.booking_data
+    user = pending_booking.user
+
+    # Extract related objects
+    vehicle_id = booking_data.get('vehicle', {}).get('id') if isinstance(booking_data.get('vehicle'), dict) else booking_data.get('vehicle_id')
+    valet_type_id = booking_data.get('valet_type', {}).get('id') if isinstance(booking_data.get('valet_type'), dict) else booking_data.get('valet_type_id')
+    service_type_id = booking_data.get('service_type', {}).get('id') if isinstance(booking_data.get('service_type'), dict) else booking_data.get('service_type_id')
+    address_id = booking_data.get('address', {}).get('id') if isinstance(booking_data.get('address'), dict) else booking_data.get('address_id')
+
+    vehicle = Vehicle.objects.get(id=vehicle_id) if vehicle_id else None
+    valet_type = ValetType.objects.get(id=valet_type_id)
+    service_type = ServiceType.objects.get(id=service_type_id)
+
+    # Try to get Address by ID first (for regular addresses)
+    try:
+        address = Address.objects.get(id=address_id)
+    except (Address.DoesNotExist, ValueError):
+        # If not found, check if it's a branch ID (UUID)
+        try:
+            branch_uuid = uuid.UUID(str(address_id))
+            branch = Branch.objects.get(id=branch_uuid)
+            # Create or get Address from branch data
+            address, created = Address.objects.get_or_create(
+                user=user,
+                address=branch.address or '',
+                post_code=branch.postcode or '',
+                city=branch.city or '',
+                country=branch.country or '',
+                defaults={
+                    'latitude': branch.latitude,
+                    'longitude': branch.longitude
+                }
+            )
+        except (Branch.DoesNotExist, ValueError, TypeError) as e:
+            raise ValueError(f"Address with ID {address_id} not found")
+
+    # Parse dates/times
+    date_str = booking_data.get('date') or booking_data.get('appointment_date')
+    appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+    start_time_str = booking_data.get('start_time')
+    start_time = None
+    if start_time_str:
+        try:
+            start_time = datetime.strptime(start_time_str, '%H:%M:%S.%f').time()
+        except Exception:
+            try:
+                start_time = datetime.strptime(start_time_str, '%H:%M:%S').time()
+            except Exception:
+                print(f"Could not parse start_time: {start_time_str}")
+
+    # Calculate amounts
+    subtotal_amount = booking_data.get('subtotal_amount')
+    vat_amount = booking_data.get('vat_amount')
+    vat_rate = booking_data.get('vat_rate', 23.00)
+    total_amount = booking_data.get('total_amount')
+
+    if subtotal_amount is None or vat_amount is None:
+        if total_amount:
+            vat_rate_decimal = vat_rate / 100 if vat_rate else 0.23
+            subtotal_amount = total_amount / (1 + vat_rate_decimal)
+            vat_amount = total_amount - subtotal_amount
+        else:
+            subtotal_amount = 0
+            vat_amount = 0
+
+    # Check if free Quick Sparkle should be applied (loyalty or partner referral)
+    applied_free_wash = booking_data.get('applied_free_quick_sparkle', False)
+    if applied_free_wash and service_type.name == 'The Quick Sparkle':
+        loyalty_used = False
+        try:
+            loyalty = LoyaltyProgram.objects.get(user=user)
+            if loyalty.can_use_free_quick_sparkle():
+                loyalty.use_free_quick_sparkle()
+                loyalty_used = True
+                print(f"Free Quick Sparkle applied for user {user.id} (loyalty)")
+        except LoyaltyProgram.DoesNotExist:
+            pass
+
+        if not loyalty_used:
+            try:
+                attr = ReferralAttribution.objects.get(referred_user=user, source='partner')
+                if not attr.partner_free_wash_used and (attr.expires_at is None or attr.expires_at > timezone.now()):
+                    attr.partner_free_wash_used = True
+                    attr.save()
+                    print(f"Free Quick Sparkle applied for user {user.id} (partner referral)")
+            except ReferralAttribution.DoesNotExist:
+                pass
+
+    # Create booking
+    appointment = BookedAppointment.objects.create(
+        user=user,
+        appointment_date=appointment_date,
+        vehicle=vehicle,
+        valet_type=valet_type,
+        service_type=service_type,
+        detailer=None,  # Will be assigned by detailer app
+        address=address,
+        status='pending',
+        total_amount=total_amount,
+        subtotal_amount=subtotal_amount,
+        vat_amount=vat_amount,
+        vat_rate=vat_rate,
+        start_time=start_time,
+        duration=booking_data.get('duration'),
+        special_instructions=booking_data.get('special_instructions'),
+        booking_reference=pending_booking.booking_reference
+    )
+
+    # Add add-ons
+    addons_data = booking_data.get('addons', [])
+    if addons_data:
+        addon_ids = []
+        for addon in addons_data:
+            if isinstance(addon, dict):
+                addon_ids.append(addon.get('id'))
+            else:
+                addon_ids.append(addon)
+        addons = AddOns.objects.filter(id__in=addon_ids)
+        appointment.add_ons.set(addons)
+        appointment.save()
+
+    # Send push notification
+    send_push_notification.delay(
+        user.id,
+        "Booking Confirmed! 🎉",
+        f"Your booking for {appointment_date} has been confirmed. Payment received!",
+        "booking_confirmed"
+    )
+
+    print(f"Created booking {appointment.id} from pending booking {pending_booking.id}")
+    return appointment
+
+
+def build_detailer_payload_from_booking_data(booking_data, user, booking_reference):
+    """
+    Build the flat payload expected by the detailer app from client booking_data.
+    Used when detailer_booking_data was not provided by the frontend.
+    """
+    if not booking_data or not isinstance(booking_data, dict):
+        return {}
+
+    # Resolve address to a dict with address, post_code, city, country, latitude, longitude
+    address_obj = booking_data.get('address')
+    address_id = None
+    if isinstance(address_obj, dict):
+        if 'address' in address_obj or 'city' in address_obj:
+            addr = address_obj
+        else:
+            address_id = address_obj.get('id')
+    else:
+        address_id = booking_data.get('address_id')
+
+    if address_id and not (isinstance(address_obj, dict) and ('address' in address_obj or 'city' in address_obj)):
+        try:
+            address = Address.objects.get(id=address_id)
+            addr = {
+                'address': address.address or '',
+                'post_code': getattr(address, 'post_code', None) or '',
+                'city': address.city or '',
+                'country': address.country or '',
+                'latitude': address.latitude,
+                'longitude': address.longitude,
+            }
+        except (Address.DoesNotExist, ValueError):
+            try:
+                branch = Branch.objects.get(id=uuid.UUID(str(address_id)))
+                addr = {
+                    'address': branch.address or '',
+                    'post_code': getattr(branch, 'postcode', None) or getattr(branch, 'post_code', None) or '',
+                    'city': branch.city or '',
+                    'country': branch.country or '',
+                    'latitude': branch.latitude,
+                    'longitude': branch.longitude,
+                }
+            except (Branch.DoesNotExist, ValueError, TypeError):
+                addr = {'address': '', 'post_code': '', 'city': '', 'country': '', 'latitude': None, 'longitude': None}
+    elif isinstance(address_obj, dict):
+        addr = {
+            'address': address_obj.get('address', ''),
+            'post_code': address_obj.get('post_code', '') or address_obj.get('postcode', ''),
+            'city': address_obj.get('city', ''),
+            'country': address_obj.get('country', ''),
+            'latitude': address_obj.get('latitude'),
+            'longitude': address_obj.get('longitude'),
+        }
+    else:
+        addr = {'address': '', 'post_code': '', 'city': '', 'country': '', 'latitude': None, 'longitude': None}
+
+    # Vehicle
+    vehicle = booking_data.get('vehicle') if isinstance(booking_data.get('vehicle'), dict) else {}
+    valet_type = booking_data.get('valet_type')
+    valet_type_name = valet_type.get('name', '') if isinstance(valet_type, dict) else ''
+    service_type = booking_data.get('service_type')
+    service_type_name = service_type.get('name', '') if isinstance(service_type, dict) else ''
+
+    # Addons: list of names
+    addons_raw = booking_data.get('addons', [])
+    addon_names = []
+    for a in addons_raw:
+        if isinstance(a, dict):
+            if a.get('name'):
+                addon_names.append(a['name'])
+        else:
+            addon_names.append(str(a))
+    # If we only have IDs, resolve names from AddOns
+    if not addon_names and addons_raw:
+        addon_ids = [a.get('id') if isinstance(a, dict) else a for a in addons_raw]
+        addon_ids = [x for x in addon_ids if x is not None]
+        if addon_ids:
+            addon_names = list(AddOns.objects.filter(id__in=addon_ids).values_list('name', flat=True))
+
+    # start_time + duration -> end_time
+    start_time_str = booking_data.get('start_time', '00:00:00')
+    duration_minutes = booking_data.get('duration') or 0
+    try:
+        try:
+            start_dt = datetime.strptime(start_time_str, '%H:%M:%S.%f')
+        except ValueError:
+            start_dt = datetime.strptime(start_time_str, '%H:%M:%S')
+        end_dt = start_dt + timedelta(minutes=duration_minutes)
+        end_time_str = end_dt.strftime('%H:%M:%S.%f')[:-3]
+    except Exception:
+        end_time_str = start_time_str
+
+    date_str = booking_data.get('date') or booking_data.get('appointment_date', '')
+    total_amount = booking_data.get('total_amount', 0)
+    if total_amount is not None:
+        try:
+            total_amount = float(total_amount)
+        except (TypeError, ValueError):
+            total_amount = 0
+
+    # Loyalty (optional)
+    loyalty_tier = 'bronze'
+    loyalty_benefits = []
+    try:
+        loyalty = LoyaltyProgram.objects.get(user=user)
+        loyalty_tier = getattr(loyalty, 'current_tier', 'bronze') or 'bronze'
+        benefits = loyalty.get_tier_benefits() if hasattr(loyalty, 'get_tier_benefits') else {}
+        loyalty_benefits = benefits.get('free_service', []) or []
+    except LoyaltyProgram.DoesNotExist:
+        pass
+
+    return {
+        'booking_reference': booking_reference,
+        'service_type': service_type_name,
+        'client_name': getattr(user, 'name', '') or '',
+        'client_phone': getattr(user, 'phone', '') or '',
+        'vehicle_registration': vehicle.get('licence', '') or '',
+        'vehicle_make': vehicle.get('make', '') or '',
+        'vehicle_model': vehicle.get('model', '') or '',
+        'vehicle_color': vehicle.get('color', '') or '',
+        'vehicle_year': vehicle.get('year'),
+        'address': addr.get('address', ''),
+        'city': (addr.get('city') or '').strip(),
+        'postcode': addr.get('post_code', '') or addr.get('postcode', ''),
+        'country': (addr.get('country') or '').strip(),
+        'latitude': addr.get('latitude'),
+        'longitude': addr.get('longitude'),
+        'valet_type': valet_type_name,
+        'addons': addon_names,
+        'special_instructions': booking_data.get('special_instructions', '') or '',
+        'total_amount': total_amount,
+        'status': booking_data.get('status', 'pending'),
+        'booking_date': date_str,
+        'start_time': start_time_str,
+        'end_time': end_time_str,
+        'loyalty_tier': loyalty_tier,
+        'loyalty_benefits': loyalty_benefits,
+        'is_express_service': booking_data.get('is_express_service', False),
+    }
+
+
+def send_booking_to_detailer(pending_booking, booking):
+    """
+    Send booking data to detailer app after payment validation.
+    Shared by PaymentView (free Quick Sparkle) and StripeWebhookView.
+    """
+    import requests
+
+    detailer_data = pending_booking.detailer_booking_data
+    if not detailer_data or not isinstance(detailer_data, dict):
+        detailer_data = build_detailer_payload_from_booking_data(
+            pending_booking.booking_data,
+            pending_booking.user,
+            pending_booking.booking_reference,
+        )
+    if not detailer_data:
+        print("ERROR: No detailer payload available for send_booking_to_detailer")
+        return False
+
+    # Add booking_reference to detailer data if not present
+    if 'booking_reference' not in detailer_data:
+        detailer_data['booking_reference'] = pending_booking.booking_reference
+
+    # Get detailer app URL from settings
+    detailer_app_url = getattr(settings, 'DETAILER_APP_URL', None)
+    if not detailer_app_url:
+        # Try to construct from API_CONFIG if available
+        detailer_app_url = getattr(settings, 'API_CONFIG', {}).get('detailerAppUrl')
+
+    if not detailer_app_url:
+        print("ERROR: DETAILER_APP_URL not configured in settings")
+        return False
+
+    try:
+        base = (detailer_app_url or "").rstrip("/")
+        url = f"{base}/api/v1/booking/create_booking/"
+        response = requests.post(
+            url,
+            json=detailer_data,
+            headers={'Content-Type': 'application/json'},
+            timeout=30
+        )
+
+        if response.status_code in [200, 201]:
+            print(f"Successfully sent booking {pending_booking.booking_reference} to detailer app")
+            return True
+        else:
+            print(f"Failed to send booking to detailer app: {response.status_code} - {response.text}")
+            return False
+
+    except Exception as e:
+        print(f"Error sending booking to detailer app: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 class PaymentView(APIView):
@@ -61,24 +396,12 @@ class PaymentView(APIView):
             booking_data = request.data.get('booking_data')
             detailer_booking_data = request.data.get('detailer_booking_data')
             
-            # Check if this is a tip payment (minimal booking_data with is_tip flag)
-            # Check both in booking_data and request.data for flexibility
-            is_tip_payment = False
-            if booking_data and isinstance(booking_data, dict):
-                is_tip_payment = booking_data.get('is_tip', False)
-            # Also check request.data directly as fallback
-            if not is_tip_payment:
-                is_tip_payment = request.data.get('is_tip', False)
-            
             # Generate booking reference
             booking_reference = request.data.get('booking_reference')
+            if not booking_reference and booking_data and isinstance(booking_data, dict):
+                booking_reference = booking_data.get('booking_reference')
             if not booking_reference:
-                # For tip payments, try to get from booking_data
-                if booking_data and isinstance(booking_data, dict):
-                    booking_reference = booking_data.get('booking_reference')
-                if not booking_reference:
-                    # Generate unique booking reference
-                    booking_reference = f"APT{int(time.time() * 1000)}{str(uuid.uuid4())[:8].upper()}"
+                booking_reference = f"APT{int(time.time() * 1000)}{str(uuid.uuid4())[:8].upper()}"
             
             # Get amount from request or booking data
             amount = request.data.get('amount', 0)
@@ -88,20 +411,65 @@ class PaymentView(APIView):
                     if amount:
                         amount = int(float(amount) * 100)  # Convert to cents
             
-            # For tip payments, booking_data is optional but should contain minimal info
-            # For regular payments, booking_data is required
-            if not is_tip_payment and not booking_data:
+            if not booking_data:
                 return Response(
                     {'error': 'booking_data is required'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
             if amount == 0:
+                # Handle free Quick Sparkle (loyalty or partner referral) - no Stripe payment needed
+                if booking_data and isinstance(booking_data, dict):
+                    applied_free = booking_data.get('applied_free_quick_sparkle', False)
+                    total_amount = booking_data.get('total_amount', 0)
+                    if applied_free and (total_amount == 0 or total_amount == 0.0):
+                        service_type_data = booking_data.get('service_type', {})
+                        service_name = service_type_data.get('name', '') if isinstance(service_type_data, dict) else ''
+                        if service_name == 'The Quick Sparkle':
+                            user = User.objects.get(id=request.user.id)
+                            # Validate free wash eligibility
+                            can_use = False
+                            try:
+                                loyalty = LoyaltyProgram.objects.get(user=user)
+                                if loyalty.can_use_free_quick_sparkle():
+                                    can_use = True
+                            except LoyaltyProgram.DoesNotExist:
+                                pass
+                            if not can_use:
+                                try:
+                                    attr = ReferralAttribution.objects.get(
+                                        referred_user=user, source='partner'
+                                    )
+                                    if not attr.partner_free_wash_used and (
+                                        attr.expires_at is None or attr.expires_at > timezone.now()
+                                    ):
+                                        can_use = True
+                                except ReferralAttribution.DoesNotExist:
+                                    pass
+                            if can_use:
+                                expires_at = timezone.now() + timedelta(hours=24)
+                                pending_booking = PendingBooking.objects.create(
+                                    booking_reference=booking_reference,
+                                    user=user,
+                                    booking_data=booking_data,
+                                    detailer_booking_data=detailer_booking_data or build_detailer_payload_from_booking_data(booking_data, user, booking_reference),
+                                    payment_status='succeeded',
+                                    expires_at=expires_at
+                                )
+                                booking = create_booking_from_pending(pending_booking)
+                                send_booking_to_detailer(pending_booking, booking)
+                                return Response({
+                                    'free_booking': True,
+                                    'booking_reference': booking_reference,
+                                    'success': True,
+                                    'appointment_id': str(booking.id),
+                                }, status=status.HTTP_200_OK)
+
                 return Response(
-                    {'error': 'Amount is required'}, 
+                    {'error': 'Amount is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             # Get country for currency setup
             try:
                 # Try to get address from booking data or user's addresses
@@ -160,22 +528,17 @@ class PaymentView(APIView):
                                 status=status.HTTP_403_FORBIDDEN,
                             )
             
-            # For tip payments, skip creating pending booking (booking already exists)
-            pending_booking = None
-            if not is_tip_payment:
-                # Create pending booking (expires in 24 hours)
-                expires_at = timezone.now() + timedelta(hours=24)
-                pending_booking = PendingBooking.objects.create(
-                    booking_reference=booking_reference,
-                    user=user,
-                    booking_data=booking_data,
-                    detailer_booking_data=detailer_booking_data or booking_data,
-                    payment_status='pending',
-                    expires_at=expires_at
-                )
-                print(f"Created pending booking: {pending_booking.id} with reference: {booking_reference}")
-            else:
-                print(f"Tip payment for booking reference: {booking_reference}")
+            # Create pending booking (expires in 24 hours)
+            expires_at = timezone.now() + timedelta(hours=24)
+            pending_booking = PendingBooking.objects.create(
+                booking_reference=booking_reference,
+                user=user,
+                booking_data=booking_data,
+                detailer_booking_data=detailer_booking_data or build_detailer_payload_from_booking_data(booking_data, user, booking_reference),
+                payment_status='pending',
+                expires_at=expires_at
+            )
+            print(f"Created pending booking: {pending_booking.id} with reference: {booking_reference}")
             
             # Get or create Stripe customer
             if hasattr(user, 'stripe_customer_id') and user.stripe_customer_id:
@@ -200,11 +563,8 @@ class PaymentView(APIView):
                 'booking_reference': booking_reference,
             }
             
-            # For tip payments, don't include pending_booking_id
-            if not is_tip_payment and pending_booking:
+            if pending_booking:
                 payment_intent_metadata['pending_booking_id'] = str(pending_booking.id)
-            else:
-                payment_intent_metadata['is_tip'] = 'true'
             
             payment_intent = stripe.PaymentIntent.create(
                 amount=amount,
@@ -217,7 +577,6 @@ class PaymentView(APIView):
                 metadata=payment_intent_metadata
             )
             
-            # Only update pending booking if it exists (not for tip payments)
             if pending_booking:
                 pending_booking.stripe_payment_intent_id = payment_intent.id
                 pending_booking.payment_status = 'processing'
@@ -286,7 +645,6 @@ class PaymentView(APIView):
         
         Works for all payment types:
         - Regular bookings (transaction_type='payment')
-        - Tips (transaction_type='tip')
         - VIN lookups (transaction_type='vin_lookup')
         - Subscriptions (transaction_type='subscription')
         """
@@ -300,7 +658,7 @@ class PaymentView(APIView):
             print(f"Checking payment confirmation for payment intent: {payment_intent_id}")
             
             # Check if PaymentTransaction exists for this payment intent
-            # Works for all transaction types: payment, tip, vin_lookup, subscription
+            # Works for all transaction types: payment, vin_lookup, subscription
             payment_transaction = PaymentTransaction.objects.filter(
                 stripe_payment_intent_id=payment_intent_id,
                 status='succeeded'
@@ -431,7 +789,7 @@ class StripeWebhookView(APIView):
             if webhook_secret and sig_header:
                 try:
                     event = stripe.Webhook.construct_event(
-                        payload, sig_header, webhook_secret
+                    payload, sig_header, webhook_secret
                     )
                     print(f"Stripe webhook signature verified successfully")
                 except stripe.error.SignatureVerificationError as e:
@@ -469,11 +827,6 @@ class StripeWebhookView(APIView):
                     transaction_type = metadata.get('transaction_type')
                     if transaction_type == 'vin_lookup':
                         return self._handle_vin_lookup_payment(payment_intent, metadata)
-                    
-                    # Check if this is a tip payment
-                    is_tip = metadata.get('is_tip') == 'true'
-                    if is_tip:
-                        return self._handle_tip_payment(payment_intent, metadata)
                     
                     # Get pending booking ID from metadata (new flow)
                     pending_booking_id = metadata.get('pending_booking_id')
@@ -515,7 +868,7 @@ class StripeWebhookView(APIView):
                         pending_booking.save()
                         
                         # Create actual booking on client side
-                        booking = self._create_booking_from_pending(pending_booking)
+                        booking = create_booking_from_pending(pending_booking)
                         print(f"Created booking {booking.id} from pending booking {pending_booking_id}")
                     
                     # Create payment transaction record
@@ -543,7 +896,7 @@ class StripeWebhookView(APIView):
                     
                     # Send booking to detailer app (only if booking was just created)
                     if booking and not existing_transaction:
-                        self._send_booking_to_detailer(pending_booking, booking)
+                        send_booking_to_detailer(pending_booking, booking)
                     
                     # Delete pending booking (cleanup)
                     pending_booking.delete()
@@ -645,81 +998,6 @@ class StripeWebhookView(APIView):
             print(f"Traceback: {traceback.format_exc()}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-    def _handle_tip_payment(self, payment_intent, metadata):
-        """
-        Handle tip payment webhook.
-        Records payment transaction for tip without creating a booking.
-        """
-        from main.models import PaymentTransaction, User, BookedAppointment
-        
-        try:
-            payment_intent_id = payment_intent.get('id')
-            booking_reference = metadata.get('booking_reference')
-            user_id = metadata.get('user_id')
-            
-            print(f"Processing tip payment - Booking Reference: {booking_reference}, User ID: {user_id}")
-            
-            if not booking_reference or not user_id:
-                print(f"Missing required metadata for tip payment")
-                return Response({
-                    'error': 'Missing required metadata (booking_reference or user_id)'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Get user
-            try:
-                user = User.objects.get(id=user_id)
-            except User.DoesNotExist:
-                print(f"User not found: {user_id}")
-                return Response({
-                    'error': 'User not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            # Get booking
-            try:
-                booking = BookedAppointment.objects.get(booking_reference=booking_reference)
-            except BookedAppointment.DoesNotExist:
-                print(f"Booking not found: {booking_reference}")
-                return Response({
-                    'error': 'Booking not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            # Check if transaction already exists (idempotency)
-            existing_transaction = PaymentTransaction.objects.filter(
-                stripe_payment_intent_id=payment_intent_id
-            ).first()
-            
-            if existing_transaction:
-                print(f"Tip payment transaction already exists: {existing_transaction.id}")
-                return Response({'status': 'tip payment already recorded'}, status=status.HTTP_200_OK)
-            
-            # Create payment transaction record for tip
-            payment_method_details = payment_intent.get('payment_method_details', {})
-            card_details = payment_method_details.get('card', {})
-            
-            PaymentTransaction.objects.create(
-                booking=booking,
-                user=user,
-                booking_reference=booking_reference,
-                stripe_payment_intent_id=payment_intent_id,
-                transaction_type='tip',
-                amount=payment_intent.get('amount', 0) / 100,
-                currency=payment_intent.get('currency', 'gbp'),
-                last_4_digits=card_details.get('last4'),
-                card_brand=card_details.get('brand'),
-                status='succeeded'
-            )
-            
-            print(f"Tip payment transaction recorded successfully for booking {booking_reference}")
-            return Response({'status': 'tip payment recorded successfully'}, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            print(f"Error handling tip payment: {str(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
-            return Response({
-                'error': f'Failed to process tip payment: {str(e)}'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _handle_subscription_payment(self, invoice):
         """
@@ -1483,178 +1761,6 @@ class StripeWebhookView(APIView):
             import traceback
             print(f"Traceback: {traceback.format_exc()}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    def _create_booking_from_pending(self, pending_booking):
-        """
-        Create actual BookedAppointment from pending booking data.
-        Reuses logic from BookingView._book_appointment()
-        """
-        booking_data = pending_booking.booking_data
-        user = pending_booking.user
-        
-        # Extract related objects
-        vehicle_id = booking_data.get('vehicle', {}).get('id') if isinstance(booking_data.get('vehicle'), dict) else booking_data.get('vehicle_id')
-        valet_type_id = booking_data.get('valet_type', {}).get('id') if isinstance(booking_data.get('valet_type'), dict) else booking_data.get('valet_type_id')
-        service_type_id = booking_data.get('service_type', {}).get('id') if isinstance(booking_data.get('service_type'), dict) else booking_data.get('service_type_id')
-        address_id = booking_data.get('address', {}).get('id') if isinstance(booking_data.get('address'), dict) else booking_data.get('address_id')
-        
-        vehicle = Vehicle.objects.get(id=vehicle_id) if vehicle_id else None
-        valet_type = ValetType.objects.get(id=valet_type_id)
-        service_type = ServiceType.objects.get(id=service_type_id)
-        
-        # Try to get Address by ID first (for regular addresses)
-        try:
-            address = Address.objects.get(id=address_id)
-        except (Address.DoesNotExist, ValueError):
-            # If not found, check if it's a branch ID (UUID)
-            try:
-                branch_uuid = uuid.UUID(str(address_id))
-                branch = Branch.objects.get(id=branch_uuid)
-                # Create or get Address from branch data
-                address, created = Address.objects.get_or_create(
-                    user=user,
-                    address=branch.address or '',
-                    post_code=branch.postcode or '',
-                    city=branch.city or '',
-                    country=branch.country or '',
-                    defaults={
-                        'latitude': None,
-                        'longitude': None
-                    }
-                )
-            except (Branch.DoesNotExist, ValueError, TypeError) as e:
-                raise ValueError(f"Address with ID {address_id} not found")
-        
-        # Parse dates/times
-        date_str = booking_data.get('date') or booking_data.get('appointment_date')
-        appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        
-        start_time_str = booking_data.get('start_time')
-        start_time = None
-        if start_time_str:
-            try:
-                start_time = datetime.strptime(start_time_str, '%H:%M:%S.%f').time()
-            except:
-                try:
-                    start_time = datetime.strptime(start_time_str, '%H:%M:%S').time()
-                except:
-                    print(f"Could not parse start_time: {start_time_str}")
-        
-        # Calculate amounts
-        subtotal_amount = booking_data.get('subtotal_amount')
-        vat_amount = booking_data.get('vat_amount')
-        vat_rate = booking_data.get('vat_rate', 23.00)
-        total_amount = booking_data.get('total_amount')
-        
-        if subtotal_amount is None or vat_amount is None:
-            if total_amount:
-                vat_rate_decimal = vat_rate / 100 if vat_rate else 0.23
-                subtotal_amount = total_amount / (1 + vat_rate_decimal)
-                vat_amount = total_amount - subtotal_amount
-            else:
-                subtotal_amount = 0
-                vat_amount = 0
-        
-        # Check if free Quick Sparkle should be applied
-        applied_free_wash = booking_data.get('applied_free_quick_sparkle', False)
-        if applied_free_wash and service_type.name == 'The Quick Sparkle':
-            try:
-                loyalty = LoyaltyProgram.objects.get(user=user)
-                if loyalty.can_use_free_quick_sparkle():
-                    loyalty.use_free_quick_sparkle()
-                    print(f"Free Quick Sparkle applied for user {user.id}")
-            except LoyaltyProgram.DoesNotExist:
-                print(f"Loyalty program not found for user {user.id}")
-        
-        # Create booking
-        appointment = BookedAppointment.objects.create(
-            user=user,
-            appointment_date=appointment_date,
-            vehicle=vehicle,
-            valet_type=valet_type,
-            service_type=service_type,
-            detailer=None,  # Will be assigned by detailer app
-            address=address,
-            status='pending',
-            total_amount=total_amount,
-            subtotal_amount=subtotal_amount,
-            vat_amount=vat_amount,
-            vat_rate=vat_rate,
-            start_time=start_time,
-            duration=booking_data.get('duration'),
-            special_instructions=booking_data.get('special_instructions'),
-            booking_reference=pending_booking.booking_reference
-        )
-        
-        # Add add-ons
-        addons_data = booking_data.get('addons', [])
-        if addons_data:
-            addon_ids = []
-            for addon in addons_data:
-                if isinstance(addon, dict):
-                    addon_ids.append(addon.get('id'))
-                else:
-                    addon_ids.append(addon)
-            addons = AddOns.objects.filter(id__in=addon_ids)
-            appointment.add_ons.set(addons)
-            appointment.save()
-        
-        # Send push notification
-        send_push_notification.delay(
-            user.id,
-            "Booking Confirmed! 🎉",
-            f"Your booking for {appointment_date} has been confirmed. Payment received!",
-            "booking_confirmed"
-        )
-        
-        print(f"Created booking {appointment.id} from pending booking {pending_booking.id}")
-        return appointment
-
-    def _send_booking_to_detailer(self, pending_booking, booking):
-        """
-        Send booking data to detailer app after payment validation.
-        Uses HTTP POST instead of direct frontend call.
-        """
-        import requests
-        from django.conf import settings
-        
-        detailer_data = pending_booking.detailer_booking_data
-        
-        # Add booking_reference to detailer data if not present
-        if 'booking_reference' not in detailer_data:
-            detailer_data['booking_reference'] = pending_booking.booking_reference
-        
-        # Get detailer app URL from settings
-        detailer_app_url = getattr(settings, 'DETAILER_APP_URL', None)
-        if not detailer_app_url:
-            # Try to construct from API_CONFIG if available
-            detailer_app_url = getattr(settings, 'API_CONFIG', {}).get('detailerAppUrl')
-        
-        if not detailer_app_url:
-            print("ERROR: DETAILER_APP_URL not configured in settings")
-            return False
-        
-        try:
-            url = f"{detailer_app_url}/api/v1/booking/create_booking/"
-            response = requests.post(
-                url,
-                json=detailer_data,
-                headers={'Content-Type': 'application/json'},
-                timeout=30
-            )
-            
-            if response.status_code in [200, 201]:
-                print(f"Successfully sent booking {pending_booking.booking_reference} to detailer app")
-                return True
-            else:
-                print(f"Failed to send booking to detailer app: {response.status_code} - {response.text}")
-                return False
-                
-        except Exception as e:
-            print(f"Error sending booking to detailer app: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return False
 
     def _handle_refund_updated(self, refund):
         print(f"Handling refund updated: {refund}")

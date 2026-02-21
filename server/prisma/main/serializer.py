@@ -163,6 +163,18 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                     'city': managed_branch_obj.city,
                 }
         
+        # Partner profile for dealership users
+        from main.models import Partner
+        try:
+            partner_profile = user.partner_profile
+            is_dealership = partner_profile is not None
+            partner_referral_code = partner_profile.referral_code if is_dealership else None
+            partner_business_name = partner_profile.business_name if is_dealership else None
+        except Partner.DoesNotExist:
+            is_dealership = False
+            partner_referral_code = None
+            partner_business_name = None
+
         # Add user data to the existing token data
         data.update({
             'user': {
@@ -172,6 +184,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'phone': user.phone,
                 'is_fleet_owner': user.is_fleet_owner,
                 'is_branch_admin': user.is_branch_admin,
+                'is_dealership': is_dealership,
+                'partner_referral_code': partner_referral_code,
+                'business_name': partner_business_name,
                 'managed_branch': managed_branch,
                 'address': {
                     'address': address.address if address else None,

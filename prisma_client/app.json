@@ -69,9 +69,9 @@
       "typedRoutes": true
     },
     "extra": {
-      "detailer_app_url": "https://1daa-2a02-8084-c80-ea80-50fb-c429-191b-7cb7.ngrok-free.app/detailer",
-      "customer_app_url": "https://1daa-2a02-8084-c80-ea80-50fb-c429-191b-7cb7.ngrok-free.app/client",
-      "websocket_url": "wss://1daa-2a02-8084-c80-ea80-50fb-c429-191b-7cb7.ngrok-free.app/ws/client/",  
+      "detailer_app_url": "https://0c60-2a02-8084-c80-ea80-c1fc-2938-23f4-4da1.ngrok-free.app/detailer",
+      "customer_app_url": "https://0c60-2a02-8084-c80-ea80-c1fc-2938-23f4-4da1.ngrok-free.app/client",
+      "websocket_url": "wss://0c60-2a02-8084-c80-ea80-c1fc-2938-23f4-4da1.ngrok-free.app/ws/client/",   
       "googoleApiKeys": "AIzaSyAW00mf-OWgmU_lQ2yLiy3RLWkAVpIdE0U", 
       "stripe": {
         "publishableKey": "pk_test_51S0pCyFO4bA8gRHV8aalwThKMBfWVy3jwM7xZ5cxNfM2QH0AygnOn4WPtEk7kPC3J1BJHLPQ508FpPjYtitk0Qfp00bYRMgL4p"

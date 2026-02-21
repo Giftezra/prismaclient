@@ -205,14 +205,14 @@ const FleetDashboardScreen = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.quickActionButton, { backgroundColor: cardColor, borderColor }]}
-            onPress={() => router.push("/main/(tabs)/dashboard/CreateBranchAdminScreen")}
+            onPress={() => router.push("/main/(tabs)/dashboard/AdminManagementScreen")}
           >
             <Ionicons name="person-add" size={24} color={primaryColor} />
             <StyledText
               variant="bodyMedium"
               style={[styles.quickActionText, { color: textColor }]}
             >
-              Create Admin
+              Manage Admins
             </StyledText>
           </TouchableOpacity>
         </View>

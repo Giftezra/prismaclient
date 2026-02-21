@@ -9,6 +9,15 @@ export default interface AuthState {
   signUpData?: SignUpScreenProps;
 }
 
+export interface BusinessAddress {
+  address: string;
+  post_code: string;
+  city: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface SignUpScreenProps {
   name: string;
   email: string;
@@ -16,6 +25,9 @@ export interface SignUpScreenProps {
   password: string;
   referred_code?: string;
   isFleetOwner?: boolean;
+  isDealership?: boolean;
+  business_name?: string;
+  business_address?: BusinessAddress;
 }
 
 export interface LoginScreenProps {

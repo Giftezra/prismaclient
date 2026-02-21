@@ -1,4 +1,5 @@
 import React, { createContext, useContext } from "react";
+import { InteractionManager } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useAlertContext } from "./AlertContext";
 import { useAppDispatch, AppDispatch } from "../store/main_store";
@@ -70,9 +71,6 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
       const storedRefresh = await SecureStore.getItemAsync("refresh");
       // Check if the user is authenticated.
       if (user && storedAccess && storedRefresh) {
-        console.log('user', user);
-
-
         dispatch(setUser(JSON.parse(user)));
         dispatch(setAccessToken(storedAccess));
         dispatch(setRefreshToken(storedRefresh));
@@ -95,8 +93,12 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
           await SecureStore.deleteItemAsync("user");
           await SecureStore.deleteItemAsync("access");
           await SecureStore.deleteItemAsync("refresh");
-          dispatch(logout());
-          router.replace('/onboarding/SigninScreen')
+          // Defer state update and navigation until after current frame and interactions
+          // to avoid Android crash: getChildDrawingOrder() returned invalid index (react-native-screens)
+          InteractionManager.runAfterInteractions(() => {
+            dispatch(logout());
+            router.replace("/onboarding/SigninScreen");
+          });
         } catch (error) {
           console.error("Error during logout:", error);
         }

@@ -61,7 +61,6 @@ services:
     networks:
       - prisma_shared_net
 
-
   nginx:
     image: nginx:alpine
     restart: unless-stopped
@@ -93,24 +92,6 @@ services:
     depends_on:
       - prisma_redis
     restart: always
-    networks:
-      - prisma_shared_net
-
-  chat_subscriber:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    command: python manage.py chat_subscriber
-    volumes:
-      - ./server/prisma:/app
-    env_file:
-      - .env
-    environment:
-      - DJANGO_SETTINGS_MODULE=prisma.settings
-      - REDIS_HOST=prisma_redis
-    depends_on:
-      - client_server
-      - prisma_redis
     networks:
       - prisma_shared_net
 

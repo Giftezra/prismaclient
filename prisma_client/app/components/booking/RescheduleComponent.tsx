@@ -18,6 +18,8 @@ interface RescheduleComponentProps {
   appointmentId: string;
   userCountry?: string;
   userCity?: string;
+  userLatitude?: number;
+  userLongitude?: number;
   serviceDuration?: number;
   isLoading?: boolean;
 }
@@ -31,6 +33,8 @@ const RescheduleComponent: React.FC<RescheduleComponentProps> = ({
   appointmentId,
   userCountry = "United Kingdom",
   userCity = "London",
+  userLatitude,
+  userLongitude,
   serviceDuration = 60,
   isLoading = false,
 }) => {
@@ -87,6 +91,11 @@ const RescheduleComponent: React.FC<RescheduleComponentProps> = ({
         url.searchParams.append("service_duration", serviceDuration.toString());
         url.searchParams.append("country", userCountry);
         url.searchParams.append("city", userCity);
+        // Pass lat/lng for geographic fallback (30km radius) when city match fails
+        if (userLatitude != null && userLongitude != null) {
+          url.searchParams.append("latitude", userLatitude.toString());
+          url.searchParams.append("longitude", userLongitude.toString());
+        }
 
         const response = await fetch(url.toString(), {
           method: "GET",
@@ -100,6 +109,21 @@ const RescheduleComponent: React.FC<RescheduleComponentProps> = ({
         }
 
         const data = await response.json();
+
+        // Check for error messages from the server (e.g. no detailers in area)
+        if (data.error) {
+          setAlertConfig({
+            title: "Availability Error",
+            message: data.error,
+            type: "warning",
+            isVisible: true,
+            onConfirm: () => {
+              setIsVisible(false);
+            },
+          });
+          setAvailableTimeSlots([]);
+          return data;
+        }
 
         // Transform the response to TimeSlot format
         const transformedSlots: TimeSlot[] = [];
@@ -154,7 +178,7 @@ const RescheduleComponent: React.FC<RescheduleComponentProps> = ({
         setIsLoadingSlots(false);
       }
     },
-    [userCountry, userCity, serviceDuration, setAlertConfig, setIsVisible]
+    [userCountry, userCity, userLatitude, userLongitude, serviceDuration, setAlertConfig, setIsVisible]
   );
 
   /**

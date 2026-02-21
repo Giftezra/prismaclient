@@ -599,9 +599,6 @@ class GarageView(APIView):
             
             for booking in bookings:
                 booking_total = float(booking.total_amount)
-                # Add tip if it exists
-                if booking.review_tip:
-                    booking_total += float(booking.review_tip)
                 total_amount += booking_total
             
             # Get the last cleaned date (last wash event)

@@ -10,9 +10,12 @@ const DashboardLayout = () => {
       <Stack.Screen name="DashboardScreen" />
       <Stack.Screen name="FleetDashboardScreen" />
       <Stack.Screen name="BranchAdminDashboardScreen" />
+      <Stack.Screen name="AdminManagementScreen" />
       <Stack.Screen name="CreateBranchAdminScreen" />
       <Stack.Screen name="BranchManagementScreen" />
       <Stack.Screen name="UpcomingBookingScreen" />
+      <Stack.Screen name="DealershipPartnerDashboardScreen" />
+      <Stack.Screen name="PartnerPayoutScreen" />
     </Stack>
   );
 };

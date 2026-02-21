@@ -29,6 +29,9 @@ import { useGetBranchesQuery } from "@/app/store/api/fleetApi";
  * All business logic and state management is handled by the useGarage hook.
  * This component focuses purely on rendering the UI and delegating user interactions to the hook.
  */
+const MIN_VEHICLE_YEAR = 1900;
+const MAX_VEHICLE_YEAR = new Date().getFullYear();
+
 const AddNewVehicleScreen = ({
   setIsAddVehicleModalVisible,
 }: {
@@ -36,6 +39,7 @@ const AddNewVehicleScreen = ({
 }) => {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [showBranchModal, setShowBranchModal] = useState(false);
+  const [yearError, setYearError] = useState<string | null>(null);
 
   // Theme colors
   const backgroundColor = useThemeColor({}, "background");
@@ -85,6 +89,21 @@ const AddNewVehicleScreen = ({
     setShowBranchModal(false);
   };
 
+  const handleYearChange = (text: string) => {
+    const digitsOnly = text.replace(/\D/g, "").slice(0, 4);
+    collectNewVehicleData("year", digitsOnly);
+    if (digitsOnly.length === 4) {
+      const yearNum = parseInt(digitsOnly, 10);
+      if (yearNum < MIN_VEHICLE_YEAR || yearNum > MAX_VEHICLE_YEAR) {
+        setYearError(`Enter a year between ${MIN_VEHICLE_YEAR} and ${MAX_VEHICLE_YEAR}`);
+      } else {
+        setYearError(null);
+      }
+    } else {
+      setYearError(null);
+    }
+  };
+
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       "keyboardDidShow",
@@ -113,6 +132,7 @@ const AddNewVehicleScreen = ({
       <ScrollView
         style={[styles.mainContainer]}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
         contentContainerStyle={[
           styles.scrollContent,
           keyboardVisible &&
@@ -141,12 +161,17 @@ const AddNewVehicleScreen = ({
 
             <StyledTextInput
               label="Year"
-              placeholder="e.g., 2020"
+              placeholder={`e.g., ${MAX_VEHICLE_YEAR}`}
               value={newVehicle?.year?.toString() || ""}
-              onChangeText={(text) => collectNewVehicleData("year", text)}
+              onChangeText={handleYearChange}
               keyboardType="numeric"
               maxLength={4}
             />
+            {yearError && (
+              <StyledText variant="bodySmall" style={[styles.fieldError, { color: "#c62828" }]}>
+                {yearError}
+              </StyledText>
+            )}
 
             <StyledTextInput
               label="Color"
@@ -169,7 +194,8 @@ const AddNewVehicleScreen = ({
               placeholder="e.g., ABC123"
               value={newVehicle?.licence || ""}
               maxLength={12}
-              onChangeText={(text) => collectNewVehicleData("licence", text)}
+              onChangeText={(text) => collectNewVehicleData("licence", text.toUpperCase())}
+              autoCapitalize="characters"
             />
 
             {/* Branch Selection (for fleet owners) */}
@@ -287,7 +313,7 @@ const AddNewVehicleScreen = ({
               }}
               variant="medium"
               style={styles.submitButton}
-              disabled={isLoadingVehicles}
+              disabled={isLoadingVehicles || !!yearError}
             />
           )}
         </View>
@@ -455,6 +481,10 @@ const styles = StyleSheet.create({
   formSection: {
     gap: 5,
     marginVertical: 5,
+  },
+  fieldError: {
+    marginTop: -4,
+    marginBottom: 4,
   },
 
   submitContainer: {
