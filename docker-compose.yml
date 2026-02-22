@@ -13,7 +13,8 @@ services:
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=prisma.settings
       - DJANGO_ALLOWED_HOSTS=*
-    command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn prisma.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 2 --timeout 120
+
     networks:
       - prisma_shared_net
     healthcheck:

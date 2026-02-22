@@ -16,12 +16,14 @@ SECRET_KEY= os.getenv('DJANGO_SECRET_KEY')
 BASE_URL = os.getenv('BASE_URL')
 
 
-ALLOWED_ORIGINS = ['https://0c60-2a02-8084-c80-ea80-c1fc-2938-23f4-4da1.ngrok-free.app']        
-CSRF_TRUSTED_ORIGINS = ['https://0c60-2a02-8084-c80-ea80-c1fc-2938-23f4-4da1.ngrok-free.app']
-CORS_ALLOWED_ORIGINS = ['https://0c60-2a02-8084-c80-ea80-c1fc-2938-23f4-4da1.ngrok-free.app']
+# Production: client.prismavalet.com on droplet. Override via env for local/dev.
+_CLIENT_ORIGIN = os.getenv('CLIENT_ORIGIN', 'https://client.prismavalet.com')
+ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', _CLIENT_ORIGIN).split(',') if os.getenv('ALLOWED_ORIGINS') else [_CLIENT_ORIGIN]
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', _CLIENT_ORIGIN).split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else [_CLIENT_ORIGIN]
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', _CLIENT_ORIGIN).split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else [_CLIENT_ORIGIN]
 
 CORS_ALLOW_CREDENTIALS = True
-ALLOWED_HOSTS=['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'client.prismavalet.com').split(',') if os.getenv('ALLOWED_HOSTS') else ['client.prismavalet.com']
 
 
 USE_X_FORWARDED_HOST = True

@@ -1697,6 +1697,7 @@ const useBooking = () => {
       setPaymentConfirmationStatus("pending");
       // Generate a booking reference
       const bookingReference = `APT${Date.now()}`;
+      console.log("[useBooking] Confirm payment: booking reference created", { bookingReference });
 
       // Check if this is a Quick Sparkle - always call checkFreeWash; backend decides eligibility (loyalty or partner)
       const isQuickSparkle = selectedServiceType?.name === "The Quick Sparkle";
@@ -1785,6 +1786,7 @@ const useBooking = () => {
 
       // Process payment with booking data (webhook will create bookings)
       setIsProcessingPayment(true);
+      console.log("[useBooking] Opening payment sheet with booking reference", { bookingReference });
       const paymentResult = await openPaymentSheet(
         priceBreakdown.total,
         "Prisma Valet",
@@ -1792,9 +1794,16 @@ const useBooking = () => {
         bookingDataForClient,
         detailerBookingData
       );
+      console.log("[useBooking] Payment sheet result", {
+        success: paymentResult.success,
+        freeBooking: paymentResult.freeBooking,
+        paymentIntentId: paymentResult.paymentIntentId,
+        bookingReference,
+      });
 
       // If payment was cancelled, don't proceed
       if (!paymentResult.success) {
+        console.log("[useBooking] Payment cancelled or failed", { bookingReference });
         setIsProcessingPayment(false);
         setPaymentConfirmationStatus("failed");
         return;
@@ -1802,6 +1811,7 @@ const useBooking = () => {
 
       // Free booking - already created on server, skip payment confirmation
       if (paymentResult.freeBooking) {
+        console.log("[useBooking] Free booking – no payment, using booking reference", { bookingReference });
         setPaymentConfirmationStatus("confirmed");
         setIsProcessingPayment(false);
 
@@ -1830,23 +1840,29 @@ const useBooking = () => {
           booking_reference: bookingReference,
         } as ReturnBookingProps);
         setIsConfirmationModalVisible(true);
+        console.log("[useBooking] Free booking confirmation modal shown", { bookingReference });
         return;
       }
 
       // Wait for webhook confirmation (webhook creates bookings automatically)
       if (!paymentResult.paymentIntentId) {
+        console.log("[useBooking] No paymentIntentId – cannot wait for webhook", { bookingReference });
         setIsProcessingPayment(false);
         setPaymentConfirmationStatus("failed");
         return;
       }
 
       setPaymentConfirmationStatus("confirming");
+      console.log("[useBooking] Waiting for webhook confirmation", {
+        paymentIntentId: paymentResult.paymentIntentId,
+        bookingReference,
+      });
       try {
         await waitForPaymentConfirmation(paymentResult.paymentIntentId);
         setPaymentConfirmationStatus("confirmed");
         setIsProcessingPayment(false);
 
-        console.log("Payment confirmed, webhook should have created bookings");
+        console.log("[useBooking] Payment confirmed, webhook created bookings", { bookingReference });
 
         // Mark promotion as used if there's an active promotion (best-effort; 404 is non-fatal)
         if (promotions?.is_active && promotions?.id) {
@@ -1873,8 +1889,9 @@ const useBooking = () => {
           booking_reference: bookingReference,
         } as ReturnBookingProps);
         setIsConfirmationModalVisible(true);
+        console.log("[useBooking] Confirmation modal shown with booking reference", { bookingReference });
       } catch (error: any) {
-        console.error("Payment confirmation error:", error);
+        console.error("[useBooking] Payment confirmation error", { error, bookingReference });
         setIsProcessingPayment(false);
         setPaymentConfirmationStatus("failed");
         showSnackbarWithConfig({
@@ -1887,6 +1904,11 @@ const useBooking = () => {
         return;
       }
     } catch (error: any) {
+      console.error("[useBooking] handleBookingConfirmation error", {
+        error,
+        status: error?.status,
+        data: error?.data,
+      });
       let message = "";
       if (error?.data?.error) {
         message = error.data.error;

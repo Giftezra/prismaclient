@@ -15450,3 +15450,18 @@ INFO 2026-02-16 02:31:28,848 runserver 7 125236907906752 HTTP GET /api/v1/notifi
 INFO 2026-02-16 02:31:46,159 runserver 7 125236907906752 HTTP GET /api/v1/dashboard/get_upcoming_appointments/ 200 [0.04, 172.18.0.6:37192]
 INFO 2026-02-16 02:31:46,307 runserver 7 125236907906752 HTTP GET /api/v1/dashboard/get_recent_services/ 200 [0.05, 172.18.0.6:37204]
 INFO 2026-02-16 02:31:46,437 runserver 7 125236907906752 HTTP GET /api/v1/dashboard/get_user_stats/ 200 [0.03, 172.18.0.6:37216]
+INFO 2026-02-21 12:21:43,652 autoreload 7 125236987566976 /app/prisma/settings.py changed, reloading.
+INFO 2026-02-21 12:21:55,800 autoreload 6621 130054992386944 Watching for file changes with StatReloader
+INFO 2026-02-21 12:21:58,095 server 6621 130054912726720 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-02-21 12:21:58,097 server 6621 130054912726720 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-02-21 12:21:58,101 server 6621 130054912726720 Listening on TCP address 0.0.0.0:8000
+INFO 2026-02-21 12:22:42,669 autoreload 6621 130054992386944 /app/prisma/settings.py changed, reloading.
+INFO 2026-02-21 12:22:47,528 autoreload 6636 138296288615296 Watching for file changes with StatReloader
+INFO 2026-02-21 12:22:48,527 server 6636 138296208955072 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-02-21 12:22:48,528 server 6636 138296208955072 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-02-21 12:22:48,532 server 6636 138296208955072 Listening on TCP address 0.0.0.0:8000
+INFO 2026-02-21 12:22:54,158 autoreload 6636 138296288615296 /app/prisma/settings.py changed, reloading.
+INFO 2026-02-21 12:22:58,289 autoreload 6638 139294787701632 Watching for file changes with StatReloader
+INFO 2026-02-21 12:22:59,500 server 6638 139294708041408 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2026-02-21 12:22:59,501 server 6638 139294708041408 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2026-02-21 12:22:59,503 server 6638 139294708041408 Listening on TCP address 0.0.0.0:8000
