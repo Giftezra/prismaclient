@@ -8,6 +8,7 @@ from .user import (
     Promotions,
     Notification,
     TermsAndConditions,
+    PrivacyPolicy,
     PasswordResetToken,
 )
 from .vehicle import (
@@ -23,6 +24,7 @@ from .vehicle import (
     BookedAppointment,
     BookedAppointmentImage,
     PendingBooking,
+    BulkOrder,
     VinLookupPurchase,
     PaymentTransaction,
     RefundRecord,
@@ -50,11 +52,11 @@ from .partner import (
 
 __all__ = [
     'User', 'UserManager', 'Referral', 'Address', 'LoyaltyProgram', 'Promotions',
-    'Notification', 'TermsAndConditions', 'PasswordResetToken',
+    'Notification', 'TermsAndConditions', 'PrivacyPolicy', 'PasswordResetToken',
     'Vehicle', 'VehicleOwnership', 'VehicleEvent', 'VehicleTransfer',
     'ServiceType', 'ValetType', 'DetailerProfile', 'AddOns',
     'BookedAppointment', 'BookedAppointmentImage', 'EventDataManagement',
-    'PendingBooking', 'VinLookupPurchase', 'PaymentTransaction', 'RefundRecord',
+    'PendingBooking', 'BulkOrder', 'VinLookupPurchase', 'PaymentTransaction', 'RefundRecord',
     'Fleet', 'Branch', 'FleetMember', 'FleetVehicle',
     'SubscriptionTier', 'SubscriptionPlan', 'FleetSubscription', 'SubscriptionBilling',
     'Partner', 'PartnerBankAccount', 'PartnerPayoutRequest', 'ReferralAttribution', 'CommissionPayout', 'CommissionEarning',

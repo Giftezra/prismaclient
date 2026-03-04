@@ -4,11 +4,12 @@ import {
   ScrollView,
   View,
   TouchableOpacity,
-  Alert,
   TextInput,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -28,9 +29,18 @@ import AddonSelection from "@/app/components/booking/AddonSelection";
 import StyledText from "@/app/components/helpers/StyledText";
 import StyledButton from "@/app/components/helpers/StyledButton";
 
-// Import hook
+// Import hooks
 import useBooking from "@/app/app-hooks/useBooking";
+import {
+  useBulkBooking,
+  type BulkCapacityOption,
+} from "@/app/app-hooks/useBulkBooking";
+import usePayment from "@/app/app-hooks/usePayment";
 import { useAppSelector, RootState } from "@/app/store/main_store";
+import {
+  useFetchPaymentSheetDetailsMutation,
+  useConfirmPaymentIntentMutation,
+} from "@/app/store/api/eventApi";
 
 // Import modal
 import AddAddressModal from "@/app/components/profile/AddAddressModal";
@@ -43,6 +53,13 @@ import PromotionsCardComponent from "@/app/components/booking/PromotionsCard";
 import { PromotionsProps } from "@/app/interfaces/GarageInterface";
 import useProfile from "@/app/app-hooks/useProfile";
 import BookingConfirmationModal from "@/app/components/booking/BookingConfirmationModal";
+import BulkOrderConfirmationModal from "@/app/components/booking/BulkOrderConfirmationModal";
+import { useAlertContext } from "@/app/contexts/AlertContext";
+import dayjs from "dayjs";
+import type { AddOnsProps } from "@/app/interfaces/BookingInterfaces";
+
+const dismissAlert = (setAlertConfig: (c: { isVisible: boolean; title: string; message: string; type: "success" | "error" | "warning" }) => void) =>
+  setAlertConfig({ isVisible: false, title: "", message: "", type: "error" });
 
 // Define step interface
 interface BookingStep {
@@ -58,6 +75,35 @@ const BookingScreen = () => {
   const primaryPurpleColor = useThemeColor({}, "primary");
   const iconColor = useThemeColor({}, "icons");
   const borderColor = useThemeColor({}, "borders");
+
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  const isBulkEligible = Boolean(
+    user?.is_fleet_owner ||
+    user?.is_branch_admin ||
+    user?.is_dealership ||
+    user?.partner_referral_code,
+  );
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [bulkStep, setBulkStep] = useState(1);
+  const [isBulkAddonModalVisible, setIsBulkAddonModalVisible] = useState(false);
+  const [bulkConfirmationPayload, setBulkConfirmationPayload] = useState<{
+    bookingReference: string;
+    invoiceSent: boolean;
+    numberOfVehicles: number;
+    date: string;
+    startTime?: string;
+    endTime?: string;
+    serviceName: string;
+    serviceDurationMinutes?: number;
+    address?: { address?: string; city?: string; post_code?: string; country?: string };
+    totalAmount: number;
+  } | null>(null);
+
+  const { setAlertConfig } = useAlertContext();
+  const bulk = useBulkBooking();
+  const { openPaymentSheet, waitForPaymentConfirmation } = usePayment();
+  const [fetchPaymentSheetDetails] = useFetchPaymentSheetDetailsMutation();
+  const [confirmPaymentIntent] = useConfirmPaymentIntentMutation();
 
   /* Get the save new address hook and handle save address function to close the modal and save the address */
   const { saveNewAddress } = useProfile();
@@ -119,6 +165,8 @@ const BookingScreen = () => {
 
     // Time slot management handlers
     handleTimeSlotSelect,
+    handleSlotHoldExpired,
+    selectedSlotAt,
     handleDaySelection,
     handleMonthNavigation,
     hasSelectedTimeSlot,
@@ -162,10 +210,45 @@ const BookingScreen = () => {
 
   const { addresses } = useAddresses();
   const { vehicles } = useVehicles();
-  const user = useAppSelector((state: RootState) => state.auth.user);
 
   const [showSpecialInstructions, setShowSpecialInstructions] = useState(false);
   const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
+
+  const handleBulkAddonSelect = useCallback(
+    (addon: AddOnsProps) => {
+      bulk.setSelectedAddons((prev) => {
+        const isSelected = prev.some((a) => a.id === addon.id);
+        if (isSelected) return prev.filter((a) => a.id !== addon.id);
+        return [...prev, addon];
+      });
+    },
+    [bulk]
+  );
+
+  const handleBulkAddonClose = useCallback(() => {
+    setIsBulkAddonModalVisible(false);
+    setBulkStep(3);
+  }, []);
+
+  const handleBulkAddonConfirm = useCallback(() => {
+    setIsBulkAddonModalVisible(false);
+    setBulkStep(3);
+  }, []);
+
+  const handleBulkConfirmationClose = useCallback(() => {
+    setBulkConfirmationPayload(null);
+    bulk.resetBulkBooking();
+    setIsBulkMode(false);
+    setBulkStep(1);
+  }, [bulk]);
+
+  const handleBulkConfirmationViewDashboard = useCallback(() => {
+    setBulkConfirmationPayload(null);
+    bulk.resetBulkBooking();
+    setIsBulkMode(false);
+    setBulkStep(1);
+    router.push("/main/(tabs)/dashboard/DashboardScreen");
+  }, [bulk]);
 
   // Handle add address based on user role
   const handleAddAddress = useCallback(() => {
@@ -321,6 +404,8 @@ const BookingScreen = () => {
                 onMonthNavigation={handleMonthNavigation}
                 onTimeSlotSelect={handleTimeSlotSelect}
                 hasSelectedTimeSlot={hasSelectedTimeSlot()}
+                selectedSlotAt={selectedSlotAt}
+                onSlotHoldExpired={handleSlotHoldExpired}
               />
             ) : (
               <View style={[styles.infoCard, { backgroundColor: cardColor }]}>
@@ -445,11 +530,11 @@ const BookingScreen = () => {
             isProcessingPayment && paymentConfirmationStatus === "pending"
               ? "Processing Payment..."
               : isProcessingPayment &&
-                paymentConfirmationStatus === "confirming"
-              ? "Confirming Payment..."
-              : isLoading
-              ? "Creating Booking..."
-              : "Confirm Booking"
+                  paymentConfirmationStatus === "confirming"
+                ? "Confirming Payment..."
+                : isLoading
+                  ? "Creating Booking..."
+                  : "Confirm Booking"
           }
           variant="medium"
           onPress={handleBookingConfirmation}
@@ -459,6 +544,251 @@ const BookingScreen = () => {
       )}
     </View>
   );
+
+  const handleBulkPayNow = useCallback(async () => {
+    const bookingReference = `BULK${Date.now()}${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const bookingData = bulk.buildBulkBookingData(bookingReference);
+    try {
+      const result = await openPaymentSheet(
+        bulk.total,
+        "Prisma Valet",
+        bookingReference,
+        bookingData,
+        undefined,
+      );
+      if (!result.success || !result.paymentIntentId) return;
+      await waitForPaymentConfirmation(result.paymentIntentId);
+      setBulkConfirmationPayload({
+        bookingReference,
+        invoiceSent: false,
+        numberOfVehicles: bulk.numberOfVehicles,
+        date: bulk.selectedDate?.toISOString().slice(0, 10) ?? "",
+        startTime: bulk.selectedOption?.best_start_time ?? bulk.capacityOptions?.[0]?.best_start_time,
+        endTime: bulk.selectedOption?.estimated_finish_time ?? bulk.capacityOptions?.[0]?.estimated_finish_time,
+        serviceName: bulk.selectedServiceType?.name ?? "Service",
+        serviceDurationMinutes: bulk.selectedServiceType?.duration,
+        address: bulk.selectedAddress
+          ? {
+              address: bulk.selectedAddress.address,
+              city: bulk.selectedAddress.city,
+              post_code: bulk.selectedAddress.post_code,
+              country: bulk.selectedAddress.country,
+            }
+          : undefined,
+        totalAmount: bulk.total,
+      });
+    } catch (e) {
+      setAlertConfig({
+        isVisible: true,
+        title: "Error",
+        message: (e as Error)?.message || "Payment failed.",
+        type: "error",
+        onConfirm: () => dismissAlert(setAlertConfig),
+      });
+    }
+  }, [bulk, openPaymentSheet, waitForPaymentConfirmation, setAlertConfig]);
+
+  /* This part of the code is designed to handle the flow of bul */
+  const renderBulkContent = () => {
+    if (bulkStep === 1) {
+      return (
+        <View style={styles.stepContent}>
+          <StyledText
+            variant="titleMedium"
+            style={[styles.stepHeader, { color: textColor }]}
+          >
+            Service type & number of vehicles
+          </StyledText>
+          {(serviceTypes || []).map((service) => (
+            <ServiceTypeCard
+              key={service.id}
+              service={{
+                ...service,
+                user_price: bulk.getFleetPrice(service),
+              }}
+              isSelected={bulk.selectedServiceType?.id === service.id}
+              onSelect={() => bulk.setSelectedServiceType(service)}
+            />
+          ))}
+          <StyledText
+            variant="titleMedium"
+            style={[styles.stepHeader, { color: textColor, marginTop: 16 }]}
+          >
+            Number of vehicles
+          </StyledText>
+
+          <StyledTextInput
+            label="Number of vehicles"
+            placeholder="Enter the number of vehicles"
+            value={String(bulk.numberOfVehicles)}
+            onChangeText={(t) =>
+              bulk.setNumberOfVehicles(Math.max(0, parseInt(t, 10) || 0))
+            }
+            keyboardType="number-pad"
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={styles.input}
+          />
+        </View>
+      );
+    }
+    if (bulkStep === 2) {
+      return (
+        <View style={styles.stepContent}>
+          <StyledText
+            variant="titleMedium"
+            style={[styles.stepHeader, { color: textColor }]}
+          >
+            Choose Valet Type
+          </StyledText>
+          {valetTypes?.map((valetType) => (
+            <ValetTypeCard
+              key={valetType.id}
+              valetType={valetType}
+              isSelected={bulk.selectedValetType?.id === valetType.id}
+              onSelect={(vt) => bulk.setSelectedValetType(vt)}
+            />
+          ))}
+        </View>
+      );
+    }
+    if (bulkStep === 3) {
+      return (
+        <View style={styles.stepContent}>
+          <AddressSelector
+            addresses={addresses}
+            selectedAddress={bulk.selectedAddress}
+            onSelectAddress={bulk.setSelectedAddress}
+            onAddAddress={handleAddAddress}
+            showAddButton={showAddButton}
+          />
+          <StyledText
+            variant="titleMedium"
+            style={[styles.stepHeader, { color: textColor, marginTop: 16 }]}
+          >
+            Select date
+          </StyledText>
+          <TimeSlotPicker
+            selectedDate={bulk.selectedDate || new Date()}
+            onDateChange={bulk.setSelectedDate}
+            minimumDate={new Date()}
+            serviceDuration={bulk.selectedServiceType?.duration || 60}
+            serviceTypeName={bulk.selectedServiceType?.name || ""}
+            availableTimeSlots={[]}
+            isLoadingSlots={false}
+            currentMonth={dayjs(bulk.selectedDate || new Date())}
+            selectedDay={dayjs(bulk.selectedDate || new Date())}
+            onDaySelection={(dateString) =>
+              bulk.setSelectedDate(new Date(dateString))
+            }
+            onMonthNavigation={() => {}}
+            onTimeSlotSelect={() => {}}
+            hasSelectedTimeSlot={false}
+            selectedSlotAt={null}
+            onSlotHoldExpired={() => {}}
+          />
+          <StyledText
+            variant="titleMedium"
+            style={[styles.stepHeader, { color: textColor, marginTop: 16 }]}
+          >
+            Special instructions (optional)
+          </StyledText>
+          <StyledTextInput
+            placeholder="Any notes for the detailer..."
+            value={bulk.specialInstructions}
+            onChangeText={bulk.setSpecialInstructions}
+            multiline
+            numberOfLines={3}
+            style={[ { minHeight: 60 }]}
+          />
+        </View>
+      );
+    }
+    if (bulkStep === 4) {
+      return (
+        <View style={styles.stepContent}>
+        {bulk.capacityError && (
+          <StyledText style={{ color: "orange", marginBottom: 8 }}>
+            {bulk.capacityError}
+          </StyledText>
+        )}
+        {!bulk.capacityOptions?.length && !bulk.isLoadingCapacity && (
+          <StyledButton
+            title="Check capacity"
+            variant="medium"
+            onPress={bulk.checkBulkCapacity}
+            style={styles.nextButton}
+          />
+        )}
+        {bulk.isLoadingCapacity && (
+          <ActivityIndicator size="small" color={primaryPurpleColor} />
+        )}
+        {bulk.capacityOptions?.length ? (
+          <>
+            <StyledText
+              variant="titleMedium"
+              style={[styles.stepHeader, { color: textColor }]}
+            >
+              Choose window
+            </StyledText>
+            {bulk.capacityOptions.map((opt: BulkCapacityOption) => (
+              <TouchableOpacity
+                key={opt.window}
+                onPress={() => bulk.setSelectedOption(opt)}
+                style={[
+                  styles.infoCard,
+                  {
+                    backgroundColor: cardColor,
+                    borderWidth:
+                      bulk.selectedOption?.window === opt.window ? 2 : 0,
+                    borderColor: primaryPurpleColor,
+                  },
+                ]}
+              >
+                <StyledText variant="bodyMedium" style={{ color: textColor }}>
+                  {opt.window}: {opt.best_start_time} –{" "}
+                  {opt.estimated_finish_time} (team: {opt.suggested_team_size})
+                </StyledText>
+              </TouchableOpacity>
+            ))}
+            <View
+              style={[
+                styles.infoCard,
+                { backgroundColor: cardColor, marginTop: 16 },
+              ]}
+            >
+              <StyledText variant="bodyMedium" style={{ color: textColor }}>
+                {bulk.numberOfVehicles} vehicles ×{" "}
+                {bulk.getFleetPrice(bulk.selectedServiceType!)}
+                {bulk.discountPercent
+                  ? ` − ${bulk.discountPercent}% = `
+                  : " = "}
+                €{(bulk.subtotal / bulk.numberOfVehicles).toFixed(2)}/vehicle
+              </StyledText>
+              {bulk.selectedAddons.length > 0 && (
+                <StyledText variant="bodySmall" style={{ color: textColor, marginTop: 4 }}>
+                  Add-ons: +€{(bulk.addonPriceTotal * bulk.numberOfVehicles).toFixed(2)} (+{bulk.addonDurationTotal} min/vehicle)
+                </StyledText>
+              )}
+              <StyledText variant="bodyMedium" style={{ color: textColor, marginTop: 4, fontWeight: "600" }}>
+                Total: €{bulk.total.toFixed(2)}
+              </StyledText>
+            </View>
+            <View style={{ marginTop: 16 }}>
+              <StyledButton
+                title="Pay now"
+                variant="medium"
+                onPress={handleBulkPayNow}
+                style={styles.confirmButton}
+              />
+            </View>
+          </>
+        ) : null}
+      </View>
+    );
+    }
+    return null;
+  };
 
   if (isLoadingBooking) {
     return <ActivityIndicator size="large" color={primaryPurpleColor} />;
@@ -475,15 +805,116 @@ const BookingScreen = () => {
             <PromotionsCardComponent {...promotions} />
           </View>
         )}
-        {renderStepIndicator()}
+        {isBulkEligible && (
+          <View
+            style={[
+              styles.bulkToggleRow,
+              { backgroundColor: cardColor, borderColor },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                styles.bulkToggleBtn,
+                !isBulkMode && { backgroundColor: primaryPurpleColor },
+              ]}
+              onPress={() => {
+                setIsBulkMode(false);
+                setBulkStep(1);
+                bulk.resetBulkBooking();
+                setIsBulkAddonModalVisible(false);
+              }}
+            >
+              <StyledText
+                variant="bodyMedium"
+                style={{ color: isBulkMode ? textColor : "#fff" }}
+              >
+                Single vehicle
+              </StyledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.bulkToggleBtn,
+                isBulkMode && { backgroundColor: primaryPurpleColor },
+              ]}
+              onPress={() => {
+                setIsBulkMode(true);
+                setBulkStep(1);
+                bulk.resetBulkBooking();
+                setIsBulkAddonModalVisible(false);
+              }}
+            >
+              <StyledText
+                variant="bodyMedium"
+                style={{ color: isBulkMode ? "#fff" : textColor }}
+              >
+                Make bulk booking
+              </StyledText>
+            </TouchableOpacity>
+          </View>
+        )}
+        {!isBulkMode && renderStepIndicator()}
+        {isBulkMode && (
+          <View style={styles.stepIndicator}>
+            <StyledText variant="bodyMedium" style={{ color: textColor }}>
+              Step {bulkStep} of 4{" "}
+              {bulkStep === 1
+                ? "– Service & count"
+                : bulkStep === 2
+                  ? "– Valet type"
+                  : bulkStep === 3
+                    ? "– Date & address"
+                    : "– Confirm"}
+            </StyledText>
+          </View>
+        )}
         <ScrollView
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
-          {renderStepContent()}
+          {isBulkMode ? renderBulkContent() : renderStepContent()}
         </ScrollView>
 
-        {renderNavigationButtons()}
+        {isBulkMode ? (
+          <View style={styles.navigationContainer}>
+            {bulkStep > 1 && (
+              <TouchableOpacity
+                style={[styles.navButton, styles.backButton, { borderColor }]}
+                onPress={() => setBulkStep((s) => s - 1)}
+              >
+                <Ionicons name="arrow-back" size={20} color={textColor} />
+                <StyledText
+                  variant="bodyMedium"
+                  style={[styles.backButtonText, { color: textColor }]}
+                >
+                  Back
+                </StyledText>
+              </TouchableOpacity>
+            )}
+            {bulkStep < 4 && (
+              <StyledButton
+                title="Next"
+                variant="medium"
+                onPress={() => {
+                  if (bulkStep === 2) {
+                    setIsBulkAddonModalVisible(true);
+                  } else {
+                    setBulkStep((s) => s + 1);
+                  }
+                }}
+                disabled={
+                  (bulkStep === 1 &&
+                    (!bulk.selectedServiceType || bulk.numberOfVehicles < 1)) ||
+                  (bulkStep === 2 && !bulk.selectedValetType) ||
+                  (bulkStep === 3 &&
+                    (!bulk.selectedDate || !bulk.selectedAddress))
+                }
+                style={styles.nextButton}
+              />
+            )}
+          </View>
+        ) : (
+          renderNavigationButtons()
+        )}
 
         {/* Addon Selection Modal */}
         <ModalServices
@@ -498,6 +929,28 @@ const BookingScreen = () => {
               onAddonSelect={handleAddonSelectionWithRefresh}
               totalAddonPrice={getAddonPrice()}
               totalAddonDuration={getAddonDuration()}
+              formatPrice={formatPrice}
+            />
+          }
+          title="Add-ons"
+          modalType="fullscreen"
+          animationType="slide"
+          showCloseButton={true}
+        />
+
+        {/* Bulk booking addon selection modal – shown after valet step */}
+        <ModalServices
+          visible={isBulkAddonModalVisible}
+          onClose={handleBulkAddonClose}
+          component={
+            <AddonSelection
+              onClose={handleBulkAddonClose}
+              onConfirm={handleBulkAddonConfirm}
+              addons={addOns || []}
+              selectedAddons={bulk.selectedAddons}
+              onAddonSelect={handleBulkAddonSelect}
+              totalAddonPrice={bulk.addonPriceTotal * bulk.numberOfVehicles}
+              totalAddonDuration={bulk.addonDurationTotal}
               formatPrice={formatPrice}
             />
           }
@@ -547,8 +1000,8 @@ const BookingScreen = () => {
                   {paymentConfirmationStatus === "pending"
                     ? "Processing Payment..."
                     : paymentConfirmationStatus === "confirming"
-                    ? "Confirming Payment..."
-                    : "Processing..."}
+                      ? "Confirming Payment..."
+                      : "Processing..."}
                 </StyledText>
                 <StyledText
                   variant="bodyMedium"
@@ -557,48 +1010,106 @@ const BookingScreen = () => {
                   {paymentConfirmationStatus === "pending"
                     ? "Please wait while we process your payment"
                     : paymentConfirmationStatus === "confirming"
-                    ? "Waiting for payment confirmation..."
-                    : "Please wait..."}
+                      ? "Waiting for payment confirmation..."
+                      : "Please wait..."}
                 </StyledText>
               </View>
             }
           />
         )}
 
-        {/* Booking Confirmation Modal */}
+        {/* Booking Confirmation Modal - dedicated modal for proper scrolling */}
         {confirmationBookingData &&
           selectedVehicle &&
           selectedServiceType &&
           selectedValetType &&
           selectedAddress && (
-            <ModalServices
+            <Modal
               visible={isConfirmationModalVisible}
-              onClose={handleCloseConfirmationModal}
-              modalType="fullscreen"
               animationType="slide"
-              showCloseButton={true}
-              component={
-                <BookingConfirmationModal
-                  bookingReference={confirmationBookingReference || "N/A"}
-                  vehicle={selectedVehicle}
-                  serviceType={selectedServiceType}
-                  valetType={selectedValetType}
-                  address={selectedAddress}
-                  selectedDate={selectedDate}
-                  specialInstructions={specialInstructions}
-                  selectedAddons={selectedAddons}
-                  finalPrice={getFinalPrice()}
-                  originalPrice={getOriginalPrice()}
-                  loyaltyDiscount={getLoyaltyDiscount()}
-                  formatPrice={formatPrice}
-                  formatDuration={formatDuration}
-                  user={user || undefined}
-                  onClose={handleCloseConfirmationModal}
-                  onViewDashboard={handleViewDashboard}
-                />
-              }
-            />
+              onRequestClose={handleCloseConfirmationModal}
+              statusBarTranslucent
+            >
+              <View
+                style={[styles.confirmationModalContainer, { backgroundColor }]}
+              >
+                <View
+                  style={[
+                    styles.confirmationModalHeader,
+                    { borderBottomColor: borderColor },
+                  ]}
+                >
+                  <View style={styles.confirmationModalHeaderSpacer} />
+                  <StyledText
+                    variant="titleMedium"
+                    style={[
+                      styles.confirmationModalTitle,
+                      { color: textColor },
+                    ]}
+                  >
+                    Booking confirmed
+                  </StyledText>
+                  <Pressable
+                    onPress={handleCloseConfirmationModal}
+                    hitSlop={12}
+                    style={[
+                      styles.confirmationModalCloseBtn,
+                      { backgroundColor: cardColor },
+                    ]}
+                  >
+                    <Ionicons name="close" size={24} color={textColor} />
+                  </Pressable>
+                </View>
+                <ScrollView style={styles.confirmationModalContent}>
+                  <BookingConfirmationModal
+                    bookingReference={confirmationBookingReference || "N/A"}
+                    vehicle={selectedVehicle}
+                    serviceType={selectedServiceType}
+                    valetType={selectedValetType}
+                    address={selectedAddress}
+                    selectedDate={selectedDate}
+                    specialInstructions={specialInstructions}
+                    selectedAddons={selectedAddons}
+                    finalPrice={getFinalPrice()}
+                    originalPrice={getOriginalPrice()}
+                    loyaltyDiscount={getLoyaltyDiscount()}
+                    formatPrice={formatPrice}
+                    formatDuration={formatDuration}
+                    user={user || undefined}
+                    onClose={handleCloseConfirmationModal}
+                    onViewDashboard={handleViewDashboard}
+                  />
+                </ScrollView>
+              </View>
+            </Modal>
           )}
+
+        {/* Bulk order booking confirmation modal */}
+        {bulkConfirmationPayload && (
+          <Modal
+            visible={true}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={handleBulkConfirmationClose}
+          >
+            <BulkOrderConfirmationModal
+              type="confirmed"
+              bookingReference={bulkConfirmationPayload.bookingReference}
+              numberOfVehicles={bulkConfirmationPayload.numberOfVehicles}
+              date={bulkConfirmationPayload.date}
+              startTime={bulkConfirmationPayload.startTime}
+              endTime={bulkConfirmationPayload.endTime}
+              serviceName={bulkConfirmationPayload.serviceName}
+              serviceDurationMinutes={bulkConfirmationPayload.serviceDurationMinutes}
+              address={bulkConfirmationPayload.address}
+              totalAmount={bulkConfirmationPayload.totalAmount}
+              invoiceSent={bulkConfirmationPayload.invoiceSent}
+              formatPrice={formatPrice}
+              onClose={handleBulkConfirmationClose}
+              onViewDashboard={handleBulkConfirmationViewDashboard}
+            />
+          </Modal>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -633,6 +1144,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     marginBottom: 4,
+  },
+
+  input: {
+    marginBottom: 20,
+    borderRadius: 10,
+    fontSize: 20,
+    fontFamily: "SpaceMonoBold",
+    fontWeight: "bold",
+    padding: 12,
   },
   stepTitle: {
     textAlign: "center",
@@ -707,6 +1227,27 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     fontWeight: "600",
   },
+  bulkToggleRow: {
+    flexDirection: "row",
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  bulkToggleBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bulkNumberInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 18,
+    marginTop: 8,
+  },
   infoCard: {
     borderRadius: 12,
     padding: 16,
@@ -736,5 +1277,35 @@ const styles = StyleSheet.create({
   processingSubtitle: {
     textAlign: "center",
     opacity: 0.7,
+  },
+  // Booking confirmation modal (dedicated modal for scrollable content)
+  confirmationModalContainer: {
+    flex: 1,
+    paddingTop: Platform.OS === "android" ? 24 : 0,
+  },
+  confirmationModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  confirmationModalHeaderSpacer: {
+    width: 40,
+  },
+  confirmationModalTitle: {
+    fontWeight: "600",
+    fontSize: 18,
+  },
+  confirmationModalCloseBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  confirmationModalContent: {
+    flex: 1,
   },
 });

@@ -160,7 +160,7 @@ def get_spend_trends(fleet: Fleet, start_date: datetime, end_date: datetime, gra
         for item in refunds_grouped:
             date_key = item['date'].isoformat() if item['date'] else None
             if date_key:
-                spend_by_date[date_key]['refunds'] += item['requested_amount'] or Decimal('0')
+                spend_by_date[date_key]['refunds'] += item['total'] or Decimal('0')
         
         # Convert to list format
         trend_points = []

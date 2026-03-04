@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",  
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./google-services.json",
@@ -69,12 +69,12 @@
       "typedRoutes": true
     },
     "extra": {
-      "detailer_app_url": "https://detailer.prismavalet.com",
-      "customer_app_url": "https://client.prismavalet.com",
-      "websocket_url": "wss://client.prismavalet.com/ws/client/",   
-      "googoleApiKeys": "AIzaSyAW00mf-OWgmU_lQ2yLiy3RLWkAVpIdE0U", 
+      "detailer_app_url": "https://157b-2a02-8084-c80-ea80-2438-8f1b-b2df-319f.ngrok-free.app/detailer",
+      "customer_app_url": "https://157b-2a02-8084-c80-ea80-2438-8f1b-b2df-319f.ngrok-free.app/client",
+      "websocket_url": "wss://client.prismavalet.com/ws/client/",
+      "googoleApiKeys": "AIzaSyAW00mf-OWgmU_lQ2yLiy3RLWkAVpIdE0U",
       "stripe": {
-        "publishableKey": "pk_test_51S0pCyFO4bA8gRHV8aalwThKMBfWVy3jwM7xZ5cxNfM2QH0AygnOn4WPtEk7kPC3J1BJHLPQ508FpPjYtitk0Qfp00bYRMgL4p"
+        "publishableKey": "pk_test_51S0pDCFVJJgf9kPbBk7noZevUQSzkRN7CyYGi7QeKzKGToFekvr6jPVQQS1lsQoZyvd1J3EiQTfZJJHMxwIpX4mL005xBo7ME9"
       },
       "router": {},
       "eas": {

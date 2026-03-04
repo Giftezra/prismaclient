@@ -151,6 +151,7 @@ const useBooking = () => {
 
   // Time slot management state
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
+  const [selectedSlotAt, setSelectedSlotAt] = useState<number | null>(null);
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false);
   const [currentMonth, setCurrentMonth] = useState<dayjs.Dayjs>(
     dayjs(selectedDate)
@@ -395,6 +396,7 @@ const useBooking = () => {
       const newDate = new Date(selectedDate);
       newDate.setHours(hours, minutes, 0, 0);
       setSelectedDate(newDate);
+      setSelectedSlotAt(Date.now());
 
       // Update the availableTimeSlots to mark the selected slot
       setAvailableTimeSlots((prevSlots) =>
@@ -407,6 +409,31 @@ const useBooking = () => {
     },
     [selectedDate]
   );
+
+  /**
+   * Clears the selected time slot (e.g. when slot hold countdown expires).
+   */
+  const clearTimeSlotSelection = useCallback(() => {
+    setSelectedSlotAt(null);
+    setAvailableTimeSlots((prevSlots) =>
+      prevSlots.map((s) => ({ ...s, isSelected: false }))
+    );
+  }, []);
+
+  /**
+   * Called when the 1-minute slot hold countdown expires. Clears the selection
+   * and re-fetches time slots from the detailer so the user sees current
+   * availability and must choose again.
+   */
+  const handleSlotHoldExpired = useCallback(async () => {
+    clearTimeSlotSelection();
+    try {
+      await fetchAvailableTimeSlots(selectedDay);
+    } catch (error) {
+      console.error("Failed to re-fetch time slots after hold expiry:", error);
+      setAvailableTimeSlots([]);
+    }
+  }, [clearTimeSlotSelection, fetchAvailableTimeSlots, selectedDay]);
 
   /**
    * Generates calendar days for the current month
@@ -1741,7 +1768,7 @@ const useBooking = () => {
         valet_type: selectedValetType,
         service_type: selectedServiceType,
         address: selectedAddress,
-        status: "pending",
+        status: "accepted", // No separate accept step; job is accepted when assigned
         total_amount: priceBreakdown.total,
         subtotal_amount: priceBreakdown.subtotal,
         vat_amount: priceBreakdown.vat,
@@ -1773,7 +1800,7 @@ const useBooking = () => {
         addons: selectedAddons.map((addon) => addon.name || ""),
         special_instructions: specialInstructions || "",
         total_amount: getOriginalPrice(), // Send original price to detailer (no discount info)
-        status: "pending",
+        status: "accepted", // No separate accept step; job is accepted when created
         booking_reference: bookingReference,
         service_type: selectedServiceType?.name || "",
         booking_date: selectedDate?.toISOString().split("T")[0] || "",
@@ -1973,20 +2000,37 @@ const useBooking = () => {
         );
       }
 
-      // Use actual booking amount or default to 0
+      // Tiered refund: >12h full, 6-12h half, <=6h none
       const actualAmount = totalAmount || 0;
-      const refundAmount = hoursUntilAppointment <= 12 ? 0 : actualAmount;
+      let refundAmount = 0;
+      let tier: "full" | "half" | "none" = "none";
+      let message = "This booking will be cancelled.";
 
-      // Create cancellation data with actual booking amount
+      if (hoursUntilAppointment > 12) {
+        tier = "full";
+        refundAmount = actualAmount;
+        message =
+          "This booking will be cancelled and you will receive a full refund.";
+      } else if (hoursUntilAppointment > 6) {
+        tier = "half";
+        refundAmount = actualAmount / 2;
+        message =
+          "This booking will be cancelled and you will receive a 50% refund.";
+      } else {
+        tier = "none";
+        message =
+          "This booking will be cancelled. You will NOT receive a refund (cancellation within 6 hours of appointment).";
+      }
+
       const cancellationData = {
-        message:
-          hoursUntilAppointment <= 12
-            ? "This booking will be cancelled. You will NOT receive a refund due to late cancellation."
-            : "This booking will be cancelled and you will receive a full refund.",
+        message,
         booking_status: "pending_cancellation",
         refund:
-          refundAmount > 0 ? { amount: Math.round(refundAmount * 100) } : null, // Convert to cents
+          refundAmount > 0
+            ? { amount: Math.round(refundAmount * 100), tier }
+            : null,
         hours_until_appointment: hoursUntilAppointment,
+        tier,
       };
 
       setCancellationData(cancellationData);
@@ -2003,8 +2047,18 @@ const useBooking = () => {
       try {
         const response = await cancelBooking(bookingReference).unwrap();
         if (response) {
+          const res = typeof response === "object" && response !== null ? response as { refund?: { tier?: string; processed?: boolean; amount?: number } } : null;
+          const refund = res?.refund;
+          let successMessage = "Appointment cancelled successfully.";
+          if (refund?.tier === "full" && refund?.processed) {
+            successMessage = `Appointment cancelled. Refund of ${refund.amount ?? ""} will be processed within 3-5 business days.`;
+          } else if (refund?.tier === "half" && refund?.processed) {
+            successMessage = `Appointment cancelled. 50% refund of ${refund.amount ?? ""} will be processed within 3-5 business days.`;
+          } else if (refund?.tier === "none" || !refund?.processed) {
+            successMessage = "Appointment cancelled. No refund applicable.";
+          }
           showSnackbarWithConfig({
-            message: "Appointment cancelled successfully",
+            message: successMessage,
             type: "success",
             duration: 3000,
           });
@@ -2050,9 +2104,14 @@ const useBooking = () => {
           new_time: newTime,
         }).unwrap();
         if (response) {
+          const messageText =
+            typeof response === "string"
+              ? response
+              : (response as { message?: string })?.message ??
+                "Booking rescheduled successfully.";
           setAlertConfig({
             title: "Booking Rescheduled",
-            message: response,
+            message: messageText,
             type: "success",
             isVisible: true,
             onConfirm: () => {
@@ -2152,6 +2211,9 @@ const useBooking = () => {
     // Time slot management handlers
     fetchAvailableTimeSlots,
     handleTimeSlotSelect,
+    clearTimeSlotSelection,
+    handleSlotHoldExpired,
+    selectedSlotAt,
     handleDaySelection,
     handleMonthNavigation,
     generateCalendarDays,

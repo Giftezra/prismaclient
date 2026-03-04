@@ -46,6 +46,18 @@ def get_branch_spend_for_period(branch: Branch, period: str) -> Decimal:
     )
     payments_sum = payments_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
+    # Bulk order payments attributed to this branch (bulk_order.branch == branch)
+    bulk_payments_qs = PaymentTransaction.objects.filter(
+        transaction_type='payment',
+        status='succeeded',
+        bulk_order__isnull=False,
+        bulk_order__branch=branch,
+        created_at__gte=start,
+        created_at__lte=end,
+    )
+    bulk_payments_sum = bulk_payments_qs.aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    payments_sum = payments_sum + bulk_payments_sum
+
     # Refunds: status=succeeded, booking.user in branch admins. Use processed_at or created_at for period.
     refunds_qs = (
         RefundRecord.objects.filter(

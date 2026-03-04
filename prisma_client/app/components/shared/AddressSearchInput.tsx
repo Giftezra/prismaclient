@@ -50,7 +50,7 @@ const AddressSearchInput: React.FC<AddressSearchInputProps> = ({
   const borderColor = useThemeColor({}, "borders");
   const backgroundColor = useThemeColor({}, "background");
 
-  const [searchText, setSearchText] = useState(initialValue);
+  const [searchText, setSearchText] = useState<string>();
   const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,13 +91,15 @@ const AddressSearchInput: React.FC<AddressSearchInputProps> = ({
       clearTimeout(debounceRef.current);
     }
 
-    if (searchText.trim().length < 2) {
+    if (searchText && searchText.trim().length < 2) {
       setSuggestions([]);
       return;
     }
 
     debounceRef.current = setTimeout(() => {
-      searchAddresses(searchText);
+      if (searchText) {
+        searchAddresses(searchText);
+      }
     }, DEBOUNCE_MS);
 
     return () => {
@@ -201,8 +203,7 @@ const AddressSearchInput: React.FC<AddressSearchInputProps> = ({
           placeholder={placeholder}
           placeholderTextColor="#999999"
           value={searchText}
-          onChangeText={setSearchText}
-          editable={!isLoading}
+          onChangeText={(text) => setSearchText(text)}
         />
         {isLoading && (
           <ActivityIndicator size="small" color={textColor} style={styles.loader} />

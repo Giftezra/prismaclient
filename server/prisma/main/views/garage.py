@@ -108,7 +108,12 @@ class GarageView(APIView):
                 
                 if active_ownership:
                     # Vehicle is already owned - check if it's the same user or associated with the same fleet
-                    if active_ownership.owner == request.user or active_ownership.vehicle.fleet_associations.filter(fleet=request.user.get_managed_branch().fleet).exists():
+                    managed_branch = request.user.get_managed_branch()
+                    already_owns_or_same_fleet = (
+                        active_ownership.owner == request.user
+                        or (managed_branch is not None and active_ownership.vehicle.fleet_associations.filter(fleet=managed_branch.fleet).exists())
+                    )
+                    if already_owns_or_same_fleet:
                         return Response({
                             'error': 'You already own this vehicle',
                             'vehicle': {
@@ -809,6 +814,18 @@ class GarageView(APIView):
                 transfer.responded_at = timezone.now()
                 transfer.save()
                 
+                # Remove vehicle from any fleet so it no longer appears in previous owner's garage
+                FleetVehicle.objects.filter(vehicle=transfer.vehicle).delete()
+                
+                # Reject any other pending transfers for the same vehicle
+                VehicleTransfer.objects.filter(
+                    vehicle=transfer.vehicle,
+                    status='pending'
+                ).exclude(id=transfer.id).update(
+                    status='rejected',
+                    responded_at=timezone.now()
+                )
+                
                 # Increment owner count
                 transfer.vehicle.owner_count += 1
                 transfer.vehicle.save()
@@ -856,18 +873,23 @@ class GarageView(APIView):
                     'error': 'You are not authorized to reject this transfer'
                 }, status=status.HTTP_403_FORBIDDEN)
             
-            # Check if transfer can still be rejected
-            if transfer.status != 'pending':
+            # If already expired, set status to expired and do not send rejected email
+            if transfer.is_expired():
+                transfer.status = 'expired'
+                transfer.responded_at = timezone.now()
+                transfer.save()
                 return Response({
-                    'error': f'This transfer request is {transfer.status} and cannot be rejected'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                    'message': 'This transfer request had already expired.',
+                    'transfer_id': str(transfer.id),
+                    'status': 'expired'
+                }, status=status.HTTP_200_OK)
             
             # Reject transfer
             transfer.status = 'rejected'
             transfer.responded_at = timezone.now()
             transfer.save()
             
-            # Send notification email
+            # Send notification email only when actively rejected (not expired)
             from main.tasks import send_transfer_rejected_email
             send_transfer_rejected_email.delay(
                 transfer.id,

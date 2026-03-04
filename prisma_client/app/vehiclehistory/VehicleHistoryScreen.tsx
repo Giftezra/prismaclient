@@ -165,7 +165,7 @@ const VehicleHistoryScreen = () => {
         >
           <Ionicons name="arrow-back" size={24} color={textColor} />
         </TouchableOpacity>
-        <StyledText variant="titleLarge" style={[styles.headerTitle, { color: textColor }]}>
+        <StyledText variant="titleMedium" style={[styles.headerTitle, { color: textColor }]}>
           Vehicle History
         </StyledText>
         <View style={styles.placeholder} />
@@ -384,7 +384,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    padding: 10,
+    paddingTop: 40,
     borderBottomWidth: 1,
   },
   backButton: {

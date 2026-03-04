@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import ModalServices from "@/app/utils/ModalServices";
 import AddNewVehicle from "@/app/components/garage/AddNewVehicle";
 import { useAppSelector, RootState } from "@/app/store/main_store";
+import PendingTransfersSection from "@/app/components/garage/PendingTransfersSection";
 
 const GarageScreen = () => {
   const {
@@ -50,6 +51,7 @@ const GarageScreen = () => {
           />
         }
       >
+        <PendingTransfersSection onTransferResolved={refetchVehicles} />
         {/* Display the list of cars the user has added */}
         <View style={styles.myvehiclecontainer}>
           {isLoadingVehicles ? (

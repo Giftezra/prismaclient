@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from main.models import TermsAndConditions
+from main.models import TermsAndConditions, PrivacyPolicy
 
 class TermsView(APIView):
     permission_classes = [AllowAny]
@@ -27,10 +27,15 @@ class TermsView(APIView):
         return handler(request)
 
     def get_terms(self, request):
+        """Returns the latest Terms and Conditions from the TermsAndConditions model."""
         try:
             terms = TermsAndConditions.objects.latest('last_updated')
 
-            # Simple HTML structure that matches the mobile design
+            # Styled HTML matching the Terms of Service modal: blue headings, grey body, numbered sections
+            primary_blue = '#5B9BD5'
+            text_dark = '#2C3E50'
+            text_muted = '#6B7C8D'
+
             styled_html = f"""
             <html>
             <head>
@@ -42,48 +47,39 @@ class TermsView(APIView):
                         padding: 0;
                         box-sizing: border-box;
                     }}
-                    
                     body {{
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                        background-color: #FFFFFF;
-                        color: #000000;
-                        font-size: 16px;
-                        line-height: 1.5;
-                        padding: 20px;
-                    }}
-                    
-                    .terms-content {{
-                        max-width: 800px;
-                        margin: 0 auto;
-                    }}
-                    
-                    p {{
-                        margin-bottom: 16px;
-                        margin-top: 0;
-                        color: #000000;
+                        background-color: transparent;
+                        color: {text_muted};
+                        font-size: 15px;
                         line-height: 1.6;
-                        font-size: 16px;
+                        padding: 0;
                     }}
-                    
-                    /* Section headers - first strong element in paragraph */
+                    .terms-content {{
+                        max-width: 100%;
+                    }}
+                    p {{
+                        margin-bottom: 14px;
+                        margin-top: 0;
+                        color: {text_muted};
+                        line-height: 1.6;
+                        font-size: 15px;
+                    }}
+                    /* Numbered section headers (e.g. "3 - Terms and Conditions") - bold blue */
                     p strong:first-child {{
                         display: block;
-                        font-size: 18px;
+                        font-size: 16px;
                         font-weight: bold;
                         margin-bottom: 8px;
-                        margin-top: 20px;
-                        color: #000000;
+                        margin-top: 18px;
+                        color: {primary_blue};
                     }}
-                    
-                    /* Regular strong text */
                     strong {{
                         font-weight: 600;
-                        color: #000000;
+                        color: {text_dark};
                     }}
-                    
-                    /* Links */
                     a {{
-                        color: #8B5CF6;
+                        color: {primary_blue};
                         text-decoration: underline;
                     }}
                 </style>
@@ -106,10 +102,13 @@ class TermsView(APIView):
 
 
     def get_privacy_policy(self, request):
+        """Returns the latest Privacy Policy from the PrivacyPolicy model."""
         try:
-            privacy_policy = TermsAndConditions.objects.latest('last_updated')
+            privacy_policy = PrivacyPolicy.objects.latest('last_updated')
+            primary_blue = '#5B9BD5'
+            text_dark = '#2C3E50'
+            text_muted = '#6B7C8D'
 
-            # Simple HTML structure that matches the mobile design
             styled_html = f"""
             <html>
             <head>
@@ -121,72 +120,58 @@ class TermsView(APIView):
                         padding: 0;
                         box-sizing: border-box;
                     }}
-                    
                     body {{
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                        background-color: #FFFFFF;
-                        color: #000000;
-                        font-size: 16px;
-                        line-height: 1.5;
-                        padding: 20px;
-                    }}
-                    
-                    .privacy-content {{
-                        max-width: 800px;
-                        margin: 0 auto;
-                    }}
-                    
-                    h1 {{
-                        font-size: 24px;
-                        font-weight: bold;
-                        margin-bottom: 20px;
-                        color: #000000;
-                        text-align: center;
-                    }}
-                    
-                    p {{
-                        margin-bottom: 16px;
-                        margin-top: 0;
-                        color: #000000;
+                        background-color: transparent;
+                        color: {text_muted};
+                        font-size: 15px;
                         line-height: 1.6;
-                        font-size: 16px;
+                        padding: 0;
                     }}
-                    
-                    /* Section headers - first strong element in paragraph */
+                    .privacy-content {{
+                        max-width: 100%;
+                    }}
+                    h1 {{
+                        font-size: 16px;
+                        font-weight: bold;
+                        margin-bottom: 14px;
+                        color: {primary_blue};
+                    }}
+                    p {{
+                        margin-bottom: 10px;
+                        margin-top: 0;
+                        color: {text_muted};
+                        line-height: 1.6;
+                        font-size: 10px;
+                    }}
                     p strong:first-child {{
                         display: block;
-                        font-size: 18px;
+                        font-size: 12px;
                         font-weight: bold;
                         margin-bottom: 8px;
-                        margin-top: 20px;
-                        color: #000000;
+                        margin-top: 18px;
+                        color: {primary_blue};
                     }}
-                    
-                    /* Regular strong text */
                     strong {{
                         font-weight: 600;
-                        color: #000000;
+                        color: {text_dark};
                     }}
-                    
-                    /* Links */
                     a {{
-                        color: #8B5CF6;
+                        color: {primary_blue};
                         text-decoration: underline;
                     }}
-                    
                     ul, ol {{
                         margin-left: 20px;
-                        margin-bottom: 16px;
+                        margin-bottom: 14px;
                     }}
-                    
                     li {{
-                        margin-bottom: 8px;
+                        margin-bottom: 6px;
                     }}
                 </style>
             </head>
             <body>
                 <div class="privacy-content">
-                    <h1>Privacy Policy</h1>
+                    <h2>Privacy Policy</h2>
                     {privacy_policy.content}
                 </div>
             </body>
@@ -197,5 +182,5 @@ class TermsView(APIView):
                 'content': styled_html,
                 'last_updated': privacy_policy.last_updated,
             })
-        except TermsAndConditions.DoesNotExist:
+        except PrivacyPolicy.DoesNotExist:
             return Response({'error': 'Privacy Policy not found'}, status=status.HTTP_404_NOT_FOUND)

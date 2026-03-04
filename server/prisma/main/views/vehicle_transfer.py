@@ -125,6 +125,15 @@ class WebTransferActionView(APIView):
                 transfer.responded_at = timezone.now()
                 transfer.save()
                 
+                # Reject any other pending transfers for the same vehicle
+                VehicleTransfer.objects.filter(
+                    vehicle=transfer.vehicle,
+                    status='pending'
+                ).exclude(id=transfer.id).update(
+                    status='rejected',
+                    responded_at=timezone.now()
+                )
+                
                 # Increment owner count
                 transfer.vehicle.owner_count += 1
                 transfer.vehicle.save()
@@ -153,14 +162,23 @@ class WebTransferActionView(APIView):
             
     
     def _process_rejection(self, request, transfer):
-        """Process transfer rejection"""
+        """Process transfer rejection. If already expired, set status to expired and skip rejected email."""
         try:
+            if transfer.is_expired():
+                transfer.status = 'expired'
+                transfer.responded_at = timezone.now()
+                transfer.save()
+                return render(request, 'transfer_invalid.html', {
+                    'error': 'This transfer request had already expired.',
+                    'transfer': transfer
+                })
+            
             # Reject transfer
             transfer.status = 'rejected'
             transfer.responded_at = timezone.now()
             transfer.save()
             
-            # Send notification email
+            # Send notification email only when actively rejected (not expired)
             send_transfer_rejected_email.delay(
                 transfer.id,
                 transfer.to_owner.email,

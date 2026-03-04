@@ -51,6 +51,8 @@ class ServiceHistoryView(APIView):
                     
                     # Add filter for bookings with vehicles in this branch
                     user_filter |= Q(vehicle_id__in=branch_vehicles)
+                    # Include bulk order appointments for this branch
+                    user_filter |= Q(bulk_order__branch=managed_branch)
             
             # If user is a fleet owner, also include bookings for vehicles in their fleet
             elif request.user.is_fleet_owner:
@@ -63,6 +65,11 @@ class ServiceHistoryView(APIView):
                     
                     # Add filter for bookings with vehicles in this fleet
                     user_filter |= Q(vehicle_id__in=fleet_vehicles)
+                    # Include bulk order appointments for this fleet
+                    user_filter |= Q(bulk_order__fleet=fleet)
+            else:
+                # Regular user: include their bulk order appointments
+                user_filter |= Q(bulk_order__user=request.user)
             
             # Combine filters
             query_filter &= user_filter
@@ -77,7 +84,8 @@ class ServiceHistoryView(APIView):
                 'valet_type',
                 'vehicle',
                 'address',
-                'detailer'
+                'detailer',
+                'bulk_order',
             ).order_by('-appointment_date')
             
             service_history = []
@@ -85,13 +93,25 @@ class ServiceHistoryView(APIView):
             for appointment in appointments:
                 try:
                     # Format the service history data to match MyServiceHistoryProps interface
+                    if appointment.vehicle:
+                        vehicle_reg = appointment.vehicle.registration_number or 'Unknown'
+                    elif appointment.bulk_order_id and appointment.booking_reference:
+                        # Bulk slot: e.g. BULKxxx-3 -> "Vehicle 3"
+                        ref = appointment.booking_reference
+                        if '-' in ref:
+                            suffix = ref.split('-')[-1]
+                            vehicle_reg = f"Vehicle {suffix}" if suffix.isdigit() else ref
+                        else:
+                            vehicle_reg = 'Bulk'
+                    else:
+                        vehicle_reg = 'Unknown'
                     service_history_item = {
                         'id': str(appointment.id),
                         'booking_date': appointment.booking_date.isoformat(),
                         'appointment_date': appointment.appointment_date.isoformat(),
                         'service_type': appointment.service_type.name if appointment.service_type else 'Unknown',
                         'valet_type': appointment.valet_type.name if appointment.valet_type else 'Unknown',
-                        'vehicle_reg': appointment.vehicle.registration_number if appointment.vehicle else 'Unknown',
+                        'vehicle_reg': vehicle_reg,
                         'address': {
                             'id': str(appointment.address.id) if appointment.address else '',
                             'address': appointment.address.address if appointment.address else '',
@@ -153,7 +173,7 @@ class ServiceHistoryView(APIView):
             
             # Get the booking and verify access
             try:
-                booking = BookedAppointment.objects.get(id=booking_id)
+                booking = BookedAppointment.objects.select_related('bulk_order').get(id=booking_id)
             except BookedAppointment.DoesNotExist:
                 return Response({
                     'error': 'Booking not found'
@@ -182,6 +202,19 @@ class ServiceHistoryView(APIView):
                         fleet=fleet,
                         vehicle=booking.vehicle
                     ).exists()
+            # Bulk order appointments: check access via bulk_order
+            if not has_access and booking.vehicle is None and getattr(booking, 'bulk_order', None):
+                bulk_order = booking.bulk_order
+                if request.user == bulk_order.user:
+                    has_access = True
+                elif request.user.is_branch_admin:
+                    managed_branch = request.user.get_managed_branch()
+                    if managed_branch and bulk_order.branch_id == managed_branch.id:
+                        has_access = True
+                elif request.user.is_fleet_owner:
+                    fleet = Fleet.objects.filter(owner=request.user).first()
+                    if fleet and bulk_order.fleet_id == fleet.id:
+                        has_access = True
             
             if not has_access:
                 return Response({

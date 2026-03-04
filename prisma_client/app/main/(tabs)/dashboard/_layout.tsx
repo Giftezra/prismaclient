@@ -14,6 +14,7 @@ const DashboardLayout = () => {
       <Stack.Screen name="CreateBranchAdminScreen" />
       <Stack.Screen name="BranchManagementScreen" />
       <Stack.Screen name="UpcomingBookingScreen" />
+      <Stack.Screen name="ForthcomingBookingsListScreen" />
       <Stack.Screen name="DealershipPartnerDashboardScreen" />
       <Stack.Screen name="PartnerPayoutScreen" />
     </Stack>

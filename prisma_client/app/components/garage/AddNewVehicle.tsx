@@ -64,6 +64,7 @@ const AddNewVehicleScreen = ({
     collectNewVehicleData,
     handleSubmit,
     isLoadingVehicles,
+    isAddingNewVehicle,
     isImageModalVisible,
     showImageSelectionModal,
     hideImageSelectionModal,
@@ -302,18 +303,18 @@ const AddNewVehicleScreen = ({
 
         {/* Submit Button */}
         <View style={styles.submitContainer}>
-          {isLoadingVehicles ? (
+          {isLoadingVehicles || isAddingNewVehicle ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <StyledButton
               title={"Add New Vehicle"}
-              onPress={() => {
-                handleSubmit();
+              onPress={async () => {
+                await handleSubmit();
                 setIsAddVehicleModalVisible(false);
               }}
               variant="medium"
               style={styles.submitButton}
-              disabled={isLoadingVehicles || !!yearError}
+              disabled={isLoadingVehicles || isAddingNewVehicle || !!yearError}
             />
           )}
         </View>

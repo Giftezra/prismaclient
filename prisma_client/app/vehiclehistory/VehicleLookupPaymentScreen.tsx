@@ -174,10 +174,11 @@ const VehicleLookupPaymentScreen = () => {
       // Poll for payment verification
       let verified = false;
       let attempts = 0;
-      const maxAttempts = 20; // 20 attempts * 2.5s = 50 seconds max
+      const maxAttempts = 24; // 24 * 1.5s = 36s max
+      const pollIntervalMs = 1500;
 
       while (!verified && attempts < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, 2500)); // Wait 2.5 seconds
+        await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
 
         try {
           const verificationResult = await verifyPayment({
@@ -209,7 +210,6 @@ const VehicleLookupPaymentScreen = () => {
           // If pending, continue polling
         } catch (error: any) {
           if (error?.data?.error && error.data.error.includes("not found")) {
-            // Purchase not created yet, continue polling
             attempts++;
             continue;
           }
@@ -220,7 +220,9 @@ const VehicleLookupPaymentScreen = () => {
       }
 
       if (!verified) {
-        throw new Error("Payment verification timeout. Please contact support.");
+        throw new Error(
+          "Verification is taking longer than expected. Check your email or the app later—your purchase may already be active."
+        );
       }
     } catch (error: any) {
       console.error("Payment error:", error);

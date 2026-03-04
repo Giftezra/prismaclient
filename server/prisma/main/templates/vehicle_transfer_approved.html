@@ -1,55 +1,16 @@
-{% extends "base_email.html" %} {% block content %}
-<div
-  style="
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
-  "
->
-  <h2
-    style="
-      color: #4caf50;
-      border-bottom: 2px solid #4caf50;
-      padding-bottom: 10px;
-    "
-  >
-    ✓ Vehicle Transfer Approved
-  </h2>
+{% extends "base_email.html" %}
+{% block content %}
+<div style="max-width: 520px; margin: 0 auto; padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; line-height: 1.5; ">
+  <p style="margin: 0 0 8px; font-weight: 600; font-size: 16px; color: #166534;">Vehicle transfer approved</p>
+  <p style="margin: 0 0 12px; color: #374151;">Hello {{ requester_name }},</p>
+  <p style="margin: 0 0 12px; color: #374151;">{{ owner_name }} has approved your request. The vehicle is now in your garage.</p>
 
-  <p>Hello {{ requester_name }},</p>
-
-  <p>
-    Great news! Your vehicle transfer request has been approved by {{ owner_name
-    }}.
-  </p>
-
-  <div
-    style="
-      background-color: #e8f5e9;
-      padding: 15px;
-      border-radius: 5px;
-      margin: 20px 0;
-      border-left: 4px solid #4caf50;
-    "
-  >
-    <p style="margin: 5px 0">
-      <strong>Vehicle:</strong> {{ vehicle_make }} {{ vehicle_model }} {{
-      vehicle_year }}
-    </p>
-    <p style="margin: 5px 0">
-      <strong>Registration:</strong> {{ vehicle_registration }}
-    </p>
-    <p style="margin: 5px 0">
-      <strong>Transfer Date:</strong> {{ transfer_date }}
-    </p>
+  <div style="background: #f0fdf4; border-radius: 8px; padding: 10px 12px; margin: 12px 0; border: 1px solid #bbf7d0;">
+    <p style="margin: 4px 0; color: #334155;"><strong>Vehicle</strong> {{ vehicle_make }} {{ vehicle_model }} ({{ vehicle_year }})</p>
+    <p style="margin: 4px 0; color: #334155;"><strong>Registration</strong> {{ vehicle_registration }}</p>
+    <p style="margin: 4px 0; color: #64748b; font-size: 13px;">Transferred {{ transfer_date }}</p>
   </div>
 
-  <p>
-    The vehicle has been successfully transferred to your account. You can now
-    view it in your garage and book services for it.
-  </p>
-
-  <p style="margin-top: 30px">Thank you for using Prisma!</p>
+  <p style="margin: 12px 0 0; color: #374151;">You can view and manage it in the Prisma app.</p>
 </div>
 {% endblock %}

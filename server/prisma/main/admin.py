@@ -2,7 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from django.utils import timezone
-from .models import User, Vehicle, VehicleOwnership, VehicleEvent, Fleet, FleetMember, FleetVehicle, VehicleTransfer, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification, LoyaltyProgram, Promotions, PaymentTransaction, RefundRecord, TermsAndConditions, Referral, Branch, SubscriptionTier, SubscriptionPlan, FleetSubscription, SubscriptionBilling, EventDataManagement, BookedAppointmentImage, Partner, PartnerBankAccount, PartnerPayoutRequest, ReferralAttribution, CommissionEarning, CommissionPayout, PartnerMetricsCache, CommissionAdminLog
+from .models import User, Vehicle, VehicleOwnership, VehicleEvent, Fleet, FleetMember, FleetVehicle, VehicleTransfer, ServiceType, ValetType, DetailerProfile, BookedAppointment, Address, AddOns, Notification, LoyaltyProgram, Promotions, PaymentTransaction, RefundRecord, TermsAndConditions, PrivacyPolicy, Referral, Branch, SubscriptionTier, SubscriptionPlan, FleetSubscription, SubscriptionBilling, EventDataManagement, BookedAppointmentImage, Partner, PartnerBankAccount, PartnerPayoutRequest, ReferralAttribution, CommissionEarning, CommissionPayout, PartnerMetricsCache, CommissionAdminLog, PendingBooking, BulkOrder
 
 
 
@@ -290,6 +290,11 @@ class TermsAndConditionsAdmin(admin.ModelAdmin):
     list_display = ('version', 'last_updated')
     ordering = ('-last_updated',)
 
+@admin.register(PrivacyPolicy)
+class PrivacyPolicyAdmin(admin.ModelAdmin):
+    list_display = ('version', 'last_updated')
+    ordering = ('-last_updated',)
+
 @admin.register(Referral)
 class ReferralAdmin(admin.ModelAdmin):
     list_display = ('referrer', 'referred', 'created_at')
@@ -494,3 +499,18 @@ class PartnerMetricsCacheAdmin(admin.ModelAdmin):
     list_display = ('partner', 'total_referred_users', 'active_referred_users', 'total_revenue_from_referrals', 'total_commission_earned', 'pending_commission', 'last_updated')
     search_fields = ('partner__business_name',)
     readonly_fields = ('last_updated',)
+
+@admin.register(PendingBooking)
+class PendingBookingAdmin(admin.ModelAdmin):
+    list_display = ('booking_reference', 'user', 'payment_status', 'expires_at', 'created_at')
+    list_filter = ('payment_status', 'expires_at', 'created_at')
+    search_fields = ('booking_reference', 'user__email', 'user__name')
+
+
+@admin.register(BulkOrder)
+class BulkOrderAdmin(admin.ModelAdmin):
+    list_display = ('booking_reference', 'user', 'branch', 'fleet', 'payment_status', 'number_of_vehicles', 'total_amount', 'created_at')
+    list_filter = ('payment_status', 'created_at')
+    search_fields = ('booking_reference', 'user__email', 'user__name')
+    readonly_fields = ('id', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'

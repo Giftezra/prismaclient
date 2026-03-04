@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { View, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -11,6 +11,7 @@ import { Colors } from "../../../constants/Colors";
 import { useColorScheme } from "../../../hooks/useColorScheme";
 import StyledText from "../helpers/StyledText";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { useAlertContext } from "@/app/contexts/AlertContext";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -93,27 +94,25 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   const textColor = useThemeColor({}, "text");
   const primaryColor = useThemeColor({}, "primary");
   const iconColor = useThemeColor({}, "icons");
+  const { setAlertConfig, setIsVisible } = useAlertContext();
 
   const icon = getNotificationIcon(notification.type, notification.status);
   const swipeableRef = useRef<Swipeable>(null);
 
   const handleDelete = () => {
-    Alert.alert(
-      "Delete Notification",
-      "Are you sure you want to delete this notification?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            onDelete(notification.id);
-            // Close the swipeable after deletion
-            swipeableRef.current?.close();
-          },
-        },
-      ]
-    );
+    setAlertConfig({
+      isVisible: true,
+      title: "Delete Notification",
+      message: "Are you sure you want to delete this notification?",
+      type: "warning",
+      confirmLabel: "Delete",
+      onClose: () => setIsVisible(false),
+      onConfirm: () => {
+        onDelete(notification.id);
+        swipeableRef.current?.close();
+        setIsVisible(false);
+      },
+    });
   };
 
   const renderRightActions = () => {

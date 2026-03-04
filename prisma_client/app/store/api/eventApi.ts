@@ -271,6 +271,25 @@ const createBookingApi = createApi({
     }),
 
     /**
+     * Create bulk order with Stripe invoice sent to user email; booking is sent to detailer.
+     * ARGS : { booking_data: object (is_bulk, service_type, address, date, number_of_vehicles, total_amount, etc.) }
+     * RESPONSE : { success: boolean, booking_reference: string, bulk_order_id: number, message?: string }
+     */
+    createBulkOrderInvoiceLater: builder.mutation<
+      { success: boolean; booking_reference: string; bulk_order_id: number; message?: string },
+      { booking_data: Record<string, unknown>; booking_reference?: string }
+    >({
+      query: (data) => ({
+        url: "/api/v1/payment/create_bulk_order_invoice_later/",
+        method: "POST",
+        data: {
+          booking_data: data.booking_data,
+          booking_reference: data.booking_reference,
+        },
+      }),
+    }),
+
+    /**
      * Delete a saved payment method
      * ARGS : { payment_method_id: string }
      * RESPONSE : { message: string }
@@ -314,7 +333,6 @@ const createBookingApi = createApi({
         method: "GET",
       }),
     }),
-
   }),
 });
 export const {
@@ -332,5 +350,6 @@ export const {
   useCheckFreeWashQuery,
   useLazyCheckFreeWashQuery,
   useConfirmPaymentIntentMutation,
+  useCreateBulkOrderInvoiceLaterMutation,
 } = createBookingApi;
 export default createBookingApi;

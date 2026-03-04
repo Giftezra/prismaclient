@@ -8,6 +8,7 @@ import {
   BranchSpendResponse,
   VehicleBookingsResponse,
   BranchAdminsResponse,
+  BranchBulkOrdersResponse,
   FleetAdminsResponse,
   FleetAdmin,
   UpdateBranchAdminProps,
@@ -204,6 +205,21 @@ const fleetApi = createApi({
     }),
 
     /**
+     * Get bulk orders for a specific branch
+     * ARGS: { branch_id: string }
+     * RESPONSE: BranchBulkOrdersResponse
+     */
+    getBranchBulkOrders: builder.query<
+      BranchBulkOrdersResponse,
+      { branch_id: string }
+    >({
+      query: ({ branch_id }) => ({
+        url: `/api/v1/fleet/get_branch_bulk_orders/${branch_id}/`,
+        method: "GET",
+      }),
+    }),
+
+    /**
      * Get all branch admins for the fleet (fleet owner only)
      * RESPONSE: FleetAdminsResponse
      */
@@ -243,6 +259,44 @@ const fleetApi = createApi({
         data: { admin_id },
       }),
     }),
+
+    /**
+     * Cancel a bulk order (full refund when >=12h before job start).
+     * ARGS: { bulk_order_id?: string, booking_reference?: string }
+     */
+    cancelBulkOrder: builder.mutation<
+      { message: string; refund_amount?: number },
+      { bulk_order_id?: string; booking_reference?: string }
+    >({
+      query: (data) => ({
+        url: "/api/v1/fleet/cancel_bulk_order/",
+        method: "POST",
+        data,
+      }),
+    }),
+
+    /**
+     * Reschedule a bulk order to a new date/window (only when >=12h before current job start).
+     * ARGS: { bulk_order_id?: string, booking_reference?: string, new_date: string, start_time?: string, end_time?: string, number_of_vehicles?: number, suggested_team_size?: number }
+     */
+    rescheduleBulkOrder: builder.mutation<
+      { message: string; new_slots?: Array<{ booking_reference: string; appointment_date: string; appointment_time: string; detailer_id: string }> },
+      {
+        bulk_order_id?: string;
+        booking_reference?: string;
+        new_date: string;
+        start_time?: string;
+        end_time?: string;
+        number_of_vehicles?: number;
+        suggested_team_size?: number;
+      }
+    >({
+      query: (data) => ({
+        url: "/api/v1/fleet/reschedule_bulk_order/",
+        method: "POST",
+        data,
+      }),
+    }),
   }),
 });
 
@@ -257,9 +311,12 @@ export const {
   useDeleteBranchMutation,
   useGetVehicleBookingsQuery,
   useGetBranchAdminsQuery,
+  useGetBranchBulkOrdersQuery,
   useGetFleetAdminsQuery,
   useUpdateBranchAdminMutation,
   useRemoveBranchAdminMutation,
+  useCancelBulkOrderMutation,
+  useRescheduleBulkOrderMutation,
 } = fleetApi;
 
 export default fleetApi;

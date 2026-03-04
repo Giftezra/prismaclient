@@ -17,13 +17,15 @@ BASE_URL = os.getenv('BASE_URL')
 
 
 # Production: client.prismavalet.com on droplet. Override via env for local/dev.
-_CLIENT_ORIGIN = os.getenv('CLIENT_ORIGIN', 'https://client.prismavalet.com')
+_CLIENT_ORIGIN = os.getenv('CLIENT_ORIGIN', 'https://157b-2a02-8084-c80-ea80-2438-8f1b-b2df-319f.ngrok-free.app')
+# Prismahome (landing site) often runs on localhost:3000; allow it for terms/privacy API calls.
+_DEFAULT_CORS_ORIGINS = [_CLIENT_ORIGIN, 'http://localhost:3000', 'http://127.0.0.1:3000']
 ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', _CLIENT_ORIGIN).split(',') if os.getenv('ALLOWED_ORIGINS') else [_CLIENT_ORIGIN]
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', _CLIENT_ORIGIN).split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else [_CLIENT_ORIGIN]
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', _CLIENT_ORIGIN).split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else [_CLIENT_ORIGIN]
+CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://157b-2a02-8084-c80-ea80-2438-8f1b-b2df-319f.ngrok-free.app']
 
 CORS_ALLOW_CREDENTIALS = True
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'client.prismavalet.com').split(',') if os.getenv('ALLOWED_HOSTS') else ['client.prismavalet.com']
+ALLOWED_HOSTS = ['*']
 
 
 USE_X_FORWARDED_HOST = True

@@ -16,6 +16,7 @@ from main.tasks.emails.subscription import (
     send_payment_method_updated_email,
     send_trial_subscription_welcome_email,
 )
+from main.tasks.emails.branch_admin import send_branch_admin_credentials_email
 
 __all__ = [
     'send_welcome_email',
@@ -33,4 +34,5 @@ __all__ = [
     'send_payment_failed_email',
     'send_payment_method_updated_email',
     'send_trial_subscription_welcome_email',
+    'send_branch_admin_credentials_email',
 ]

@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from main.models import Fleet, Branch, FleetMember, FleetVehicle, Vehicle, VehicleOwnership, BookedAppointment, User
+from main.models import Fleet, Branch, FleetMember, FleetVehicle, Vehicle, VehicleOwnership, BookedAppointment, User, BulkOrder, PaymentTransaction, RefundRecord
 from main.utils.branch_spend import get_branch_spend_for_period
 from main.utils.fleet_analytics import (
     get_branch_performance, get_spend_trends, get_vehicle_health_scores,
@@ -12,6 +12,11 @@ from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
+import stripe
+from django.conf import settings
+import logging
+
+from main.tasks import publish_booking_cancelled, send_branch_admin_credentials_email
 
 
 class FleetView(APIView):
@@ -28,6 +33,9 @@ class FleetView(APIView):
         'delete_branch': 'delete_branch',
         'get_vehicle_bookings': 'get_vehicle_bookings',
         'get_branch_admins': 'get_branch_admins',
+        'get_branch_bulk_orders': 'get_branch_bulk_orders',
+        'cancel_bulk_order': 'cancel_bulk_order',
+        'reschedule_bulk_order': 'reschedule_bulk_order',
         'get_fleet_admins': 'get_fleet_admins',
         'update_branch_admin': 'update_branch_admin',
         'remove_branch_admin': 'remove_branch_admin',
@@ -256,7 +264,20 @@ class FleetView(APIView):
                 role='admin',
                 branch=branch
             )
-            
+
+            # Send credentials email to the new admin/manager
+            branch_address_parts = [branch.address, branch.city, branch.postcode, branch.country]
+            branch_address_str = ", ".join(p for p in branch_address_parts if p and str(p).strip()) or "—"
+            role_label = "Branch Admin" if fleet_member.role == "admin" else "Branch Manager"
+            send_branch_admin_credentials_email.delay(
+                recipient_email=user.email,
+                recipient_name=user.name,
+                branch_name=branch.name,
+                branch_address=branch_address_str,
+                password=password,
+                role_label=role_label,
+            )
+
             return Response({
                 'message': 'Branch admin created successfully',
                 'admin': {
@@ -307,14 +328,15 @@ class FleetView(APIView):
             branches = Branch.objects.filter(fleet=fleet)
             total_branches = branches.count()
             
-            # Get all vehicles in fleet (through FleetVehicle)
-            fleet_vehicles = FleetVehicle.objects.filter(fleet=fleet)
+            # Get all vehicles in fleet (through FleetVehicle); skip entries with no vehicle
+            fleet_vehicles = FleetVehicle.objects.filter(fleet=fleet).select_related('vehicle')
             total_vehicles = fleet_vehicles.count()
             
             # Get all bookings for vehicles in this fleet
-            vehicle_ids = [fv.vehicle.id for fv in fleet_vehicles]
+            vehicle_ids = [fv.vehicle.id for fv in fleet_vehicles if fv.vehicle]
             bookings = BookedAppointment.objects.filter(vehicle_id__in=vehicle_ids)
-            total_bookings = bookings.count()
+            fleet_bulk_orders = BulkOrder.objects.filter(fleet=fleet)
+            total_bookings = bookings.count() + fleet_bulk_orders.count()
             
             # Get recent bookings (last 10)
             recent_bookings = bookings.order_by('-created_at')[:10]
@@ -324,7 +346,7 @@ class FleetView(APIView):
                     'id': str(booking.id),
                     'booking_reference': booking.booking_reference,
                     'vehicle_reg': booking.vehicle.registration_number if booking.vehicle else None,
-                    'service_type': booking.service_type.name,
+                    'service_type': booking.service_type.name if booking.service_type else None,
                     'status': booking.status,
                     'appointment_date': booking.appointment_date.isoformat(),
                     'total_amount': float(booking.total_amount),
@@ -336,10 +358,13 @@ class FleetView(APIView):
             # Get branch stats (include spend cap data)
             branches_data = []
             for branch in branches:
-                branch_vehicles = FleetVehicle.objects.filter(fleet=fleet, branch=branch)
+                branch_vehicles = FleetVehicle.objects.filter(fleet=fleet, branch=branch).select_related('vehicle')
+                branch_vehicle_ids = [bv.vehicle.id for bv in branch_vehicles if bv.vehicle]
                 branch_bookings = BookedAppointment.objects.filter(
-                    vehicle_id__in=[bv.vehicle.id for bv in branch_vehicles]
+                    vehicle_id__in=branch_vehicle_ids
                 )
+                branch_bulk_orders = BulkOrder.objects.filter(branch=branch)
+                branch_booking_count = branch_bookings.count() + branch_bulk_orders.count()
                 period = branch.spend_limit_period or 'monthly'
                 spent = get_branch_spend_for_period(branch, period)
                 limit = branch.spend_limit
@@ -352,19 +377,29 @@ class FleetView(APIView):
                     'address': branch.address,
                     'city': branch.city,
                     'vehicle_count': branch_vehicles.count(),
-                    'booking_count': branch_bookings.count(),
+                    'booking_count': branch_booking_count,
                     'spend_limit': float(limit) if limit is not None else None,
                     'spend_limit_period': branch.spend_limit_period,
                     'spent': float(spent),
                     'remaining': float(remaining) if remaining is not None else None,
                 })
             
-            # Get analytics data
-            branch_performance = get_branch_performance(fleet, start_date, end_date)
-            spend_trends = get_spend_trends(fleet, start_date, end_date, granularity='daily')
-            vehicle_health_scores = get_vehicle_health_scores(fleet, start_date, end_date)
-            booking_activity = get_booking_activity(fleet, start_date, end_date)
-            common_issues = get_common_issues(fleet, start_date, end_date)
+            # Get analytics data (defensive: return empty on failure so dashboard still loads)
+            try:
+                branch_performance = get_branch_performance(fleet, start_date, end_date)
+                spend_trends = get_spend_trends(fleet, start_date, end_date, granularity='daily')
+                vehicle_health_scores = get_vehicle_health_scores(fleet, start_date, end_date)
+                booking_activity = get_booking_activity(fleet, start_date, end_date)
+                common_issues = get_common_issues(fleet, start_date, end_date)
+            except Exception as analytics_err:
+                logging.getLogger(__name__).exception(
+                    "Fleet dashboard analytics failed: %s", analytics_err
+                )
+                branch_performance = []
+                spend_trends = []
+                vehicle_health_scores = []
+                booking_activity = []
+                common_issues = []
             
             return Response({
                 'fleet': {
@@ -458,6 +493,272 @@ class FleetView(APIView):
             
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get_branch_bulk_orders(self, request, branch_id=None):
+        """Get bulk orders for a specific branch"""
+        try:
+            branch_id = branch_id or request.query_params.get('branch_id')
+            
+            if not branch_id:
+                return Response({'error': 'Branch ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                branch = Branch.objects.get(id=branch_id)
+            except Branch.DoesNotExist:
+                return Response({'error': 'Branch not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+            if request.user.is_fleet_owner:
+                fleet = Fleet.objects.filter(owner=request.user).first()
+                if not fleet or branch.fleet != fleet:
+                    return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+            elif request.user.is_branch_admin:
+                managed_branch = request.user.get_managed_branch()
+                if not managed_branch or managed_branch.id != branch.id:
+                    return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+            
+            bulk_orders = BulkOrder.objects.filter(branch=branch).order_by('-created_at')
+            orders_data = []
+            for bo in bulk_orders:
+                orders_data.append({
+                    'id': str(bo.id),
+                    'booking_reference': bo.booking_reference or '',
+                    'number_of_vehicles': bo.number_of_vehicles or 0,
+                    'total_amount': float(bo.total_amount) if bo.total_amount is not None else None,
+                    'created_at': bo.created_at.isoformat() if bo.created_at else None,
+                    'payment_status': bo.payment_status or '',
+                    'order_data': bo.order_data,
+                })
+            
+            return Response({
+                'branch_id': str(branch.id),
+                'bulk_orders': orders_data,
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def _get_bulk_order_for_user(self, request, bulk_order_id=None, booking_reference=None):
+        """Resolve BulkOrder by id or booking_reference and check auth (user, fleet owner, or branch admin). Returns (bulk_order, None) or (None, Response)."""
+        if not bulk_order_id and not booking_reference:
+            return None, Response({'error': 'bulk_order_id or booking_reference is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if bulk_order_id:
+                bulk_order = BulkOrder.objects.get(id=bulk_order_id)
+            else:
+                bulk_order = BulkOrder.objects.get(booking_reference=booking_reference)
+        except BulkOrder.DoesNotExist:
+            return None, Response({'error': 'Bulk order not found'}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
+        if bulk_order.user_id == user.id:
+            return bulk_order, None
+        if user.is_fleet_owner:
+            fleet = Fleet.objects.filter(owner=user).first()
+            if fleet and bulk_order.fleet_id == fleet.id:
+                return bulk_order, None
+        if user.is_branch_admin:
+            managed_branch = user.get_managed_branch()
+            if managed_branch and bulk_order.branch_id == managed_branch.id:
+                return bulk_order, None
+        return None, Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+    def _bulk_order_job_start_dt(self, bulk_order):
+        """Compute job start datetime from order_data (date + start_time or best_start_time). Returns timezone-aware datetime or None."""
+        order_data = getattr(bulk_order, 'order_data', None) or {}
+        date_str = order_data.get('date') or order_data.get('appointment_date', '')
+        if isinstance(date_str, str) and len(date_str) >= 10:
+            date_str = date_str[:10]
+        try:
+            appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            return None
+        start_time_str = order_data.get('start_time') or order_data.get('best_start_time', '06:00')
+        start_time = datetime.strptime('06:00:00', '%H:%M:%S').time()
+        if isinstance(start_time_str, str):
+            if len(start_time_str) == 5:
+                start_time_str = start_time_str + ':00'
+            for fmt in ('%H:%M:%S', '%H:%M'):
+                try:
+                    start_time = datetime.strptime(start_time_str.split('.')[0], fmt).time()
+                    break
+                except ValueError:
+                    continue
+        dt = timezone.make_aware(datetime.combine(appointment_date, start_time))
+        return dt
+
+    def cancel_bulk_order(self, request):
+        """Cancel a bulk order: 12h check, cancel all related appointments, publish booking_cancelled per ref, full refund."""
+        logger = logging.getLogger('main.views.fleet')
+        bulk_order_id = request.data.get('bulk_order_id') if request.data else request.query_params.get('bulk_order_id')
+        booking_reference = request.data.get('booking_reference') if request.data else request.query_params.get('booking_reference')
+        bulk_order, err_response = self._get_bulk_order_for_user(request, bulk_order_id=bulk_order_id, booking_reference=booking_reference)
+        if err_response:
+            return err_response
+        if bulk_order.payment_status == 'cancelled':
+            return Response({'error': 'Bulk order is already cancelled'}, status=status.HTTP_400_BAD_REQUEST)
+        job_start = self._bulk_order_job_start_dt(bulk_order)
+        if not job_start:
+            return Response({'error': 'Could not determine appointment start time'}, status=status.HTTP_400_BAD_REQUEST)
+        now = timezone.now()
+        if (job_start - now).total_seconds() < 12 * 3600:
+            return Response(
+                {'error': 'Cannot cancel within 12 hours of appointment'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        appointments = BookedAppointment.objects.filter(bulk_order=bulk_order)
+        for apt in appointments:
+            apt.status = 'cancelled'
+            apt.save()
+            try:
+                publish_booking_cancelled.delay(apt.booking_reference)
+            except Exception as e:
+                logger.warning(f"Failed to publish booking_cancelled for {apt.booking_reference}: {e}")
+        bulk_order.payment_status = 'cancelled'
+        bulk_order.save()
+        refund_amount = None
+        original_txn = PaymentTransaction.objects.filter(
+            bulk_order=bulk_order,
+            transaction_type='payment',
+            status='succeeded',
+        ).first()
+        if original_txn and float(original_txn.amount) > 0:
+            try:
+                stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', None)
+                if stripe.api_key:
+                    refund_amount = float(original_txn.amount)
+                    refund_cents = int(round(refund_amount * 100))
+                    refund = stripe.Refund.create(
+                        payment_intent=original_txn.stripe_payment_intent_id,
+                        amount=refund_cents,
+                        reason='requested_by_customer',
+                        metadata={
+                            'bulk_order_reference': bulk_order.booking_reference,
+                            'refund_reason': 'Bulk order cancelled',
+                        },
+                    )
+                    first_apt = appointments.first()
+                    if first_apt:
+                        refund_record = RefundRecord.objects.create(
+                            booking=first_apt,
+                            user=bulk_order.user,
+                            original_transaction=original_txn,
+                            requested_amount=refund_amount,
+                            status='succeeded',
+                            stripe_refund_id=refund.id,
+                            processed_at=timezone.now(),
+                        )
+                    PaymentTransaction.objects.create(
+                        booking=None,
+                        bulk_order=bulk_order,
+                        user=bulk_order.user,
+                        stripe_payment_intent_id=refund.id,
+                        stripe_refund_id=refund.id,
+                        transaction_type='refund',
+                        amount=refund_amount,
+                        currency=original_txn.currency or 'eur',
+                        status='succeeded',
+                    )
+            except stripe.error.StripeError as e:
+                logger.error(f"Stripe refund failed for bulk order {bulk_order.booking_reference}: {e}")
+                return Response(
+                    {'error': 'Order and appointments cancelled but refund failed. Please contact support.', 'refund_error': str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+        return Response({
+            'message': 'Order cancelled. Full refund will be processed.' if refund_amount else 'Order cancelled.',
+            'refund_amount': refund_amount,
+        }, status=status.HTTP_200_OK)
+
+    def reschedule_bulk_order(self, request):
+        """Reschedule a bulk order to a new date/window. 12h check; call detailer reschedule_bulk_booking; update BulkOrder and BookedAppointments."""
+        import requests
+        from django.conf import settings as django_settings
+        logger = logging.getLogger('main.views.fleet')
+        bulk_order_id = request.data.get('bulk_order_id') if request.data else None
+        booking_reference = request.data.get('booking_reference') if request.data else None
+        bulk_order, err_response = self._get_bulk_order_for_user(request, bulk_order_id=bulk_order_id, booking_reference=booking_reference)
+        if err_response:
+            return err_response
+        if bulk_order.payment_status == 'cancelled':
+            return Response({'error': 'Bulk order is cancelled'}, status=status.HTTP_400_BAD_REQUEST)
+        job_start = self._bulk_order_job_start_dt(bulk_order)
+        if not job_start:
+            return Response({'error': 'Could not determine appointment start time'}, status=status.HTTP_400_BAD_REQUEST)
+        now = timezone.now()
+        if (job_start - now).total_seconds() < 12 * 3600:
+            return Response(
+                {'error': 'Cannot reschedule within 12 hours of appointment'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        new_date = (request.data or {}).get('new_date')
+        if not new_date:
+            return Response({'error': 'new_date is required'}, status=status.HTTP_400_BAD_REQUEST)
+        order_data = getattr(bulk_order, 'order_data', None) or {}
+        start_time = (request.data or {}).get('start_time') or order_data.get('start_time') or order_data.get('best_start_time', '06:00')
+        end_time = (request.data or {}).get('end_time') or order_data.get('end_time', '21:00')
+        number_of_vehicles = int((request.data or {}).get('number_of_vehicles') or bulk_order.number_of_vehicles or 0)
+        suggested_team_size = int((request.data or {}).get('suggested_team_size') or order_data.get('suggested_team_size', 1) or 1)
+        if number_of_vehicles <= 0:
+            return Response({'error': 'number_of_vehicles is required'}, status=status.HTTP_400_BAD_REQUEST)
+        detailer_app_url = getattr(django_settings, 'DETAILER_APP_URL', None) or getattr(django_settings, 'API_CONFIG', {}).get('detailerAppUrl')
+        if not detailer_app_url:
+            return Response({'error': 'Detailer app not configured'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        base = (detailer_app_url or "").rstrip("/")
+        url = f"{base}/api/v1/booking/reschedule_bulk_booking/"
+        payload = {
+            'booking_reference': bulk_order.booking_reference,
+            'date': new_date[:10] if isinstance(new_date, str) else str(new_date),
+            'start_time': start_time if isinstance(start_time, str) else str(start_time),
+            'end_time': end_time if isinstance(end_time, str) else str(end_time),
+            'number_of_vehicles': number_of_vehicles,
+            'suggested_team_size': suggested_team_size,
+        }
+        try:
+            response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=60)
+            if response.status_code not in [200, 201]:
+                err_body = response.json() if response.content else {}
+                error_message = err_body.get('error', response.text or f"HTTP {response.status_code}")
+                return Response({'error': error_message}, status=status.HTTP_400_BAD_REQUEST)
+            body = response.json() if response.content else {}
+            new_slots = body.get('new_slots') or []
+            order_data_new = dict(order_data)
+            order_data_new['date'] = new_date[:10] if isinstance(new_date, str) else str(new_date)
+            order_data_new['appointment_date'] = order_data_new['date']
+            if new_slots:
+                order_data_new['start_time'] = new_slots[0].get('appointment_time', start_time)
+            bulk_order.order_data = order_data_new
+            bulk_order.save()
+            for slot in new_slots:
+                ref = slot.get('booking_reference')
+                apt_date = slot.get('appointment_date')
+                apt_time = slot.get('appointment_time')
+                if not ref or not apt_date:
+                    continue
+                try:
+                    apt_date_parsed = datetime.strptime(apt_date[:10], '%Y-%m-%d').date()
+                except (ValueError, TypeError):
+                    continue
+                if apt_time and len(apt_time) == 5:
+                    apt_time = apt_time + ':00'
+                try:
+                    t = datetime.strptime((apt_time or '06:00').split('.')[0], '%H:%M:%S').time()
+                except ValueError:
+                    try:
+                        t = datetime.strptime((apt_time or '06:00')[:5], '%H:%M').time()
+                    except ValueError:
+                        t = datetime.strptime('06:00', '%H:%M').time()
+                BookedAppointment.objects.filter(bulk_order=bulk_order, booking_reference=ref).update(
+                    appointment_date=apt_date_parsed,
+                    start_time=t,
+                )
+            return Response({
+                'message': 'Bulk order rescheduled.',
+                'new_slots': new_slots,
+            }, status=status.HTTP_200_OK)
+        except requests.RequestException as e:
+            logger.error(f"Detailer reschedule_bulk_booking request failed: {e}")
+            return Response({'error': 'Failed to reschedule with detailer. Please try again.'}, status=status.HTTP_502_BAD_GATEWAY)
     
     def get_branch_spend(self, request):
         """Get spend limit, spent, and remaining for a branch. Fleet owner: branch_id in query. Branch admin: managed branch."""

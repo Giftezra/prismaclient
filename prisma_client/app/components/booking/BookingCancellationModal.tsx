@@ -11,8 +11,9 @@ interface BookingCancellationModalProps {
   cancellationData: {
     message: string;
     booking_status: string;
-    refund: any;
+    refund: { amount: number; tier?: "full" | "half" | "none" } | null;
     hours_until_appointment: number;
+    tier?: "full" | "half" | "none";
   };
   onCancel: () => void;
   onConfirm: () => void;
@@ -32,18 +33,38 @@ const BookingCancellationModal: React.FC<BookingCancellationModalProps> = ({
   const borderColor = useThemeColor({}, "borders");
 
   const getRefundMessage = () => {
-    if (cancellationData.refund) {
+    const tier = cancellationData.tier ?? cancellationData.refund?.tier;
+    if (tier === "none" || !cancellationData.refund) {
+      return "No refund applicable";
+    }
+    if (tier === "half") {
       if (
         typeof cancellationData.refund === "object" &&
-        cancellationData.refund.amount
+        cancellationData.refund.amount != null
       ) {
-        // Convert from cents to actual amount and format currency
         const refundAmount = cancellationData.refund.amount / 100;
-        return `Refund: ${formatCurrency(refundAmount)}`;
+        return `50% refund: ${formatCurrency(refundAmount)}`;
       }
-      return "Refund will be processed";
+      return "50% refund will be processed";
     }
-    return "No refund applicable";
+    if (tier === "full") {
+      if (
+        typeof cancellationData.refund === "object" &&
+        cancellationData.refund.amount != null
+      ) {
+        const refundAmount = cancellationData.refund.amount / 100;
+        return `Full refund: ${formatCurrency(refundAmount)}`;
+      }
+      return "Full refund will be processed";
+    }
+    if (
+      typeof cancellationData.refund === "object" &&
+      cancellationData.refund.amount != null
+    ) {
+      const refundAmount = cancellationData.refund.amount / 100;
+      return `Refund: ${formatCurrency(refundAmount)}`;
+    }
+    return "Refund will be processed";
   };
 
   const getStatusColor = () => {

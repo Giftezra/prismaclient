@@ -1,6 +1,7 @@
 """User, referral, address, loyalty, promotions, notifications - user and notification related models."""
 import random
 import string
+import uuid
 from datetime import timedelta
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
@@ -25,6 +26,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=155)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15, blank=True)
@@ -167,6 +169,7 @@ class User(AbstractUser):
 
 
 class Referral(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     referrer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referrer')
     referred = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referred')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -177,6 +180,7 @@ class Referral(models.Model):
 
 
 class Address(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     address = models.CharField(max_length=255)
     post_code = models.CharField(max_length=10)
@@ -196,6 +200,7 @@ class LoyaltyProgram(models.Model):
         ('gold', 'Gold'),
         ('platinum', 'Platinum'),
     ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     current_tier = models.CharField(max_length=50, choices=TIER_CHOICES, default='bronze')
     completed_bookings = models.IntegerField(default=0)
@@ -257,6 +262,7 @@ class LoyaltyProgram(models.Model):
 
 
 class Promotions(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -304,6 +310,7 @@ class Notification(models.Model):
         ('error', 'Error'),
         ('info', 'Info'),
     ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     message = models.TextField()
@@ -317,6 +324,7 @@ class Notification(models.Model):
 
 
 class TermsAndConditions(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     version = models.CharField(max_length=20, unique=True)
     content = models.TextField()
     last_updated = models.DateTimeField(auto_now=True)
@@ -325,7 +333,18 @@ class TermsAndConditions(models.Model):
         return f"Terms and Conditions - {self.version}"
 
 
+class PrivacyPolicy(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    version = models.CharField(max_length=20, unique=True)
+    content = models.TextField()
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Privacy Policy - {self.version}"
+
+
 class PasswordResetToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)

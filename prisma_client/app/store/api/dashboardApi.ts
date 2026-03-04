@@ -71,6 +71,21 @@ export const dashboardApi = createApi({
         data: data,
       }),
     }),
+
+    /**
+     * Fetch detailer's current location for an appointment (for map view when within ~30 min).
+     * Returns nulls when detailer has not reported location or Redis unavailable.
+     */
+    fetchDetailerLocation: builder.query<
+      { latitude: number | null; longitude: number | null },
+      string
+    >({
+      query: (bookingReference) => ({
+        url: "/api/v1/dashboard/get_detailer_location/",
+        method: "GET",
+        params: { booking_reference: bookingReference },
+      }),
+    }),
   }),
 });
 
@@ -80,5 +95,7 @@ export const {
   useFetchRecentServicesQuery,
   useFetchUserStatsQuery,
   useSubmitReviewMutation,
+  useFetchDetailerLocationQuery,
+  useLazyFetchDetailerLocationQuery,
 } = dashboardApi;
 export default dashboardApi;

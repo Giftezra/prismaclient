@@ -1,57 +1,15 @@
-{% extends "base_email.html" %} {% block content %}
-<div
-  style="
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
-  "
->
-  <h2
-    style="
-      color: #f44336;
-      border-bottom: 2px solid #f44336;
-      padding-bottom: 10px;
-    "
-  >
-    Vehicle Transfer Request Rejected
-  </h2>
+{% extends "base_email.html" %}
+{% block content %}
+<div style="max-width: 520px; margin: 0 auto; padding: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; line-height: 1.5;">
+  <p style="margin: 0 0 8px; font-weight: 600; font-size: 16px; color: #991b1b;">Transfer request declined</p>
+  <p style="margin: 0 0 12px; color: #374151;">Hello {{ requester_name }},</p>
+  <p style="margin: 0 0 12px; color: #374151;">{{ owner_name }} has declined to transfer this vehicle to you.</p>
 
-  <p>Hello {{ requester_name }},</p>
-
-  <p>
-    We regret to inform you that your vehicle transfer request has been rejected
-    by {{ owner_name }}.
-  </p>
-
-  <div
-    style="
-      background-color: #ffebee;
-      padding: 15px;
-      border-radius: 5px;
-      margin: 20px 0;
-      border-left: 4px solid #f44336;
-    "
-  >
-    <p style="margin: 5px 0">
-      <strong>Vehicle:</strong> {{ vehicle_make }} {{ vehicle_model }} {{
-      vehicle_year }}
-    </p>
-    <p style="margin: 5px 0">
-      <strong>Registration:</strong> {{ vehicle_registration }}
-    </p>
-    <p style="margin: 5px 0">
-      <strong>Current Owner:</strong> {{ owner_name }}
-    </p>
+  <div style="background: #fef2f2; border-radius: 8px; padding: 10px 12px; margin: 12px 0; border: 1px solid #fecaca;">
+    <p style="margin: 4px 0; color: #334155;"><strong>Vehicle</strong> {{ vehicle_make }} {{ vehicle_model }} ({{ vehicle_year }})</p>
+    <p style="margin: 4px 0; color: #334155;"><strong>Registration</strong> {{ vehicle_registration }}</p>
   </div>
 
-  <p>
-    The current owner has chosen not to transfer this vehicle to your account.
-    If you believe this is an error, please contact the vehicle owner directly.
-  </p>
-
-  <p style="margin-top: 30px">
-    If you have any questions, please contact our support team.
-  </p>
+  <p style="margin: 12px 0 0; color: #374151;">If you have questions, contact the vehicle owner or open the Prisma app for support.</p>
 </div>
 {% endblock %}

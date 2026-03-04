@@ -350,6 +350,14 @@ const usePayment = () => {
               return;
             }
 
+            if ((result as any).status === "refunded_slot_unavailable") {
+              const msg =
+                (result as any).message ||
+                "This time slot was no longer available. Your payment has been refunded. Please choose another slot.";
+              reject(new Error(msg));
+              return;
+            }
+
             // Check if we've exceeded max wait time
             if (Date.now() - startTime >= maxWaitTime) {
               reject(

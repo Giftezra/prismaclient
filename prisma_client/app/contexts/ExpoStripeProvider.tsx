@@ -8,6 +8,7 @@ import { STRIPE_CONFIG } from "@/constants/Config";
 
 // Get the publishable key from the config
 const publishableKey = STRIPE_CONFIG.publishableKey;
+console.log("publishableKey", publishableKey);
 
 // Add error handling for missing publishable key
 if (!publishableKey) {

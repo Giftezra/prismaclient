@@ -374,20 +374,23 @@ class VinLookupView(APIView):
                 user.save()
         
         # Create payment intent
+        metadata = {
+            'email': user_email,
+            'vin': vin,
+            'purchase_reference': purchase_reference,
+            'transaction_type': 'vin_lookup',
+        }
+        if user:
+            metadata['user_id'] = str(user.id)
         payment_intent = stripe.PaymentIntent.create(
             amount=amount,
             currency=currency,
             customer=customer.id,
+            receipt_email=user_email,
             automatic_payment_methods={
                 'enabled': True,
             },
-            metadata={
-                'user_id': str(user.id) if user else None,
-                'email': user_email,
-                'vin': vin,
-                'purchase_reference': purchase_reference,
-                'transaction_type': 'vin_lookup',
-            }
+            metadata=metadata,
         )
         
         # Create ephemeral key

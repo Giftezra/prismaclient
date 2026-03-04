@@ -48,6 +48,10 @@ interface TimeSlotPickerProps {
   }) => void;
   /** Whether a time slot has been selected */
   hasSelectedTimeSlot?: boolean;
+  /** Timestamp (ms) when the current slot was selected, for 1-min countdown */
+  selectedSlotAt?: number | null;
+  /** Called when the 1-minute slot hold countdown expires */
+  onSlotHoldExpired?: () => void;
 }
 
 /**
@@ -80,11 +84,47 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   onMonthNavigation,
   onTimeSlotSelect,
   hasSelectedTimeSlot = false,
+  selectedSlotAt = null,
+  onSlotHoldExpired,
 }) => {
   const cardColor = useThemeColor({}, "cards");
   const textColor = useThemeColor({}, "text");
   const primaryPurpleColor = useThemeColor({}, "primary");
   const backgroundColor = useThemeColor({}, "background");
+
+  const [now, setNow] = useState(Date.now());
+  const expiredCalledRef = React.useRef(false);
+
+  const secondsLeft =
+    hasSelectedTimeSlot && selectedSlotAt != null
+      ? Math.max(0, 60 - Math.floor((now - selectedSlotAt) / 1000))
+      : 60;
+
+  useEffect(() => {
+    if (!hasSelectedTimeSlot || selectedSlotAt == null || secondsLeft <= 0) {
+      if (secondsLeft <= 0 && onSlotHoldExpired && !expiredCalledRef.current) {
+        expiredCalledRef.current = true;
+        onSlotHoldExpired();
+      }
+      return;
+    }
+    expiredCalledRef.current = false;
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [hasSelectedTimeSlot, selectedSlotAt, secondsLeft, onSlotHoldExpired]);
+
+  useEffect(() => {
+    if (!hasSelectedTimeSlot || selectedSlotAt == null) {
+      expiredCalledRef.current = false;
+    }
+  }, [hasSelectedTimeSlot, selectedSlotAt]);
+
+  const countdownDisplay =
+    secondsLeft > 0
+      ? `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`
+      : "0:00";
 
   /**
    * Check if a time slot is in the past
@@ -231,6 +271,19 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
             </StyledText>
           )}
 
+        {hasSelectedTimeSlot && selectedSlotAt != null && (
+          <View style={[styles.countdownBanner, { backgroundColor: cardColor }]}>
+            <StyledText
+              variant="bodyMedium"
+              style={[styles.countdownText, { color: textColor }]}
+            >
+              {secondsLeft > 0
+                ? `Complete your booking within 1 min or you may lose your slot. Remaining time: ${countdownDisplay}`
+                : "Time expired. Please select a time slot again."}
+            </StyledText>
+          </View>
+        )}
+
         {isLoadingSlots ? (
           <View
             style={[styles.loadingContainer, { backgroundColor: cardColor }]}
@@ -375,6 +428,16 @@ const styles = StyleSheet.create({
   helperText: {
     marginBottom: 8,
     fontStyle: "italic",
+  },
+  countdownBanner: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: "#FF9800",
+  },
+  countdownText: {
+    fontWeight: "600",
   },
   loadingContainer: {
     borderRadius: 12,

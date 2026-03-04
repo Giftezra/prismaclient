@@ -195,3 +195,18 @@ export interface UpdateBranchAdminProps {
 export interface BranchAdminsResponse {
   admins: BranchAdmin[];
 }
+
+export interface BranchBulkOrderItem {
+  id: string;
+  booking_reference: string;
+  number_of_vehicles: number;
+  total_amount: number | null;
+  created_at: string | null;
+  payment_status: string;
+  order_data: Record<string, unknown> | null;
+}
+
+export interface BranchBulkOrdersResponse {
+  branch_id: string;
+  bulk_orders: BranchBulkOrderItem[];
+}

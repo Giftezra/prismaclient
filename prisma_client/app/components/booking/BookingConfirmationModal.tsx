@@ -75,19 +75,13 @@ const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> = ({
     const baseDuration = serviceType?.duration || 0;
     const addonDuration = selectedAddons.reduce(
       (total, addon) => total + addon.extra_duration,
-      0
+      0,
     );
     return baseDuration + addonDuration;
   };
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-        keyboardShouldPersistTaps="handled"
-      >
       {/* Success Header */}
       <View style={[styles.card, { backgroundColor: cardColor }]}>
         <View
@@ -422,7 +416,6 @@ const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> = ({
           We'll send you updates about your booking status
         </StyledText>
       </View>
-      </ScrollView>
 
       {/* Action Buttons - Fixed at bottom */}
       <View

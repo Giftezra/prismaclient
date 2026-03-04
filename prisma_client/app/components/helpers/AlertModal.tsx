@@ -21,6 +21,7 @@ const AlertModal = ({
   title,
   message,
   type = "error",
+  confirmLabel,
 }: {
   isVisible: boolean;
   onClose?: () => void;
@@ -28,6 +29,7 @@ const AlertModal = ({
   title: string;
   message: string;
   type?: "success" | "error" | "warning";
+  confirmLabel?: string;
 }) => {
   const textColor = useThemeColor({}, "text");
   const cardColor = useThemeColor({}, "cards");
@@ -65,7 +67,6 @@ const AlertModal = ({
             {
               backgroundColor: cardColor,
               borderColor: borderColor + "30",
-              shadowColor: 'gray',
             },
           ]}
         >
@@ -106,13 +107,17 @@ const AlertModal = ({
                 }}
                 style={[
                   styles.button,
+                  !onClose && { backgroundColor: primaryColor },
                 ]}
                 activeOpacity={0.8}
               >
                 <StyledText
-                  children="Confirm"
+                  children={confirmLabel ?? "Confirm"}
                   variant="labelMedium"
-                  style={[styles.confirmButtonText, { color: textColor }]}
+                  style={[
+                    styles.confirmButtonText,
+                    { color: !onClose ? "#fff" : textColor },
+                  ]}
                 />
               </TouchableOpacity>
             )}
@@ -126,25 +131,16 @@ const AlertModal = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
   },
   modalContainer: {
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 5,
     padding: 15,
     width: Math.min(screenWidth - 40, 350),
     maxWidth: 350,
     minWidth: 280,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
   },
   title: {
     fontSize: 18,

@@ -591,21 +591,18 @@ class SubscriptionView(APIView):
                     'error': 'Latest invoice not available on subscription',
                 }
             
-            if isinstance(latest_invoice, str):
-                # If it's a string ID, retrieve the invoice with payment_intent expanded
-                invoice = stripe.Invoice.retrieve(latest_invoice, expand=['payment_intent'])
-            else:
-                invoice = latest_invoice
+            # Always get invoice by ID with payment_intent expanded so we use the invoice's
+            # PaymentIntent (Stripe then marks the subscription active when it's paid).
+            invoice_id = latest_invoice if isinstance(latest_invoice, str) else getattr(latest_invoice, 'id', None)
+            if not invoice_id:
+                return {'success': False, 'error': 'Latest invoice ID not available'}
+            invoice = stripe.Invoice.retrieve(invoice_id, expand=['payment_intent'])
             
             # Store payment intent ID in billing for webhook lookup
-            if invoice:
-                payment_intent = getattr(invoice, 'payment_intent', None)
-                if payment_intent:
-                    if isinstance(payment_intent, str):
-                        billing.transaction_id = payment_intent
-                    else:
-                        billing.transaction_id = payment_intent.id
-                    billing.save()
+            payment_intent = getattr(invoice, 'payment_intent', None)
+            if payment_intent:
+                billing.transaction_id = payment_intent if isinstance(payment_intent, str) else payment_intent.id
+                billing.save()
             
             # Create ephemeral key
             ephemeral_key = stripe.EphemeralKey.create(
@@ -613,12 +610,20 @@ class SubscriptionView(APIView):
                 stripe_version='2022-11-15',
             )
             
-            # Safely get payment_intent
-            payment_intent = getattr(invoice, 'payment_intent', None)
-            
-            # Check if this is a trial subscription (no immediate payment required)
-            invoice_amount = invoice.amount_due or invoice.total
+            invoice_amount = invoice.amount_due or invoice.total or 0
             is_trial_subscription = trial_days > 0 and invoice_amount == 0
+            
+            # If invoice has no PaymentIntent yet (e.g. not finalized), finalize and retry
+            if not payment_intent and invoice_amount > 0 and invoice.status == 'draft':
+                try:
+                    stripe.Invoice.finalize_invoice(invoice.id)
+                    invoice = stripe.Invoice.retrieve(invoice_id, expand=['payment_intent'])
+                    payment_intent = getattr(invoice, 'payment_intent', None)
+                    if payment_intent:
+                        billing.transaction_id = payment_intent.id if hasattr(payment_intent, 'id') else payment_intent
+                        billing.save()
+                except stripe.error.InvalidRequestError as e:
+                    print(f"Invoice finalize failed (may already be final): {e}")
             
             if not payment_intent:
                 if is_trial_subscription:
@@ -668,6 +673,7 @@ class SubscriptionView(APIView):
                             amount=invoice_amount,
                             currency=currency,
                             customer=customer.id,
+                            receipt_email=user.email,
                             metadata={
                                 'user_id': str(user.id),
                                 'fleet_id': str(fleet.id),

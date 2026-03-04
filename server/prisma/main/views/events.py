@@ -5,6 +5,7 @@ from rest_framework import status
 from main.models import BookedAppointment, BookedAppointmentImage, ServiceType, ValetType, AddOns, Address, DetailerProfile, Vehicle, Promotions, PaymentTransaction, RefundRecord, User, LoyaltyProgram, Branch, ReferralAttribution
 import uuid
 import stripe
+import requests
 from django.conf import settings
 from datetime import datetime
 from django.utils import timezone
@@ -25,6 +26,7 @@ class EventsView(APIView):
         'book_appointment' : '_book_appointment',
         'cancel_booking' : 'cancel_booking',
         'reschedule_booking' : 'reschedule_booking',
+        'reschedule_intent' : 'reschedule_intent',
         'get_add_ons' : 'get_add_ons',
         'get_promotions' : 'get_promotions',
         'mark_promotion_used' : 'mark_promotion_used',
@@ -225,10 +227,18 @@ class EventsView(APIView):
                 return Response({'error': 'Invalid appointment data'}, 
                               status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-            # New refund rule: Only refund if cancelled MORE than 12 hours before appointment
-            # Allow cancellation within 12 hours but no refund
-            refund_eligible = hours_until_appointment > 12
-            logger.info(f"Refund eligible: {refund_eligible}")
+            # Tiered refund: >12h full, 6-12h half, <6h none
+            if hours_until_appointment <= 6:
+                refund_tier = 'none'
+                refund_amount = 0
+            elif hours_until_appointment <= 12:
+                refund_tier = 'half'
+                # Will set refund_amount after we have original_transaction
+                refund_amount = None  # computed in refund block
+            else:
+                refund_tier = 'full'
+                refund_amount = None  # full amount, computed in refund block
+            logger.info(f"Refund tier: {refund_tier}")
             
             # Update booking status
             try:
@@ -248,15 +258,29 @@ class EventsView(APIView):
                 logger.error(f"Error publishing to Redis: {str(e)}")
                 # Don't fail the cancellation for Redis errors
             
-            refund_data = {'eligible': refund_eligible, 'amount': 0, 'processed': False}
+            refund_data = {'eligible': refund_tier != 'none', 'amount': 0, 'tier': refund_tier, 'processed': False}
             
-            # Process refund if eligible (only outside 12-hour window)
-            if refund_eligible:
+            # Process refund when tier is full or half (get original amount first for half)
+            if refund_tier != 'none':
                 try:
-                    logger.info(f"Processing refund for booking {booking_reference}")
-                    refund_result = self._process_refund(booking)
-                    refund_data.update(refund_result)
-                    logger.info(f"Refund processing result: {refund_result}")
+                    original_transaction = PaymentTransaction.objects.filter(
+                        booking=booking,
+                        transaction_type='payment',
+                        status='succeeded'
+                    ).first()
+                    if original_transaction:
+                        if refund_tier == 'full':
+                            refund_amount = float(original_transaction.amount)
+                        else:  # half
+                            refund_amount = float(original_transaction.amount) * 0.5
+                        refund_data['amount'] = refund_amount
+                        if refund_amount > 0:
+                            logger.info(f"Processing refund for booking {booking_reference}, amount: {refund_amount} ({refund_tier})")
+                            refund_result = self._process_refund(booking, amount=refund_amount)
+                            refund_data.update(refund_result)
+                            logger.info(f"Refund processing result: {refund_result}")
+                    else:
+                        logger.warning(f"No payment found for booking {booking_reference}, skipping refund")
                 except Exception as e:
                     logger.error(f"Error processing refund: {str(e)}")
                     refund_data['error'] = str(e)
@@ -266,7 +290,7 @@ class EventsView(APIView):
                 vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}"
                 message = f'You have cancelled your booking for {vehicle_name} on {booking.appointment_date}'
                 
-                if refund_eligible and refund_data.get('processed', False):
+                if refund_data.get('processed', False):
                     message += f"\n\nRefund of £{refund_data['amount']} has been processed and will appear in your account within 3-5 business days."
                     
                     # Send push notification for refunded cancellation
@@ -280,8 +304,22 @@ class EventsView(APIView):
                         logger.info("Sent refund notification")
                     except Exception as e:
                         logger.error(f"Error sending refund notification: {str(e)}")
+                elif refund_tier == 'half':
+                    message += f"\n\n50% refund was available but could not be processed. Please contact support."
+                    try:
+                        send_push_notification.delay(
+                            request.user.id,
+                            "Booking Cancelled",
+                            f"Your valet service has been cancelled for {booking.appointment_date} at {booking.start_time}. Refund issue - please contact support.",
+                            "booking_cancelled_no_refund"
+                        )
+                    except Exception as e:
+                        logger.error(f"Error sending push notification: {str(e)}")
                 else:
-                    message += f"\n\nNo refund available - cancellation was within 12 hours of appointment start time."
+                    if refund_tier == 'none':
+                        message += f"\n\nNo refund available - cancellation was within 6 hours of appointment start time."
+                    else:
+                        message += f"\n\nNo refund available - cancellation was within 12 hours of appointment start time."
                     
                     # Send push notification for non-refunded cancellation
                     try:
@@ -317,8 +355,10 @@ class EventsView(APIView):
 
 
 
-    def _process_refund(self, booking):
-        """Process refund through Stripe with proper status tracking"""
+    def _process_refund(self, booking, amount=None):
+        """Process refund through Stripe with proper status tracking.
+        amount: optional decimal/float in same units as original transaction (e.g. EUR/GBP). If None, refunds full original amount.
+        """
         logger = logging.getLogger('main.views.booking')
         
         try:
@@ -335,7 +375,12 @@ class EventsView(APIView):
                 logger.error(f"No successful payment found for booking {booking.booking_reference}")
                 return {'processed': False, 'error': 'No payment found'}
             
-            logger.info(f"Found original transaction: {original_transaction.id}, amount: {original_transaction.amount}")
+            refund_amount = amount if amount is not None else float(original_transaction.amount)
+            refund_amount_cents = int(round(refund_amount * 100))
+            if refund_amount_cents <= 0:
+                return {'processed': False, 'error': 'Refund amount must be positive', 'amount': 0}
+            
+            logger.info(f"Found original transaction: {original_transaction.id}, refund amount: {refund_amount}")
             
             # Create refund record first
             try:
@@ -343,7 +388,7 @@ class EventsView(APIView):
                     booking=booking,
                     user=booking.user,
                     original_transaction=original_transaction,
-                    requested_amount=original_transaction.amount,
+                    requested_amount=refund_amount,
                     status='pending'
                 )
                 logger.info(f"Created refund record: {refund_record.id}")
@@ -352,15 +397,15 @@ class EventsView(APIView):
                 return {'processed': False, 'error': f'Failed to create refund record: {str(e)}'}
             
             try:
-                # Create refund with Stripe
-                logger.info(f"Creating Stripe refund for payment intent: {original_transaction.stripe_payment_intent_id}")
+                # Create refund with Stripe (partial or full)
+                logger.info(f"Creating Stripe refund for payment intent: {original_transaction.stripe_payment_intent_id}, amount: {refund_amount_cents} cents")
                 refund = stripe.Refund.create(
                     payment_intent=original_transaction.stripe_payment_intent_id,
-                    amount=int(original_transaction.amount * 100),  # Convert to cents
+                    amount=refund_amount_cents,
                     reason='requested_by_customer',
                     metadata={
                         'booking_reference': booking.booking_reference,
-                        'refund_reason': 'Booking cancelled within 12 hours',
+                        'refund_reason': 'Booking cancelled',
                         'refund_record_id': str(refund_record.id)
                     }
                 )
@@ -373,14 +418,14 @@ class EventsView(APIView):
                 refund_record.processed_at = timezone.now()
                 refund_record.save()
                 
-                # Create refund transaction record
+                # Create refund transaction record (use refund.id for stripe_payment_intent_id to satisfy unique constraint)
                 PaymentTransaction.objects.create(
                     booking=booking,
                     user=booking.user,
-                    stripe_payment_intent_id=original_transaction.stripe_payment_intent_id,
+                    stripe_payment_intent_id=refund.id,
                     stripe_refund_id=refund.id,
                     transaction_type='refund',
-                    amount=original_transaction.amount,
+                    amount=refund_amount,
                     currency=original_transaction.currency,
                     status='succeeded'
                 )
@@ -388,7 +433,7 @@ class EventsView(APIView):
                 logger.info(f"Refund processed successfully: {refund.id}")
                 return {
                     'processed': True,
-                    'amount': float(original_transaction.amount),
+                    'amount': refund_amount,
                     'refund_id': refund.id,
                     'refund_record_id': refund_record.id
                 }
@@ -414,34 +459,182 @@ class EventsView(APIView):
 
 
 
-    def reschedule_booking(self, request):
-        """ Reschedule a booking for the user.
-            ARGS : void
-            RESPONSE : void
-            QUERY_PARAMS : booking_id : string
-        """
-
+    def _fetch_detailer_timeslots(self, date_str, service_duration_minutes, country, city, latitude=None, longitude=None, is_express_service=False):
+        """Call detailer app get_timeslots and return list of slot start times (or empty on error)."""
+        detailer_app_url = getattr(settings, 'DETAILER_APP_URL', None) or getattr(settings, 'API_CONFIG', {}).get('detailerAppUrl')
+        if not detailer_app_url:
+            return None, "Detailer app URL not configured"
+        base = detailer_app_url.rstrip("/")
+        url = f"{base}/api/v1/availability/get_timeslots/"
+        params = {
+            "date": date_str,
+            "service_duration": service_duration_minutes,
+            "country": country,
+            "city": city,
+        }
+        if is_express_service:
+            params["is_express_service"] = "true"
+        if latitude is not None and longitude is not None:
+            params["latitude"] = str(latitude)
+            params["longitude"] = str(longitude)
         try:
-            data = request.data.get('data')
-            booking = BookedAppointment.objects.get(id=data.get('booking_id'))
-            booking.appointment_date = data.get('new_date')
-            booking.start_time = data.get('new_time')
-            booking.total_amount = data.get('total_cost')
+            resp = requests.get(url, params=params, timeout=15)
+            if resp.status_code != 200:
+                return None, resp.text or f"HTTP {resp.status_code}"
+            data = resp.json()
+            if data.get("error"):
+                return None, data.get("error", "No slots")
+            slots = data.get("slots") or data.get("available_slots") or []
+            # Normalize to list of start_time strings (HH:MM or HH:MM:SS -> HH:MM)
+            start_times = set()
+            for s in slots:
+                if isinstance(s, dict) and s.get("is_available") and s.get("start_time"):
+                    st = s["start_time"]
+                    if len(st) >= 5:
+                        start_times.add(st[:5])  # HH:MM
+            return list(start_times), None
+        except Exception as e:
+            return None, str(e)
+
+    def _validate_reschedule_slot(self, booking, new_date, new_time):
+        """Check that (new_date, new_time) is an available slot from detailer app. Returns (True, None) or (False, error_msg)."""
+        try:
+            address = booking.address
+            country = (address.country or "").strip() or "Ireland"
+            city = (address.city or "").strip() or "Dublin"
+            lat = address.latitude
+            lng = address.longitude
+            duration = 60
+            if booking.service_type_id:
+                st = ServiceType.objects.filter(id=booking.service_type_id).first()
+                if st and st.duration:
+                    duration = int(st.duration)
+            is_express = getattr(booking, 'is_express_service', False) or False
+            start_times, err = self._fetch_detailer_timeslots(
+                new_date, duration, country, city,
+                latitude=lat, longitude=lng,
+                is_express_service=is_express
+            )
+            if err is not None:
+                return False, err
+            if not start_times:
+                return False, "No available slots for the selected date"
+            # new_time may be "HH:MM" or "HH:MM:SS"
+            new_time_normalized = (new_time or "")[:5] if len(new_time or "") >= 5 else (new_time or "")
+            if new_time_normalized not in start_times:
+                return False, "Selected time is no longer available"
+            return True, None
+        except Exception as e:
+            return False, str(e)
+
+    def reschedule_intent(self, request):
+        """Validate reschedule slot and return whether a fee is required (<12h before current appointment)."""
+        logger = logging.getLogger('main.views.booking')
+        try:
+            data = request.data.get('data') or request.data
+            booking_reference = data.get('booking_reference')
+            new_date = data.get('new_date')
+            new_time = data.get('new_time')
+            if not booking_reference or not new_date or not new_time:
+                return Response(
+                    {'error': 'booking_reference, new_date, and new_time are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                booking = BookedAppointment.objects.get(
+                    booking_reference=booking_reference,
+                    user=request.user
+                )
+            except BookedAppointment.DoesNotExist:
+                return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+            if booking.status in ('completed', 'cancelled', 'in_progress'):
+                return Response(
+                    {'error': 'This booking cannot be rescheduled'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            now = timezone.now()
+            try:
+                apt_dt = timezone.datetime.combine(booking.appointment_date, booking.start_time or datetime.min.time())
+                apt_dt = timezone.make_aware(apt_dt)
+                hours_until = (apt_dt - now).total_seconds() / 3600
+            except Exception:
+                hours_until = 24
+            requires_fee = hours_until < 12
+            fee_amount_cents = 1000 if requires_fee else 0
+            valid, err_msg = self._validate_reschedule_slot(booking, new_date, new_time)
+            if not valid:
+                return Response(
+                    {'error': err_msg or 'Selected time is no longer available'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response({
+                'requires_fee': requires_fee,
+                'fee_amount_cents': fee_amount_cents,
+                'slot_valid': True,
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"reschedule_intent error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def reschedule_booking(self, request):
+        """Reschedule a booking for the user. Lookup by booking_reference; validates slot with detailer app."""
+        logger = logging.getLogger('main.views.booking')
+        try:
+            data = request.data.get('data') or request.data
+            booking_reference = data.get('booking_reference') or data.get('booking_id')
+            new_date = data.get('new_date')
+            new_time = data.get('new_time')
+            total_cost = data.get('total_cost')
+            if not booking_reference or not new_date or not new_time:
+                return Response(
+                    {'error': 'booking_reference, new_date, and new_time are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                booking = BookedAppointment.objects.get(
+                    booking_reference=booking_reference,
+                    user=request.user
+                )
+            except BookedAppointment.DoesNotExist:
+                return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
+            if booking.status in ('completed', 'cancelled', 'in_progress'):
+                return Response(
+                    {'error': 'This booking cannot be rescheduled'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            valid, err_msg = self._validate_reschedule_slot(booking, new_date, new_time)
+            if not valid:
+                return Response(
+                    {'error': err_msg or 'Selected time is no longer available'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if total_cost is not None:
+                booking.total_amount = total_cost
+            booking.appointment_date = new_date
+            booking.start_time = new_time
             booking.status = 'pending'
             booking.save()
-            publish_booking_rescheduled.delay(booking.booking_reference, booking.appointment_date, booking.start_time, booking.total_amount)
-
-            # Send booking rescheduled notification
+            publish_booking_rescheduled.delay(
+                booking.booking_reference,
+                booking.appointment_date,
+                booking.start_time,
+                booking.total_amount
+            )
             send_push_notification.delay(
                 request.user.id,
                 "Booking Rescheduled!",
                 f"Your valet service has been rescheduled for {booking.appointment_date} at {booking.start_time}",
                 "booking_rescheduled"
             )
-
-            vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}"
-            return Response({'message': f'You have rescheduled your booking for {vehicle_name} on {booking.appointment_date}'}, status=status.HTTP_200_OK)
+            vehicle_name = f"{booking.vehicle.make} {booking.vehicle.model}" if booking.vehicle else "your vehicle"
+            return Response(
+                {'message': f'You have rescheduled your booking for {vehicle_name} on {booking.appointment_date}'},
+                status=status.HTTP_200_OK
+            )
         except Exception as e:
+            logger.error(f"reschedule_booking error: {str(e)}")
+            logger.error(traceback.format_exc())
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
@@ -818,14 +1011,3 @@ class EventsView(APIView):
             return Response({
                 'error': 'Internal server error'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-
-class VehicleTransferView(APIView):
-    # This view is only designed to allow user authorise vehicle transfer. 
-    # When they recieve a notification email with a link, they click on it which will then render a page 
-    # where they will be allowed to authorise the transfer.
-
-    def post(self, request):
-        pass

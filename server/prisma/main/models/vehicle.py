@@ -83,6 +83,7 @@ class VehicleOwnership(models.Model):
 
 
 class ServiceType(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     description = models.JSONField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -101,6 +102,7 @@ class ServiceType(models.Model):
 
 
 class ValetType(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -111,6 +113,7 @@ class ValetType(models.Model):
 
 
 class DetailerProfile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15, unique=True)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
@@ -128,6 +131,7 @@ class DetailerProfile(models.Model):
 
 
 class AddOns(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -148,9 +152,11 @@ class BookedAppointment(models.Model):
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
     ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking_reference = models.CharField(max_length=255, editable=False, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True, blank=True)
+    bulk_order = models.ForeignKey('BulkOrder', on_delete=models.CASCADE, null=True, blank=True, related_name='appointments')
     valet_type = models.ForeignKey(ValetType, on_delete=models.CASCADE)
     service_type = models.ForeignKey(ServiceType, on_delete=models.CASCADE)
     add_ons = models.ManyToManyField(AddOns, blank=True)
@@ -174,7 +180,15 @@ class BookedAppointment(models.Model):
     review_submitted_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        vehicle_info = f"{self.vehicle.make} {self.vehicle.model}" if self.vehicle else "No Vehicle"
+        vehicle = getattr(self, "vehicle", None)
+        if vehicle is not None:
+            make = getattr(vehicle, "make", None)
+            model = getattr(vehicle, "model", None)
+            if make is not None or model is not None:
+                vehicle_info = f"{make or ''} {model or ''}".strip()
+                if vehicle_info:
+                    return f"{self.user.name} - {vehicle_info} - {self.appointment_date}"
+        vehicle_info = "No Vehicle"
         return f"{self.user.name} - {vehicle_info} - {self.appointment_date}"
 
     def save(self, *args, **kwargs):
@@ -227,6 +241,7 @@ class BookedAppointmentImage(models.Model):
         ('interior', 'Interior'),
         ('exterior', 'Exterior'),
     ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking = models.ForeignKey(BookedAppointment, on_delete=models.CASCADE, related_name='job_images')
     vehicle_event = models.ForeignKey(VehicleEvent, on_delete=models.SET_NULL, null=True, blank=True, related_name='images')
     image_type = models.CharField(max_length=10, choices=IMAGE_TYPE_CHOICES)
@@ -286,6 +301,7 @@ class EventDataManagement(models.Model):
     BATTERY_CONDITION_CHOICES = [('good', 'Good'), ('weak', 'Weak'), ('replace', 'Replace')]
     LIGHT_STATUS_CHOICES = [('working', 'Working'), ('dim', 'Dim'), ('not_working', 'Not Working')]
     INDICATOR_STATUS_CHOICES = [('working', 'Working'), ('not_working', 'Not Working')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking = models.OneToOneField(BookedAppointment, on_delete=models.CASCADE, related_name='eventdatamanagement')
     tire_tread_depth = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     tire_condition = models.TextField(blank=True, null=True)
@@ -316,14 +332,17 @@ class PaymentTransaction(models.Model):
         ('vin_lookup', 'VIN Lookup'),
         ('tip', 'Tip'),
         ('subscription', 'Subscription'),
+        ('reschedule_fee', 'Reschedule Fee'),
     ]
     STATUS_CHOICES = [
         ('succeeded', 'Succeeded'),
         ('failed', 'Failed'),
         ('pending', 'Pending'),
     ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking = models.ForeignKey(BookedAppointment, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    bulk_order = models.ForeignKey('BulkOrder', on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     booking_reference = models.CharField(max_length=255, null=True, blank=True)
     stripe_payment_intent_id = models.CharField(max_length=255, unique=True)
     stripe_refund_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
@@ -347,6 +366,7 @@ class RefundRecord(models.Model):
         ('failed', 'Failed'),
         ('disputed', 'Disputed'),
     ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking = models.ForeignKey(BookedAppointment, on_delete=models.CASCADE, related_name='refunds')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     original_transaction = models.ForeignKey(PaymentTransaction, on_delete=models.CASCADE, related_name='refund_attempts')
@@ -372,6 +392,7 @@ class PendingBooking(models.Model):
         ('failed', 'Payment Failed'),
         ('expired', 'Expired'),
     ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking_reference = models.CharField(max_length=255, unique=True, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     booking_data = models.JSONField()
@@ -379,6 +400,7 @@ class PendingBooking(models.Model):
     stripe_payment_intent_id = models.CharField(max_length=255, null=True, blank=True)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     expires_at = models.DateTimeField()
+    slot_conflict_refunded_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -394,6 +416,44 @@ class PendingBooking(models.Model):
 
     def is_expired(self):
         return timezone.now() > self.expires_at
+
+
+class BulkOrder(models.Model):
+    """Bulk booking order (fleet/partner): multiple vehicles, one date/window, pay now or invoice later."""
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('invoice_later', 'Invoice Later'),
+        ('succeeded', 'Succeeded'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking_reference = models.CharField(max_length=255, unique=True, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    branch = models.ForeignKey('Branch', on_delete=models.SET_NULL, null=True, blank=True, related_name='bulk_orders')
+    fleet = models.ForeignKey('Fleet', on_delete=models.SET_NULL, null=True, blank=True, related_name='bulk_orders')
+    address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    stripe_payment_intent_id = models.CharField(max_length=255, null=True, blank=True)
+    stripe_invoice_id = models.CharField(max_length=255, null=True, blank=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_applied = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    number_of_vehicles = models.PositiveIntegerField(default=0)
+    order_data = models.JSONField(default=dict)  # date, window, start_time, end_time, service_type, suggested_team_size, etc.
+    assigned_detailers = models.JSONField(default=list, blank=True)  # list of {"id", "name", "rating", "phone", "image"} from job_acceptance
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['booking_reference']),
+            models.Index(fields=['user', 'payment_status']),
+            models.Index(fields=['branch']),
+            models.Index(fields=['fleet']),
+        ]
+
+    def __str__(self):
+        return f"BulkOrder {self.booking_reference} - {self.payment_status}"
 
 
 class VinLookupPurchase(models.Model):

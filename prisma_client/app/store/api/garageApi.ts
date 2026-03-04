@@ -5,6 +5,7 @@ import {
   MyVehiclesProps,
   BranchVehiclesGroup,
   CreateVehicleEventRequest,
+  PendingTransfersResponse,
 } from "@/app/interfaces/GarageInterface";
 
 const garageApi = createApi({
@@ -127,6 +128,44 @@ const garageApi = createApi({
         data: eventData,
       }),
     }),
+
+    /**
+     * Get pending vehicle transfers (incoming and outgoing)
+     */
+    getPendingTransfers: builder.query<PendingTransfersResponse, void>({
+      query: () => ({
+        url: "/api/v1/garage/get_pending_transfers/",
+        method: "GET",
+      }),
+    }),
+
+    /**
+     * Approve a vehicle transfer (owner only)
+     */
+    approveTransfer: builder.mutation<
+      { message: string; transfer_id: string; status: string },
+      { transfer_id: string }
+    >({
+      query: ({ transfer_id }) => ({
+        url: "/api/v1/garage/approve_transfer/",
+        method: "POST",
+        data: { transfer_id },
+      }),
+    }),
+
+    /**
+     * Reject a vehicle transfer (owner only)
+     */
+    rejectTransfer: builder.mutation<
+      { message: string; transfer_id: string; status: string },
+      { transfer_id: string }
+    >({
+      query: ({ transfer_id }) => ({
+        url: "/api/v1/garage/reject_transfer/",
+        method: "POST",
+        data: { transfer_id },
+      }),
+    }),
   }),
 });
 export const {
@@ -136,5 +175,8 @@ export const {
   useGetMyVehiclesQuery,
   useGetVehicleStatsQuery,
   useCreateVehicleEventMutation,
+  useGetPendingTransfersQuery,
+  useApproveTransferMutation,
+  useRejectTransferMutation,
 } = garageApi;
 export default garageApi;

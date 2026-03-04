@@ -23,6 +23,16 @@ export default interface UpcomingAppointmentProps {
   start_time?: string;
   end_time?: string;
   add_ons: AddOnsProps[];
+  /** True when this item is a bulk order (multiple vehicles). */
+  is_bulk?: boolean;
+  /** Number of vehicles (only set when is_bulk is true). */
+  number_of_vehicles?: number;
+  /** Bulk order id (only set when is_bulk is true). Used for cancel/reschedule. */
+  bulk_order_id?: string;
+  /** Order payload for bulk (date, start_time, end_time, address, service_type, etc.). Only set when is_bulk is true. */
+  order_data?: Record<string, unknown>;
+  /** Payment status for bulk order (e.g. "succeeded", "cancelled"). Only set when is_bulk is true. */
+  payment_status?: string;
 }
 
 export interface RecentServicesProps {

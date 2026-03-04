@@ -1,20 +1,21 @@
 import React, { useState } from "react";
 import {
   StyleSheet,
-  Text,
   View,
   FlatList,
   TouchableOpacity,
-  Alert,
   RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNotification } from "../app-hooks/useNotification";
 import { NotificationItem } from "../components/notification/NotificationItem";
-import { Notification } from "../interfaces/NotificationInterface";
-import { Colors } from "../../constants/Colors";
+import {
+  Notification,
+  NotificationType,
+} from "../interfaces/NotificationInterface";
 import StyledText from "../components/helpers/StyledText";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { useAlertContext } from "@/app/contexts/AlertContext";
 
 const NotificationScreen = () => {
   const backgroundColor = useThemeColor({}, "background");
@@ -29,28 +30,57 @@ const NotificationScreen = () => {
     deleteNotification,
     refreshNotifications,
   } = useNotification();
+  const { setAlertConfig, setIsVisible } = useAlertContext();
   const [refreshing, setRefreshing] = useState(false);
+
+  const getAlertTypeForNotification = (
+    type: NotificationType
+  ): "success" | "error" | "warning" => {
+    switch (type) {
+      case NotificationType.BOOKING_CONFIRMED:
+      case NotificationType.CLEANING_COMPLETED:
+      case NotificationType.CAR_READY:
+      case NotificationType.PAYMENT_RECEIVED:
+        return "success";
+      case NotificationType.BOOKING_CANCELLED:
+        return "error";
+      case NotificationType.BOOKING_RESCHEDULED:
+      case NotificationType.REMINDER:
+        return "warning";
+      default:
+        return "success";
+    }
+  };
 
   const handleNotificationPress = (notification: Notification) => {
     if (!notification.isRead) {
       markAsRead(notification.id);
     }
-
-    // Here you can add navigation to specific screens based on notification type
-    // For example, navigate to booking details, payment history, etc.
-    Alert.alert(notification.title, notification.message, [{ text: "OK" }]);
+    setAlertConfig({
+      isVisible: true,
+      title: notification.title,
+      message: notification.message,
+      type: getAlertTypeForNotification(notification.type),
+      confirmLabel: "OK",
+      onConfirm: () => setIsVisible(false),
+    });
   };
 
   const handleMarkAllAsRead = () => {
     if (unreadCount > 0) {
-      Alert.alert(
-        "Mark All as Read",
-        "Are you sure you want to mark all notifications as read?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Mark All Read", onPress: markAllAsRead },
-        ]
-      );
+      setAlertConfig({
+        isVisible: true,
+        title: "Mark All as Read",
+        message:
+          "Are you sure you want to mark all notifications as read?",
+        type: "warning",
+        confirmLabel: "Mark All Read",
+        onClose: () => setIsVisible(false),
+        onConfirm: () => {
+          markAllAsRead();
+          setIsVisible(false);
+        },
+      });
     }
   };
 

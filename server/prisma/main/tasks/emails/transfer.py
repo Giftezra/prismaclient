@@ -11,10 +11,6 @@ def send_transfer_request_email(transfer_id, owner_email, requester_name, vehicl
 
     try:
         transfer = VehicleTransfer.objects.get(id=transfer_id)
-        base_url = getattr(settings, 'BASE_URL', 'https://yourdomain.com')
-
-        approve_url = f"{base_url}/api/v1/garage/web-transfer-action/{transfer_id}/?action=approve"
-        reject_url = f"{base_url}/api/v1/garage/web-transfer-action/{transfer_id}/?action=reject"
 
         subject = f"Vehicle Transfer Request - {vehicle_registration}"
         html_message = render_to_string('vehicle_transfer_request.html', {
@@ -24,8 +20,6 @@ def send_transfer_request_email(transfer_id, owner_email, requester_name, vehicl
             'vehicle_make': transfer.vehicle.make,
             'vehicle_model': transfer.vehicle.model,
             'vehicle_year': transfer.vehicle.year,
-            'approve_url': approve_url,
-            'reject_url': reject_url,
             'expires_at': transfer.expires_at.strftime('%B %d, %Y at %I:%M %p'),
         })
 

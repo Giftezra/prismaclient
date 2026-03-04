@@ -1,22 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
   Modal,
-  Dimensions,
   TouchableOpacity,
-  ScrollView,
   StatusBar,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import StyledText from "./StyledText";
-import { useThemeColor } from "@/hooks/useThemeColor";
 import { useGetTermsAndConditionsQuery } from "@/app/store/api/authApi";
 import { ActivityIndicator } from "react-native-paper";
-import LinearGradientComponent from "./LinearGradientComponent";
 
-const { height } = Dimensions.get("window");
+// Design to match Terms of Service reference: light grey background, blue accents, white card
+const CARD_BG = "#FFFFFF";
+const SCREEN_BG = "#E8ECF0"; // light grey background
+const PRIMARY_BLUE = "#5B9BD5";
+const PRIMARY_BLUE_LIGHT = "#7EB8E8";
+const TEXT_DARK = "#2C3E50";
+const TEXT_MUTED = "#6B7C8D";
+const BORDER_LIGHT = "#E8EFF5";
 
 interface TermsAcceptanceModalProps {
   visible: boolean;
@@ -31,15 +35,28 @@ const TermsAcceptanceModal: React.FC<TermsAcceptanceModalProps> = ({
   onClose,
   onDecline,
 }) => {
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+
   const {
     data: termsAndConditions,
     isLoading,
     isError,
   } = useGetTermsAndConditionsQuery();
 
-  const backgroundColor = useThemeColor({}, "background");
-  const textColor = useThemeColor({}, "text");
-  const buttonColor = useThemeColor({}, "button");
+  const lastUpdatedFormatted = termsAndConditions?.last_updated
+    ? new Date(termsAndConditions.last_updated).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "N/A";
+
+  const bothAccepted = agreeTerms && agreePrivacy;
+
+  const handleAccept = () => {
+    if (bothAccepted) onAccept();
+  };
 
   return (
     <Modal
@@ -48,118 +65,155 @@ const TermsAcceptanceModal: React.FC<TermsAcceptanceModalProps> = ({
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
-        <StatusBar barStyle="light-content" />
+      <View style={styles.screenContainer}>
+        <StatusBar barStyle="dark-content" backgroundColor={SCREEN_BG} />
 
-        {/* Gradient Header */}
-        <LinearGradientComponent
-          color1= {backgroundColor}
-          color2={textColor}
-          style={styles.header}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 5, y: 1 }}
-        >
-          {/* Navigation */}
-          <View style={styles.navigation}>
-            <TouchableOpacity onPress={onClose} style={styles.backButton}>
-              <Ionicons name="chevron-back" size={24} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.helpButton}>
-              <Ionicons name="help-circle" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Greeting Section */}
-          <View style={styles.greetingSection}>
-            <StyledText style={styles.helloText}>Hello 👋</StyledText>
-            <StyledText style={styles.introText}>
-              Before you create an account, please read and accept our Terms &
-              Conditions
-            </StyledText>
-          </View>
-        </LinearGradientComponent>
-
-        {/* Content Section */}
-        <View style={styles.contentSection}>
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={buttonColor} />
-              <StyledText style={[styles.loadingText, { color: textColor }]}>
-                Loading terms and conditions...
-              </StyledText>
-            </View>
-          ) : isError ? (
-            <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle" size={48} color="#D32F2F" />
-              <StyledText style={[styles.errorText, { color: textColor }]}>
-                Failed to load terms and conditions. Please try again.
-              </StyledText>
-            </View>
-          ) : (
-            <ScrollView
-              style={styles.scrollView}
-              showsVerticalScrollIndicator={true}
-            >
-              <View style={styles.contentContainer}>
-                {/* Title */}
-                <StyledText style={styles.termsTitle}>
-                  Terms & Conditions
+        <View style={styles.contentWrap}>
+          <View style={styles.card}>
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={PRIMARY_BLUE} />
+                <StyledText style={styles.loadingText}>
+                  Loading terms and conditions...
                 </StyledText>
-
-                {/* Last Updated */}
-                <View style={styles.lastUpdatedContainer}>
-                  <Ionicons name="time-outline" size={16} color="#666" />
-                  <StyledText style={styles.lastUpdatedText}>
-                    Last updated:{" "}
-                    {termsAndConditions?.last_updated
-                      ? new Date(
-                          termsAndConditions.last_updated
-                        ).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : "N/A"}
-                  </StyledText>
+              </View>
+            ) : isError ? (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={48} color="#D32F2F" />
+                <StyledText style={styles.errorText}>
+                  Failed to load terms and conditions. Please try again.
+                </StyledText>
+              </View>
+            ) : (
+              <>
+                {/* Header: icon + title + update date */}
+                <View style={styles.cardHeader}>
+                  <View style={styles.docIconWrap}>
+                    <View style={styles.docIconBack} />
+                    <View style={styles.docIconFront}>
+                      <View style={styles.docIconLines}>
+                        <View style={styles.docLine} />
+                        <View style={styles.docLine} />
+                        <View style={styles.docLine} />
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.cardHeaderText}>
+                    <StyledText style={styles.cardTitle}>
+                      Terms of Service
+                    </StyledText>
+                    <StyledText style={styles.cardSubtitle}>
+                      Update {lastUpdatedFormatted}
+                    </StyledText>
+                  </View>
                 </View>
 
-                {/* Terms Content from Database */}
-                <View style={styles.termsWebViewContainer}>
+                {/* Terms content - flexes to fill space */}
+                <View style={styles.termsContentWrap}>
                   <WebView
                     originWhitelist={["*"]}
                     source={{
-                      html: termsAndConditions?.content || "No terms available",
+                      html: `
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+                        <style>
+                          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10px; color: #6B7C8D; line-height: 1.6; margin: 0; padding: 0; }
+                          strong { color: #2C3E50; }
+                          p strong:first-child { color: #5B9BD5; font-weight: bold; }
+                          a { color: #5B9BD5; text-decoration: none; }
+                        </style>
+                        ${termsAndConditions?.content || "No terms available"}
+                      `,
                     }}
                     style={styles.termsWebView}
                     scrollEnabled={true}
                     showsVerticalScrollIndicator={true}
-                    allowsInlineMediaPlayback={true}
-                    mediaPlaybackRequiresUserAction={false}
                     nestedScrollEnabled={true}
-                    automaticallyAdjustContentInsets={false}
-                    contentInsetAdjustmentBehavior="automatic"
                   />
                 </View>
-              </View>
-            </ScrollView>
-          )}
-        </View>
 
-        {/* Footer Buttons */}
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.declineButton}
-            onPress={onDecline || onClose}
-          >
-            <StyledText style={styles.declineButtonText}>Decline</StyledText>
-          </TouchableOpacity>
+                {/* Checkboxes - follow terms content */}
+                <View style={styles.checkboxGroup}>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    onPress={() => setAgreeTerms((v) => !v)}
+                    activeOpacity={0.7}
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        agreeTerms && styles.checkboxChecked,
+                      ]}
+                    >
+                      {agreeTerms && (
+                        <Ionicons name="checkmark" size={16} color={PRIMARY_BLUE} />
+                      )}
+                    </View>
+                    <StyledText style={styles.checkboxLabel}>
+                      I agree with the{" "}
+                      <StyledText style={styles.checkboxLabelBold}>
+                        Terms and Conditions
+                      </StyledText>
+                    </StyledText>
+                  </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.acceptButton, { backgroundColor: buttonColor }]}
-            onPress={onAccept}
-          >
-            <StyledText style={styles.acceptButtonText}>Accept</StyledText>
-          </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    onPress={() => setAgreePrivacy((v) => !v)}
+                    activeOpacity={0.7}
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        agreePrivacy && styles.checkboxChecked,
+                      ]}
+                    >
+                      {agreePrivacy && (
+                        <Ionicons name="checkmark" size={16} color={PRIMARY_BLUE} />
+                      )}
+                    </View>
+                    <StyledText style={styles.checkboxLabel}>
+                      I agree with the{" "}
+                      <StyledText style={styles.checkboxLabelBold}>
+                        Privacy Policy
+                      </StyledText>
+                    </StyledText>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Buttons - pinned to bottom */}
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={styles.declineButton}
+                    onPress={onDecline || onClose}
+                    activeOpacity={0.8}
+                  >
+                    <StyledText style={styles.declineButtonText}>
+                      Decline
+                    </StyledText>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.acceptButton,
+                      !bothAccepted && styles.acceptButtonDisabled,
+                    ]}
+                    onPress={handleAccept}
+                    disabled={!bothAccepted}
+                    activeOpacity={0.8}
+                  >
+                    <StyledText
+                      style={[
+                        styles.acceptButtonText,
+                        !bothAccepted && styles.acceptButtonTextDisabled,
+                      ]}
+                    >
+                      Accept
+                    </StyledText>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
         </View>
       </View>
     </Modal>
@@ -167,135 +221,192 @@ const TermsAcceptanceModal: React.FC<TermsAcceptanceModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
+  screenContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: SCREEN_BG,
   },
-  header: {
-    paddingTop: 20,
-    paddingBottom: 10,
-    paddingHorizontal: 20,
-  },
-  navigation: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  backButton: {
-    padding: 8,
-  },
-  helpButton: {
-    padding: 8,
-  },
-  greetingSection: {
-    alignItems: "flex-start",
-  },
-  helloText: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 10,
-  },
-  introText: {
-    fontSize: 16,
-    color: "white",
-    lineHeight: 22,
-    opacity: 0.9,
-  },
-  contentSection: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  scrollView: {
+  contentWrap: {
     flex: 1,
   },
-  contentContainer: {
-    marginTop: 10,
-    padding: 10,
-    paddingBottom: 100, // Space for footer buttons
+  card: {
+    flex: 1,
+    backgroundColor: CARD_BG,
+    borderRadius: 12,
+    padding: 15,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
-  termsTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#000000",
-    marginBottom: 8,
-  },
-  lastUpdatedContainer: {
+  cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  lastUpdatedText: {
-    fontSize: 12,
-    color: "#666666",
-    marginLeft: 6,
+  docIconWrap: {
+    width: 48,
+    height: 48,
+    marginRight: 14,
+    position: "relative",
   },
-  termsWebViewContainer: {
-    flex: 1, // Allow WebView to expand to fill available space
-    backgroundColor: "#FFFFFF",
-    minHeight: 400, // Set minimum height to ensure content is visible
+  docIconBack: {
+    position: "absolute",
+    left: 6,
+    top: 6,
+    width: 36,
+    height: 44,
+    backgroundColor: "#7EB8E8",
+    borderRadius: 4,
+  },
+  docIconFront: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    width: 36,
+    height: 44,
+    backgroundColor: "#B8D9F5",
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.6)",
+    justifyContent: "flex-start",
+    paddingTop: 10,
+    paddingHorizontal: 6,
+  },
+  docIconLines: {
+    marginTop: 2,
+  },
+  docLine: {
+    height: 3,
+    backgroundColor: "rgba(44, 62, 80, 0.25)",
+    borderRadius: 2,
+    width: "100%",
+    marginBottom: 4,
+  },
+  cardHeaderText: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: PRIMARY_BLUE,
+    marginBottom: 2,
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    color: TEXT_MUTED,
+  },
+  termsContentWrap: {
+    flex: 1,
+    marginBottom: 20,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#FAFBFC",
+    minHeight: 120,
   },
   termsWebView: {
+    flex: 1,
     backgroundColor: "transparent",
-    flex: 1,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  checkboxGroup: {
+    marginBottom: 16,
   },
-  loadingText: {
-    marginTop: 20,
-    textAlign: "center",
-    fontSize: 16,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorText: {
-    marginTop: 20,
-    textAlign: "center",
-    fontSize: 16,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+  checkboxRow: {
     flexDirection: "row",
-    padding: 20,
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#E5E5E5",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: TEXT_MUTED,
+    marginRight: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#E8EFF5",
+    borderColor: "#9E9E9E",
+  },
+  checkboxLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: TEXT_MUTED,
+  },
+  checkboxLabelBold: {
+    fontWeight: "bold",
+    color: PRIMARY_BLUE,
+  },
+  buttonRow: {
+    flexDirection: "row",
     gap: 12,
+    marginTop: "auto",
   },
   declineButton: {
     flex: 1,
-    height: 35,
-    backgroundColor: "#F5F5F5",
-    borderRadius: 20,
+    height: 40,
+    backgroundColor: CARD_BG,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: PRIMARY_BLUE_LIGHT,
     justifyContent: "center",
     alignItems: "center",
   },
   declineButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#000000",
+    color: PRIMARY_BLUE,
   },
   acceptButton: {
     flex: 1,
-    height: 35,
-    borderRadius: 20,
+    height: 40,
+    backgroundColor: PRIMARY_BLUE,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
+  },
+  acceptButtonDisabled: {
+    backgroundColor: "#B0C4DE",
+    opacity: 0.9,
   },
   acceptButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "white",
+    color: "#FFFFFF",
+  },
+  acceptButtonTextDisabled: {
+    color: "rgba(255,255,255,0.8)",
+  },
+  loadingContainer: {
+    flex: 1,
+    minHeight: 280,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 15,
+    color: TEXT_MUTED,
+  },
+  errorContainer: {
+    flex: 1,
+    minHeight: 280,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 15,
+    color: TEXT_MUTED,
+    textAlign: "center",
   },
 });
 

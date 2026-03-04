@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from main.views.profile import ProfileView
 from main.views.garage import GarageView
 from main.views.vinlookup import VinLookupView
-from main.views.events import EventsView, VehicleTransferView
+from main.views.events import EventsView
 from main.views.dashboard import DashboardView
 from main.views.payment import PaymentView, StripeWebhookView
 from main.views.terms import TermsView
@@ -31,7 +31,6 @@ urlpatterns = [
     path('vin-lookup/<action>/', VinLookupView.as_view(), name='vin_lookup'),
     path('vin-lookup/<action>/<purchase_reference>/', VinLookupView.as_view(), name='vin_lookup'),
     path('events/<action>/', EventsView.as_view(), name='events'),
-    path('events/vehicle-transfer/', VehicleTransferView.as_view(), name='vehicle_transfer'),
     path('dashboard/<action>/', DashboardView.as_view(), name='dashboard'),
     path('notifications/<action>/', NotificationsView.as_view(), name='notifications'),
     path('terms/<action>/', TermsView.as_view(), name='terms'),

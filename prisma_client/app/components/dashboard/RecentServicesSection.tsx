@@ -192,13 +192,7 @@ const RecentServicesSection: React.FC<RecentServicesSectionProps> = ({
 
   return (
     <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <StyledText
-          style={{ color: textColor }}
-          variant="titleMedium"
-          children="Recent Services"
-        />
-      </View>
+
       {bookings ? (
         <ServiceCard booking={bookings} onUnratedPress={onUnratedPress} />
       ) : (
@@ -317,7 +311,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     marginBottom: 12,
-    borderWidth: 1,
   },
   emptyStateIcon: {
     marginBottom: 16,

@@ -223,24 +223,22 @@ const DashboardScreen = () => {
           <OngoingServiceCard appointment={inProgressAppointment} />
         )}
 
-        {/* Display the component that would show how many upcoming appointments a user has */}
-        {appointments.length > 0 && (
-          <View style={styles.upcomingAppointmentDateContainer}>
-            <StyledText
-              children="Upcoming Appointments"
-              variant="labelMedium"
-            />
-            <View style={{ paddingHorizontal: 10, gap: 5 }}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {appointments.map((appointment) => (
-                  <View key={appointment.booking_reference}>
-                    {renderUpcomingAppointmentDate(appointment)}
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
+        {/* Upcoming Appointments: always show section with "See all forthcoming bookings" button */}
+        <View style={styles.upcomingAppointmentDateContainer}>
+          <View style={styles.upcomingSectionHeader}>
+            <Pressable
+              style={[styles.seeAllButton, { backgroundColor: buttonColor }]}
+              onPress={() =>
+                router.push("/main/(tabs)/dashboard/ForthcomingBookingsListScreen")
+              }
+            >
+              <StyledText variant="bodySmall" style={styles.seeAllButtonText}>
+                See all forthcoming bookings
+              </StyledText>
+              <Ionicons name="chevron-forward" size={14} color="#fff" />
+            </Pressable>
           </View>
-        )}
+        </View>
 
         <RecentServicesSection
           bookings={recentService}
@@ -317,6 +315,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10,
     gap: 5,
+  },
+  upcomingSectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  seeAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
+  seeAllButtonText: {
+    color: "#fff",
+    fontWeight: "600",
   },
   upcomingAppointmentCard: {
     padding: 12,

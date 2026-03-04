@@ -141,6 +141,7 @@ export default function MainLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="SettingsScreen" />
             <Stack.Screen name="NotificationScreen" />
+            <Stack.Screen name="TrackDetailerMapScreen" />
           </Stack>
         </SafeAreaView>
       </KeyboardAvoidingView>

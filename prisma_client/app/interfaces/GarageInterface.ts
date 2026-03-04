@@ -103,3 +103,29 @@ export interface CreateVehicleEventRequest {
 export default interface GarageState {
   newVehicle: MyVehiclesProps | null;
 }
+
+/** Pending vehicle transfer (incoming or outgoing) */
+export interface PendingTransferItem {
+  id: string;
+  direction: "incoming" | "outgoing";
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    registration_number: string;
+    vin: string;
+  };
+  from_owner: { id: string; name: string; email: string };
+  to_owner: { id: string; name: string; email: string };
+  status: string;
+  requested_at: string;
+  expires_at: string;
+  is_expired: boolean;
+}
+
+export interface PendingTransfersResponse {
+  incoming_transfers: PendingTransferItem[];
+  outgoing_transfers: PendingTransferItem[];
+  total_pending: number;
+}
